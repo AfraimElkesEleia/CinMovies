@@ -1,6 +1,7 @@
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/features/login/login_screen.dart';
 import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
+import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -19,6 +20,16 @@ class AppRouter {
       case Routes.register:
         return MaterialPageRoute(
           builder: (_) => const _RoutePlaceholder(title: 'Register'),
+        );
+      case Routes.preferenceOnboarding:
+        return MaterialPageRoute(
+          builder: (_) => const PreferenceOnboardingScreen(),
+        );
+      default:
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('No route defined for this path')),
+          ),
         );
     }
   }

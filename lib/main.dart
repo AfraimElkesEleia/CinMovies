@@ -17,7 +17,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(fontFamily: 'OpenSans'),
+      theme: ThemeData(
+        fontFamily: 'OpenSans',
+        scaffoldBackgroundColor: const Color(0xFF080B14),
+      ),
       title: 'CinMovies',
       initialRoute: Routes.onBoarding,
       onGenerateRoute: _appRouter.generateRoute,

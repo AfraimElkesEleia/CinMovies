@@ -66,7 +66,7 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
 
   void _handleActionButtonPressed() {
     if (_currentPage == _screens.length - 1) {
-      context.pushReplacementNamed(Routes.login);
+      context.pushReplacementNamed(Routes.preferenceOnboarding);
       return;
     }
 
@@ -79,7 +79,6 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080B14),
       body: Column(
         children: [
           const SizedBox(height: 16),
