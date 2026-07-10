@@ -17,8 +17,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(fontFamily: 'OpenSans'),
       title: 'CinMovies',
-      initialRoute: Routes.splash,
+      initialRoute: Routes.onBoarding,
       onGenerateRoute: _appRouter.generateRoute,
     );
   }

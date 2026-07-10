@@ -1,4 +1,6 @@
 import 'package:cinmovies_app/core/navigation/routes.dart';
+import 'package:cinmovies_app/features/login/login_screen.dart';
+import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -6,27 +8,17 @@ class AppRouter {
 
   Route? generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case Routes.splash:
-        return MaterialPageRoute(
-          builder: (_) => const _RoutePlaceholder(title: 'Splash'),
-        );
+      case Routes.onBoarding:
+        return MaterialPageRoute(builder: (_) => const OnBoardingPageview());
       case Routes.home:
         return MaterialPageRoute(
           builder: (_) => const _RoutePlaceholder(title: 'Home'),
         );
       case Routes.login:
-        return MaterialPageRoute(
-          builder: (_) => const _RoutePlaceholder(title: 'Login'),
-        );
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
       case Routes.register:
         return MaterialPageRoute(
           builder: (_) => const _RoutePlaceholder(title: 'Register'),
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('No route defined for this path')),
-          ),
         );
     }
   }
