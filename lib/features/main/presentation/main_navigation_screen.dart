@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -18,6 +19,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: IndexedStack(
         index: AppNavTab.values.indexOf(currentTab),
         children: AppNavTab.values.map((tab) {
+          if (tab == AppNavTab.home) {
+            return const HomeScreen();
+          }
+
           return _MainTabPlaceholder(tab: tab);
         }).toList(),
       ),

@@ -4,6 +4,7 @@ class AppColors {
   const AppColors._();
 
   static const Color transparent = Colors.transparent;
+  static const Color black = Colors.black;
   static const Color white = Colors.white;
   static const Color grey = Colors.grey;
   static const Color redAccent = Colors.redAccent;
@@ -14,6 +15,8 @@ class AppColors {
   static const Color iconMuted = Color(0xFF64748B);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color textDisabled = Color(0xFF475569);
+  static const Color ratingAmber = Color(0xFFF59E0B);
+  static const Color comingSoonPurple = Color(0xFF7C3AED);
 
   static const Color loginPrimary = Color(0xFFE11D48);
   static const Color loginPrimaryDark = Color(0xFFC01035);
