@@ -25,12 +25,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const PreferenceOnboardingScreen(),
         );
-      default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('No route defined for this path')),
-          ),
-        );
+
     }
   }
 }
