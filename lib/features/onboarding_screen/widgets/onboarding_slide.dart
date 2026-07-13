@@ -1,3 +1,4 @@
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/onboarding_screen/model/onboarding_screen_model.dart';
 import 'package:flutter/material.dart';
 
@@ -27,13 +28,13 @@ class OnboardingSlide extends StatelessWidget {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: AppColors.white,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             screen.description,
-            style: const TextStyle(fontSize: 16, color: Colors.white),
+            style: const TextStyle(fontSize: 16, color: AppColors.white),
           ),
           const SizedBox(height: 32),
         ],

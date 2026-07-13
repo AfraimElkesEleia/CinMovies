@@ -1,6 +1,7 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/navigation/app_router.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         fontFamily: 'OpenSans',
-        scaffoldBackgroundColor: const Color(0xFF080B14),
+        scaffoldBackgroundColor: AppColors.scaffoldBackground,
       ),
       title: 'CinMovies',
       initialRoute: Routes.onBoarding,

@@ -1,3 +1,4 @@
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingSkipButton extends StatelessWidget {
@@ -10,12 +11,12 @@ class OnboardingSkipButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white.withValues(alpha: 0.2),
+        backgroundColor: AppColors.onboardingSkipOverlay,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(64)),
         padding: const EdgeInsets.symmetric(horizontal: 16),
       ),
-      child: const Text('Skip', style: TextStyle(color: Colors.white)),
+      child: const Text('Skip', style: TextStyle(color: AppColors.white)),
     );
   }
 }

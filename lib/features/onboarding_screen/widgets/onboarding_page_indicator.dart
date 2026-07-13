@@ -1,3 +1,4 @@
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -28,7 +29,7 @@ class OnboardingPageIndicator extends StatelessWidget {
               dotHeight: 8,
               dotWidth: 8,
               activeDotColor: color ?? activeColor,
-              dotColor: Colors.grey,
+              dotColor: AppColors.grey,
             ),
           );
         },

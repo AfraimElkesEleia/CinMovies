@@ -1,3 +1,4 @@
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingActionButton extends StatelessWidget {
@@ -36,7 +37,7 @@ class OnboardingActionButton extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.white,
               ),
             ),
           );

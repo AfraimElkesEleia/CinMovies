@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/onboarding_screen/model/preference_model.dart';
 import 'package:flutter/material.dart';
 
@@ -49,7 +50,7 @@ class _PreferenceOnboardingScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF070B16),
+      backgroundColor: AppColors.preferenceBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -61,13 +62,16 @@ class _PreferenceOnboardingScreenState
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Select at least 3 genres to personalize your experience.',
-                style: TextStyle(fontSize: 16, color: Color(0xFF9BBBE8)),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.preferenceSubtitle,
+                ),
               ),
               const SizedBox(height: 28),
               Expanded(
@@ -83,12 +87,12 @@ class _PreferenceOnboardingScreenState
                         return FilterChip(
                           selected: isSelected,
                           showCheckmark: false,
-                          backgroundColor: const Color(0xFF0F1320),
-                          selectedColor: const Color(0xFF542078),
+                          backgroundColor: AppColors.surface,
+                          selectedColor: AppColors.preferenceSelectedChip,
                           side: BorderSide(
                             color: isSelected
-                                ? const Color(0xFF9C4DCC)
-                                : const Color(0xFF293147),
+                                ? AppColors.preferenceSelectedBorder
+                                : AppColors.preferenceChipBorder,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
@@ -105,8 +109,8 @@ class _PreferenceOnboardingScreenState
                                   ? FontWeight.w700
                                   : FontWeight.w500,
                               color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFFAFCBF2),
+                                  ? AppColors.white
+                                  : AppColors.preferenceChipText,
                             ),
                           ),
                           onSelected: (_) => toggleGenre(genre.genre),
@@ -122,8 +126,8 @@ class _PreferenceOnboardingScreenState
                   'Select at least 3 genres (${selectedGenres.length} selected)',
                   style: TextStyle(
                     color: canContinue
-                        ? const Color(0xFFAFCBF2)
-                        : const Color(0xFF7793BC),
+                        ? AppColors.preferenceChipText
+                        : AppColors.preferenceMutedText,
                   ),
                 ),
               ),
@@ -134,10 +138,11 @@ class _PreferenceOnboardingScreenState
                 child: ElevatedButton(
                   onPressed: canContinue ? continueToLogin : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF7C1951),
-                    disabledBackgroundColor: const Color(0xFF391B45),
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.grey,
+                    backgroundColor: AppColors.preferenceButton,
+                    disabledBackgroundColor:
+                        AppColors.preferenceDisabledButton,
+                    foregroundColor: AppColors.white,
+                    disabledForegroundColor: AppColors.grey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),

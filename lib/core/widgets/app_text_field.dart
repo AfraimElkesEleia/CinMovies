@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'login_styles.dart';
+import '../../features/login/presentation/widgets/login_styles.dart';
 
-class LoginTextField extends StatelessWidget {
-  const LoginTextField({
+class AppTextField extends StatelessWidget {
+  const AppTextField({
     super.key,
     required this.label,
     required this.hintText,
@@ -37,11 +37,11 @@ class LoginTextField extends StatelessWidget {
               vertical: 16,
             ),
             border: LoginStyles.inputBorder(),
-            enabledBorder: LoginStyles.inputBorder(),
+            enabledBorder: LoginStyles.inputBorder(LoginStyles.borderColor),
             focusedBorder: LoginStyles.inputBorder(LoginStyles.primaryColor),
             hintText: hintText,
             hintStyle: const TextStyle(color: LoginStyles.hintColor),
-            prefixIcon: Icon(prefixIcon, color: LoginStyles.textColor),
+            prefixIcon: Icon(prefixIcon, color: LoginStyles.iconColor),
           ),
         ),
       ],

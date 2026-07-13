@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
+import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/onboarding_screen/model/onboarding_screen_model.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_action_button.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_page_indicator.dart';
@@ -23,7 +24,7 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
       title: 'Discover Movies\nYou\'ll Love',
       description:
           'Explore trending, top-rated, and upcoming movies in one beautiful app.',
-      dotColor: Color(0xFFBD1A3F),
+      dotColor: AppColors.onboardingCrimson,
       imageAsset: 'assets/images/onB_screen1.jpg',
       buttonText: 'Next',
     ),
@@ -31,14 +32,14 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
       title: 'Build Your\nWatchlist',
       description:
           'Save movies you want to watch later and access them anytime, anywhere.',
-      dotColor: Color(0xFF6B34CE),
+      dotColor: AppColors.onboardingPurple,
       imageAsset: 'assets/images/onB_screen2.jpg',
       buttonText: 'Next',
     ),
     OnboardingScreenModel(
       title: 'Personalized\nFor You',
       description: 'Watch your favorite movies on any device, anytime.',
-      dotColor: Color(0xFFD0870C),
+      dotColor: AppColors.onboardingAmber,
       imageAsset: 'assets/images/onB_screen3.jpg',
       buttonText: 'Get Started',
     ),
