@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
               LoginPrimaryButton(
                 text: 'Login',
                 onPressed: () {
-                  // Handle login logic here
+                  context.pushNamedAndRemoveUntil(Routes.home);
                 },
               ),
             ],

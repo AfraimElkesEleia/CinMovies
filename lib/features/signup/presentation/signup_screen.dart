@@ -67,7 +67,7 @@ class _SignupScreenState extends State<SignupScreen> {
               LoginPrimaryButton(
                 text: 'Create Account',
                 onPressed: () {
-                  // Handle register logic here
+                  context.pushNamedAndRemoveUntil(Routes.home);
                 },
               ),
             ],
