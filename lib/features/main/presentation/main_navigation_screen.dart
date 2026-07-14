@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +22,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         children: AppNavTab.values.map((tab) {
           if (tab == AppNavTab.home) {
             return const HomeScreen();
+          }
+
+          if (tab == AppNavTab.browse) {
+            return const BrowseScreen();
           }
 
           return _MainTabPlaceholder(tab: tab);

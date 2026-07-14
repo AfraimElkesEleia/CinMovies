@@ -7,10 +7,10 @@ enum AppNavTab {
     icon: Icons.home_outlined,
     activeIcon: Icons.home_rounded,
   ),
-  search(
-    label: 'Search',
-    icon: Icons.search_rounded,
-    activeIcon: Icons.search_rounded,
+  browse(
+    label: 'Browse',
+    icon: Icons.grid_view_outlined,
+    activeIcon: Icons.grid_view_rounded,
   ),
   ai(
     label: 'AI',
