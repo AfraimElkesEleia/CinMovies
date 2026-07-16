@@ -2,6 +2,7 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
+import 'package:cinmovies_app/features/library/presentation/library_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -26,6 +27,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
           if (tab == AppNavTab.browse) {
             return const BrowseScreen();
+          }
+
+          if (tab == AppNavTab.library) {
+            return const LibraryScreen();
           }
 
           return _MainTabPlaceholder(tab: tab);

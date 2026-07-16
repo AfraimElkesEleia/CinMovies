@@ -41,6 +41,7 @@ dependencies:
   equatable: ^2.1.0
   smooth_page_indicator: ^2.0.1
   font_awesome_flutter: ^11.0.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:
