@@ -1,0 +1,1 @@
+enum AiScreenTab { chat, history }

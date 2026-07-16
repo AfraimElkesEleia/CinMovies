@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_bottom_navigation_bar.dart';
+import 'package:cinmovies_app/features/ai/presentation/ai_chat_screen.dart';
 import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:cinmovies_app/features/library/presentation/library_screen.dart';
@@ -31,6 +32,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
           if (tab == AppNavTab.library) {
             return const LibraryScreen();
+          }
+
+          if (tab == AppNavTab.ai) {
+            return const AiChatScreen();
           }
 
           return _MainTabPlaceholder(tab: tab);
