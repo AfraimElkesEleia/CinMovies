@@ -1,5 +1,7 @@
+import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_section_header.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
@@ -8,25 +10,12 @@ import 'package:flutter/material.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const List<HomeMovieModel> _movies = [
-    HomeMovieModel(
-      title: 'Avengers: Doomsday',
-      imageAsset: 'assets/images/movie_ex1.jpg',
-      genres: ['Action', 'Sci-Fi'],
-      rating: 8.7,
-      year: '2026',
-    ),
-    HomeMovieModel(
-      title: 'Spider-Man: Brand New Day',
-      imageAsset: 'assets/images/movie_ex2.jpg',
-      genres: ['Adventure', 'Hero'],
-      rating: 8.5,
-      year: '2026',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    void openDetails(Object movie) {
+      context.pushNamed(Routes.movieDetails, arguments: movie);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(
@@ -34,7 +23,12 @@ class HomeScreen extends StatelessWidget {
           slivers: [
             const SliverToBoxAdapter(child: _HomeTopBar()),
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
-            const SliverToBoxAdapter(child: HomeMovieCarousel(movies: _movies)),
+            SliverToBoxAdapter(
+              child: HomeMovieCarousel(
+                movies: kHomeMovies,
+                onMoviePressed: openDetails,
+              ),
+            ),
             const SliverToBoxAdapter(child: SizedBox(height: 26)),
             SliverToBoxAdapter(
               child: HomeSectionHeader(
@@ -49,11 +43,14 @@ class HomeScreen extends StatelessWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   scrollDirection: Axis.horizontal,
-                  itemCount: _movies.length,
+                  itemCount: kHomeMovies.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(width: 14),
                   itemBuilder: (context, index) {
-                    return MovieCard(movie: _movies[index]);
+                    return MovieCard(
+                      movie: kHomeMovies[index],
+                      onTap: () => openDetails(kHomeMovies[index]),
+                    );
                   },
                 ),
               ),
@@ -72,11 +69,15 @@ class HomeScreen extends StatelessWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   scrollDirection: Axis.horizontal,
-                  itemCount: _movies.length,
+                  itemCount: kHomeMovies.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(width: 14),
                   itemBuilder: (context, index) {
-                    return MovieCard(movie: _movies.reversed.toList()[index]);
+                    final movie = kHomeMovies.reversed.toList()[index];
+                    return MovieCard(
+                      movie: movie,
+                      onTap: () => openDetails(movie),
+                    );
                   },
                 ),
               ),

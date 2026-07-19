@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_empty_state.dart';
@@ -32,7 +34,14 @@ class SearchResultsView extends StatelessWidget {
           );
         }
 
-        return SearchMovieTile(movie: movies[index - 1]);
+        final movie = movies[index - 1];
+
+        return GestureDetector(
+          onTap: () {
+            context.pushNamed(Routes.movieDetails, arguments: movie);
+          },
+          child: SearchMovieTile(movie: movie),
+        );
       },
     );
   }

@@ -6,9 +6,14 @@ import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.da
 import 'package:flutter/material.dart';
 
 class HomeMovieCarousel extends StatefulWidget {
-  const HomeMovieCarousel({super.key, required this.movies});
+  const HomeMovieCarousel({
+    super.key,
+    required this.movies,
+    required this.onMoviePressed,
+  });
 
   final List<HomeMovieModel> movies;
+  final ValueChanged<HomeMovieModel> onMoviePressed;
 
   @override
   State<HomeMovieCarousel> createState() => _HomeMovieCarouselState();
@@ -63,7 +68,10 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _HeroMovieCard(movie: widget.movies[index]),
+                child: _HeroMovieCard(
+                  movie: widget.movies[index],
+                  onPressed: () => widget.onMoviePressed(widget.movies[index]),
+                ),
               );
             },
           ),
@@ -94,9 +102,10 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
 }
 
 class _HeroMovieCard extends StatelessWidget {
-  const _HeroMovieCard({required this.movie});
+  const _HeroMovieCard({required this.movie, required this.onPressed});
 
   final HomeMovieModel movie;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +171,7 @@ class _HeroMovieCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: onPressed,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.loginPrimary,
                           foregroundColor: AppColors.white,

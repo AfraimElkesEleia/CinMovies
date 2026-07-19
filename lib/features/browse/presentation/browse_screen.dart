@@ -2,6 +2,7 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/browse/presentation/widgets/browse_search_bar.dart';
+import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
@@ -23,29 +24,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
     'Drama',
   ];
 
-  static const List<HomeMovieModel> _movies = [
-    HomeMovieModel(
-      title: 'Avengers: Doomsday',
-      imageAsset: 'assets/images/movie_ex1.jpg',
-      genres: ['Action', 'Sci-Fi'],
-      rating: 8.7,
-      year: '2026',
-    ),
-    HomeMovieModel(
-      title: 'Spider-Man: Brand New Day',
-      imageAsset: 'assets/images/movie_ex2.jpg',
-      genres: ['Adventure', 'Hero'],
-      rating: 8.5,
-      year: '2026',
-    ),
-  ];
-
   String _activeGenre = 'All';
 
   List<HomeMovieModel> get _filteredMovies {
-    if (_activeGenre == 'All') return _movies;
+    if (_activeGenre == 'All') return kHomeMovies;
 
-    return _movies.where((movie) {
+    return kHomeMovies.where((movie) {
       return movie.genres.contains(_activeGenre);
     }).toList();
   }
@@ -161,7 +145,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   childAspectRatio: 0.72,
                 ),
                 itemBuilder: (context, index) {
-                  return MovieCard(movie: _filteredMovies[index]);
+                  final movie = _filteredMovies[index];
+                  return MovieCard(
+                    movie: movie,
+                    onTap: () {
+                      context.pushNamed(Routes.movieDetails, arguments: movie);
+                    },
+                  );
                 },
               ),
             ),
