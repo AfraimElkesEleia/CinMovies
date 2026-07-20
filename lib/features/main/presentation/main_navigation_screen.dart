@@ -4,6 +4,7 @@ import 'package:cinmovies_app/features/ai/presentation/ai_chat_screen.dart';
 import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:cinmovies_app/features/library/presentation/library_screen.dart';
+import 'package:cinmovies_app/features/profile/presentation/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -36,6 +37,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
           if (tab == AppNavTab.ai) {
             return const AiChatScreen();
+          }
+
+          if (tab == AppNavTab.profile) {
+            return const ProfileScreen();
           }
 
           return _MainTabPlaceholder(tab: tab);
