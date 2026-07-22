@@ -2,7 +2,16 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key});
+  const ProfileHeader({
+    super.key,
+    this.fullName = 'Movie Explorer',
+    this.subtitle = 'CinMovies member',
+    this.avatarUrl,
+  });
+
+  final String fullName;
+  final String subtitle;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -50,24 +59,26 @@ class ProfileHeader extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(27),
-              child: Image.asset('assets/images/app_logo.png', fit: BoxFit.cover),
+              child: avatarUrl == null
+                  ? Image.asset('assets/images/app_logo.png', fit: BoxFit.cover)
+                  : Image.network(avatarUrl!, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Afraim Wasef',
+          Text(
+            fullName,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.white,
               fontSize: 22,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Movie Explorer',
+          Text(
+            subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textMuted,
               fontSize: 13,
               fontWeight: FontWeight.w500,

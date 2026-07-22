@@ -5,9 +5,14 @@ import 'package:cinmovies_app/features/search/presentation/widgets/search_term_l
 import 'package:flutter/material.dart';
 
 class SearchSuggestionsView extends StatelessWidget {
-  const SearchSuggestionsView({super.key, required this.onSelected});
+  const SearchSuggestionsView({
+    super.key,
+    required this.onSelected,
+    this.recentSearches = SearchMockData.recentSearches,
+  });
 
   final ValueChanged<String> onSelected;
+  final List<String> recentSearches;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +21,7 @@ class SearchSuggestionsView extends StatelessWidget {
       children: [
         SearchTermList(
           title: 'Recent Searches',
-          terms: SearchMockData.recentSearches,
+          terms: recentSearches,
           leadingIcon: Icons.history_rounded,
           onSelected: onSelected,
         ),

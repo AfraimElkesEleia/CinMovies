@@ -8,15 +8,23 @@ class AppTextField extends StatelessWidget {
     required this.label,
     required this.hintText,
     required this.prefixIcon,
+    this.controller,
+    this.validator,
     this.obscureText = false,
     this.keyboardType,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   final String label;
   final String hintText;
   final IconData prefixIcon;
+  final TextEditingController? controller;
+  final FormFieldValidator<String>? validator;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +33,13 @@ class AppTextField extends StatelessWidget {
       children: [
         Text(label, style: const TextStyle(color: LoginStyles.textColor)),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
+          controller: controller,
+          validator: validator,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onSubmitted,
           style: const TextStyle(color: LoginStyles.textColor),
           decoration: InputDecoration(
             filled: true,

@@ -1,32 +1,34 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/ai/presentation/data/ai_mock_data.dart';
+import 'package:cinmovies_app/features/ai/presentation/cubit/ai_chat_cubit.dart';
 import 'package:cinmovies_app/features/ai/presentation/model/ai_screen_tab.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/ai_header.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/chat_tab.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/history_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class AiChatScreen extends StatefulWidget {
+class AiChatScreen extends StatelessWidget {
   const AiChatScreen({super.key});
 
   @override
-  State<AiChatScreen> createState() => _AiChatScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AiChatCubit(),
+      child: const _AiChatView(),
+    );
+  }
 }
 
-class _AiChatScreenState extends State<AiChatScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-
-  AiScreenTab _activeTab = AiScreenTab.chat;
-  List<AiChatMessage> _messages = [];
-  late List<AiChatSession> _sessions;
-  bool _isThinking = false;
+class _AiChatView extends StatefulWidget {
+  const _AiChatView();
 
   @override
-  void initState() {
-    super.initState();
-    _sessions = AiMockData.initialSessions();
-  }
+  State<_AiChatView> createState() => _AiChatViewState();
+}
+
+class _AiChatViewState extends State<_AiChatView> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -36,92 +38,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Future<void> _sendMessage([String? value]) async {
-    final text = (value ?? _messageController.text).trim();
-    if (text.isEmpty || _isThinking) return;
-
+    final text = value ?? _messageController.text;
     _messageController.clear();
-    setState(() {
-      _messages = [..._messages, _userMessage(text)];
-      _isThinking = true;
-      _activeTab = AiScreenTab.chat;
-    });
-
+    await context.read<AiChatCubit>().sendMessage(text);
     _scrollToBottom();
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-
-    final response = AiMockData.responseFor(text);
-    setState(() {
-      _messages = [..._messages, _aiMessage(response)];
-      _isThinking = false;
-    });
-    _scrollToBottom();
-  }
-
-  void _startNewChat() {
-    setState(() {
-      if (_messages.isNotEmpty) {
-        _sessions = [_sessionFromMessages(_messages), ..._sessions];
-      }
-
-      _messages = [];
-      _isThinking = false;
-      _activeTab = AiScreenTab.chat;
-    });
-  }
-
-  void _loadSession(AiChatSession session) {
-    setState(() {
-      _messages = session.messages;
-      _isThinking = false;
-      _activeTab = AiScreenTab.chat;
-    });
-    _scrollToBottom();
-  }
-
-  void _deleteSession(AiChatSession session) {
-    setState(() {
-      _sessions = _sessions
-          .where((savedSession) => savedSession.id != session.id)
-          .toList();
-    });
-  }
-
-  AiChatMessage _userMessage(String text) {
-    return AiChatMessage(
-      id: 'u${DateTime.now().microsecondsSinceEpoch}',
-      text: text,
-      isUser: true,
-      timestamp: DateTime.now(),
-    );
-  }
-
-  AiChatMessage _aiMessage(({List<AiMovie> movies, String text}) response) {
-    return AiChatMessage(
-      id: 'a${DateTime.now().microsecondsSinceEpoch}',
-      text: response.text,
-      isUser: false,
-      timestamp: DateTime.now(),
-      movies: response.movies,
-    );
-  }
-
-  AiChatSession _sessionFromMessages(List<AiChatMessage> messages) {
-    final firstMessage = messages.first.text;
-    final aiPreview = messages
-        .where((message) => !message.isUser)
-        .map((message) => message.text)
-        .firstOrNull;
-
-    return AiChatSession(
-      id: 's${DateTime.now().microsecondsSinceEpoch}',
-      title: firstMessage.length > 30
-          ? '${firstMessage.substring(0, 30)}...'
-          : firstMessage,
-      preview: aiPreview ?? 'New AI conversation',
-      timestamp: DateTime.now(),
-      messages: messages,
-    );
   }
 
   void _scrollToBottom() {
@@ -137,51 +57,53 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AiHeader(
-              activeTab: _activeTab,
-              historyCount: _sessions.length,
-              canStartNewChat: _canStartNewChat,
-              onTabChanged: (tab) => setState(() => _activeTab = tab),
-              onNewChat: _startNewChat,
+    return BlocConsumer<AiChatCubit, AiChatState>(
+      listenWhen: (previous, current) {
+        return previous.messages.length != current.messages.length;
+      },
+      listener: (context, state) => _scrollToBottom(),
+      builder: (context, state) {
+        final cubit = context.read<AiChatCubit>();
+
+        return Scaffold(
+          backgroundColor: AppColors.scaffoldBackground,
+          body: SafeArea(
+            child: Column(
+              children: [
+                AiHeader(
+                  activeTab: state.activeTab,
+                  historyCount: state.sessions.length,
+                  canStartNewChat: state.canStartNewChat,
+                  onTabChanged: cubit.setTab,
+                  onNewChat: cubit.startNewChat,
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: state.activeTab == AiScreenTab.chat
+                        ? ChatTab(
+                            key: const ValueKey('chat'),
+                            controller: _messageController,
+                            scrollController: _scrollController,
+                            messages: state.messages,
+                            isThinking: state.isThinking,
+                            onPromptSelected: _sendMessage,
+                            onSend: () => _sendMessage(),
+                          )
+                        : HistoryTab(
+                            key: const ValueKey('history'),
+                            sessions: state.sessions,
+                            onStartChat: cubit.showChat,
+                            onSessionSelected: cubit.loadSession,
+                            onSessionDeleted: cubit.deleteSession,
+                          ),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: _activeTab == AiScreenTab.chat
-                    ? ChatTab(
-                        key: const ValueKey('chat'),
-                        controller: _messageController,
-                        scrollController: _scrollController,
-                        messages: _messages,
-                        isThinking: _isThinking,
-                        onPromptSelected: _sendMessage,
-                        onSend: () => _sendMessage(),
-                      )
-                    : HistoryTab(
-                        key: const ValueKey('history'),
-                        sessions: _sessions,
-                        onStartChat: _showChat,
-                        onSessionSelected: _loadSession,
-                        onSessionDeleted: _deleteSession,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-  }
-
-  bool get _canStartNewChat {
-    return _activeTab == AiScreenTab.chat && _messages.isNotEmpty && !_isThinking;
-  }
-
-  void _showChat() {
-    setState(() => _activeTab = AiScreenTab.chat);
   }
 }

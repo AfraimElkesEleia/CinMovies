@@ -5,11 +5,13 @@ import 'login_styles.dart';
 class RememberMeAndForgotPassword extends StatelessWidget {
   const RememberMeAndForgotPassword({
     super.key,
-    required this.rememberMeCheckBox,
+    required this.rememberMe,
+    required this.onRememberMeChanged,
     required this.onForgotPasswordPressed,
   });
 
-  final ValueNotifier<bool> rememberMeCheckBox;
+  final bool rememberMe;
+  final ValueChanged<bool> onRememberMeChanged;
   final VoidCallback? onForgotPasswordPressed;
 
   @override
@@ -19,7 +21,16 @@ class RememberMeAndForgotPassword extends StatelessWidget {
       children: [
         Row(
           children: [
-            RememberMeCheckBox(rememberMeCheckBox: rememberMeCheckBox),
+            Checkbox(
+              value: rememberMe,
+              activeColor: LoginStyles.primaryColor,
+              side: const BorderSide(color: LoginStyles.hintColor),
+              onChanged: (value) => onRememberMeChanged(value ?? false),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
             const Text(
               'Remember Me',
               style: TextStyle(color: LoginStyles.textColor),
@@ -37,31 +48,6 @@ class RememberMeAndForgotPassword extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class RememberMeCheckBox extends StatelessWidget {
-  const RememberMeCheckBox({super.key, required this.rememberMeCheckBox});
-
-  final ValueNotifier<bool> rememberMeCheckBox;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: rememberMeCheckBox,
-      builder: (context, value, child) {
-        return Checkbox(
-          value: value,
-          activeColor: LoginStyles.primaryColor,
-          side: const BorderSide(color: LoginStyles.hintColor),
-          onChanged: (value) {
-            rememberMeCheckBox.value = value ?? false;
-          },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          visualDensity: VisualDensity.compact,
-        );
-      },
     );
   }
 }

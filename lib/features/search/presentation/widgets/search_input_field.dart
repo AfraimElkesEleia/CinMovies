@@ -8,12 +8,14 @@ class SearchInputField extends StatelessWidget {
     required this.hasQuery,
     required this.onChanged,
     required this.onClearPressed,
+    this.onSubmitted,
   });
 
   final TextEditingController controller;
   final bool hasQuery;
   final ValueChanged<String> onChanged;
   final VoidCallback onClearPressed;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +25,7 @@ class SearchInputField extends StatelessWidget {
         controller: controller,
         autofocus: true,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
         style: const TextStyle(color: AppColors.white),
         decoration: InputDecoration(
           filled: true,

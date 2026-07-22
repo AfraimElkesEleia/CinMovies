@@ -4,62 +4,46 @@ import 'package:cinmovies_app/features/ai/presentation/ai_chat_screen.dart';
 import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:cinmovies_app/features/library/presentation/library_screen.dart';
+import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends StatelessWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
-}
-
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  AppNavTab currentTab = AppNavTab.home;
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: AppNavTab.values.indexOf(currentTab),
-        children: AppNavTab.values.map((tab) {
-          if (tab == AppNavTab.home) {
-            return const HomeScreen();
-          }
-
-          if (tab == AppNavTab.browse) {
-            return const BrowseScreen();
-          }
-
-          if (tab == AppNavTab.library) {
-            return const LibraryScreen();
-          }
-
-          if (tab == AppNavTab.ai) {
-            return const AiChatScreen();
-          }
-
-          if (tab == AppNavTab.profile) {
-            return const ProfileScreen();
-          }
-
-          return _MainTabPlaceholder(tab: tab);
-        }).toList(),
-      ),
-      bottomNavigationBar: AppBottomNavigationBar(
-        currentTab: currentTab,
-        onTabSelected: (tab) {
-          setState(() {
-            currentTab = tab;
-          });
+    return BlocProvider(
+      create: (_) => MainNavigationCubit(),
+      child: BlocBuilder<MainNavigationCubit, AppNavTab>(
+        builder: (context, currentTab) {
+          return Scaffold(
+            body: IndexedStack(
+              index: AppNavTab.values.indexOf(currentTab),
+              children: AppNavTab.values.map((tab) {
+                return switch (tab) {
+                  AppNavTab.home => const HomeScreen(),
+                  AppNavTab.browse => const BrowseScreen(),
+                  AppNavTab.library => const LibraryScreen(),
+                  AppNavTab.ai => const AiChatScreen(),
+                  AppNavTab.profile => const ProfileScreen(),
+                };
+              }).toList(),
+            ),
+            bottomNavigationBar: AppBottomNavigationBar(
+              currentTab: currentTab,
+              onTabSelected: context.read<MainNavigationCubit>().selectTab,
+            ),
+          );
         },
       ),
     );
   }
 }
 
-class _MainTabPlaceholder extends StatelessWidget {
-  const _MainTabPlaceholder({required this.tab});
+class MainTabPlaceholder extends StatelessWidget {
+  const MainTabPlaceholder({super.key, required this.tab});
 
   final AppNavTab tab;
 

@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/presentation/cubit/home_carousel_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeMovieCarousel extends StatefulWidget {
   const HomeMovieCarousel({
@@ -22,11 +24,12 @@ class HomeMovieCarousel extends StatefulWidget {
 class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
   late final PageController _controller;
   Timer? _timer;
-  int _currentIndex = 0;
+  late final HomeCarouselCubit _cubit;
 
   @override
   void initState() {
     super.initState();
+    _cubit = HomeCarouselCubit();
     _controller = PageController();
     _startAutoSlide();
   }
@@ -34,6 +37,7 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
   @override
   void dispose() {
     _timer?.cancel();
+    _cubit.close();
     _controller.dispose();
     super.dispose();
   }
@@ -42,7 +46,7 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!_controller.hasClients || widget.movies.isEmpty) return;
 
-      final nextIndex = (_currentIndex + 1) % widget.movies.length;
+      final nextIndex = (_cubit.state + 1) % widget.movies.length;
       _controller.animateToPage(
         nextIndex,
         duration: const Duration(milliseconds: 450),
@@ -53,50 +57,52 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 228,
-          child: PageView.builder(
-            controller: _controller,
-            itemCount: widget.movies.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _HeroMovieCard(
-                  movie: widget.movies[index],
-                  onPressed: () => widget.onMoviePressed(widget.movies[index]),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.movies.length, (index) {
-            final isActive = index == _currentIndex;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isActive ? 18 : 6,
-              height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? AppColors.loginPrimary
-                    : AppColors.white.withValues(alpha: 0.28),
-                borderRadius: BorderRadius.circular(999),
+    return BlocBuilder<HomeCarouselCubit, int>(
+      bloc: _cubit,
+      builder: (context, currentIndex) {
+        return Column(
+          children: [
+            SizedBox(
+              height: 228,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: widget.movies.length,
+                onPageChanged: _cubit.setIndex,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _HeroMovieCard(
+                      movie: widget.movies[index],
+                      onPressed: () =>
+                          widget.onMoviePressed(widget.movies[index]),
+                    ),
+                  );
+                },
               ),
-            );
-          }),
-        ),
-      ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.movies.length, (index) {
+                final isActive = index == currentIndex;
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isActive ? 18 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppColors.loginPrimary
+                        : AppColors.white.withValues(alpha: 0.28),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,23 +1,37 @@
-import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/onboarding_screen/model/onboarding_screen_model.dart';
+import 'package:cinmovies_app/features/onboarding_screen/presentation/cubit/onboarding_cubit.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_action_button.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_page_indicator.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_skip_button.dart';
 import 'package:cinmovies_app/features/onboarding_screen/widgets/onboarding_slide.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class OnBoardingPageview extends StatefulWidget {
+class OnBoardingPageview extends StatelessWidget {
   const OnBoardingPageview({super.key});
 
   @override
-  State<OnBoardingPageview> createState() => _OnBoardingPageviewState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => OnboardingCubit(sl<LocalPreferencesService>()),
+      child: const _OnBoardingView(),
+    );
+  }
 }
 
-class _OnBoardingPageviewState extends State<OnBoardingPageview> {
+class _OnBoardingView extends StatefulWidget {
+  const _OnBoardingView();
+
+  @override
+  State<_OnBoardingView> createState() => _OnBoardingViewState();
+}
+
+class _OnBoardingViewState extends State<_OnBoardingView> {
   late final PageController controller;
-  int _currentPage = 0;
 
   static const List<OnboardingScreenModel> _screens = [
     OnboardingScreenModel(
@@ -65,9 +79,13 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
     );
   }
 
-  void _handleActionButtonPressed() {
-    if (_currentPage == _screens.length - 1) {
-      context.pushReplacementNamed(Routes.preferenceOnboarding);
+  Future<void> _handleActionButtonPressed(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final currentPage = context.read<OnboardingCubit>().state.pageIndex;
+    if (currentPage == _screens.length - 1) {
+      await context.read<OnboardingCubit>().markPassed();
+      if (!mounted) return;
+      navigator.pushReplacementNamed(Routes.preferenceOnboarding);
       return;
     }
 
@@ -79,45 +97,45 @@ class _OnBoardingPageviewState extends State<OnBoardingPageview> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [OnboardingSkipButton(onPressed: _goToLastPage)],
-          ),
-          Expanded(
-            child: PageView.builder(
-              controller: controller,
-              itemCount: _screens.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                return OnboardingSlide(screen: _screens[index]);
-              },
-            ),
-          ),
-          Column(
+    return BlocBuilder<OnboardingCubit, OnboardingState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: Column(
             children: [
-              OnboardingPageIndicator(
-                controller: controller,
-                count: _screens.length,
-                activeColor: _screens[_currentPage].dotColor,
-              ),
               const SizedBox(height: 16),
-              OnboardingActionButton(
-                text: _screens[_currentPage].buttonText,
-                backgroundColor: _screens[_currentPage].dotColor,
-                onPressed: _handleActionButtonPressed,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [OnboardingSkipButton(onPressed: _goToLastPage)],
+              ),
+              Expanded(
+                child: PageView.builder(
+                  controller: controller,
+                  itemCount: _screens.length,
+                  onPageChanged: context.read<OnboardingCubit>().setPage,
+                  itemBuilder: (context, index) {
+                    return OnboardingSlide(screen: _screens[index]);
+                  },
+                ),
+              ),
+              Column(
+                children: [
+                  OnboardingPageIndicator(
+                    controller: controller,
+                    count: _screens.length,
+                    activeColor: _screens[state.pageIndex].dotColor,
+                  ),
+                  const SizedBox(height: 16),
+                  OnboardingActionButton(
+                    text: _screens[state.pageIndex].buttonText,
+                    backgroundColor: _screens[state.pageIndex].dotColor,
+                    onPressed: () => _handleActionButtonPressed(context),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
