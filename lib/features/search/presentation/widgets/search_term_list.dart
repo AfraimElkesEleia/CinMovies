@@ -9,12 +9,14 @@ class SearchTermList extends StatelessWidget {
     required this.terms,
     required this.leadingIcon,
     required this.onSelected,
+    this.onDeleted,
   });
 
   final String title;
   final List<String> terms;
   final IconData leadingIcon;
   final ValueChanged<String> onSelected;
+  final ValueChanged<String>? onDeleted;
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +33,13 @@ class SearchTermList extends StatelessWidget {
               term,
               style: const TextStyle(color: AppColors.white, fontSize: 14),
             ),
-            trailing: const Icon(
-              Icons.close_rounded,
-              color: AppColors.iconMuted,
-              size: 18,
+            trailing: IconButton(
+              onPressed: onDeleted == null ? null : () => onDeleted!(term),
+              icon: const Icon(
+                Icons.close_rounded,
+                color: AppColors.iconMuted,
+                size: 18,
+              ),
             ),
             onTap: () => onSelected(term),
           ),

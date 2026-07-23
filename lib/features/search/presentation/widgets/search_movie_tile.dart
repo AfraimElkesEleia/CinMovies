@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
 import 'package:flutter/material.dart';
 
@@ -20,11 +21,10 @@ class SearchMovieTile extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              movie.imageAsset,
+            child: SizedBox(
               width: 62,
               height: 84,
-              fit: BoxFit.cover,
+              child: MovieImage(path: movie.imageAsset),
             ),
           ),
           const SizedBox(width: 12),

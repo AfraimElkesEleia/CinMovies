@@ -1,6 +1,3 @@
-import 'package:cinmovies_app/features/search/presentation/data/search_mock_data.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_category_grid.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_term_chips.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_term_list.dart';
 import 'package:flutter/material.dart';
 
@@ -8,10 +5,12 @@ class SearchSuggestionsView extends StatelessWidget {
   const SearchSuggestionsView({
     super.key,
     required this.onSelected,
-    this.recentSearches = SearchMockData.recentSearches,
+    required this.onDeleted,
+    this.recentSearches = const [],
   });
 
   final ValueChanged<String> onSelected;
+  final ValueChanged<String> onDeleted;
   final List<String> recentSearches;
 
   @override
@@ -24,17 +23,7 @@ class SearchSuggestionsView extends StatelessWidget {
           terms: recentSearches,
           leadingIcon: Icons.history_rounded,
           onSelected: onSelected,
-        ),
-        const SizedBox(height: 24),
-        SearchTermChips(
-          title: 'Popular Searches',
-          terms: SearchMockData.popularSearches,
-          onSelected: onSelected,
-        ),
-        const SizedBox(height: 24),
-        SearchCategoryGrid(
-          categories: SearchMockData.categories,
-          onSelected: onSelected,
+          onDeleted: onDeleted,
         ),
       ],
     );

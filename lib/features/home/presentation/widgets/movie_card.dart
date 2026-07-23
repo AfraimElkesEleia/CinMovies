@@ -37,15 +37,6 @@ class MovieCard extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _IconBadge(
-                    icon: Icons.bookmark_border_rounded,
-                    foregroundColor: AppColors.white,
-                    backgroundColor: AppColors.black.withValues(alpha: 0.55),
-                  ),
-                ),
-                Positioned(
                   left: 10,
                   right: 10,
                   bottom: 10,
@@ -86,31 +77,6 @@ class MovieCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({
-    required this.icon,
-    required this.foregroundColor,
-    required this.backgroundColor,
-  });
-
-  final IconData icon;
-  final Color foregroundColor;
-  final Color backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, color: foregroundColor, size: 16),
     );
   }
 }

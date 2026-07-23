@@ -1,9 +1,9 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
-import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_header.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_input_field.dart';
+import 'package:cinmovies_app/features/search/presentation/widgets/search_loading_shimmer.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_results_view.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_suggestions_view.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SearchCubit(sl<HiveCacheService>()),
+      create: (_) => sl<SearchCubit>(),
       child: const _SearchView(),
     );
   }
@@ -30,11 +30,27 @@ class _SearchView extends StatefulWidget {
 
 class _SearchViewState extends State<_SearchView> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.extentAfter > 420) return;
+    context.read<SearchCubit>().loadNextPage();
   }
 
   void _setQuery(String value) {
@@ -67,16 +83,30 @@ class _SearchViewState extends State<_SearchView> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: state.hasQuery
-                      ? SearchResultsView(
-                          query: state.query,
-                          movies: state.results,
-                        )
-                      : SearchSuggestionsView(
+                  child: !state.hasQuery
+                      ? SearchSuggestionsView(
                           recentSearches: state.recentSearches,
+                          onDeleted: (value) {
+                            context.read<SearchCubit>().deleteRecentSearch(
+                              value,
+                            );
+                          },
                           onSelected: (value) async {
                             _setQuery(value);
                             await context.read<SearchCubit>().submit(value);
+                          },
+                        )
+                      : state.status == SearchStatus.loading
+                      ? const SearchLoadingShimmer()
+                      : SearchResultsView(
+                          controller: _scrollController,
+                          query: state.query,
+                          movies: state.results,
+                          status: state.status,
+                          isLoadingMore: state.isLoadingMore,
+                          failureMessage: state.failure?.message,
+                          onMoviePressed: (_) {
+                            context.read<SearchCubit>().saveCurrentQuery();
                           },
                         ),
                 ),

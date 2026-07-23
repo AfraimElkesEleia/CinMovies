@@ -122,7 +122,10 @@ class _HomeMovieRow extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final movie = movies[index];
-          return MovieCard(movie: movie, onTap: () => onMoviePressed(movie));
+          return MovieCard(
+            movie: movie,
+            onTap: () => onMoviePressed(movie),
+          );
         },
       ),
     );

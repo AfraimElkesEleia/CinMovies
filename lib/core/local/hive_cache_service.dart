@@ -37,7 +37,7 @@ class HiveCacheService {
     return _stringList(_searchBox.get('recent_searches'));
   }
 
-  Future<void> saveRecentSearch(String query, {int limit = 10}) async {
+  Future<void> saveRecentSearch(String query, {int limit = 6}) async {
     final normalized = query.trim();
     if (normalized.isEmpty) return;
 
@@ -47,6 +47,17 @@ class HiveCacheService {
         (item) => item.toLowerCase() != normalized.toLowerCase(),
       ),
     ].take(limit).toList();
+
+    await _searchBox.put('recent_searches', searches);
+  }
+
+  Future<void> deleteRecentSearch(String query) async {
+    final normalized = query.trim();
+    if (normalized.isEmpty) return;
+
+    final searches = getRecentSearches()
+        .where((item) => item.toLowerCase() != normalized.toLowerCase())
+        .toList();
 
     await _searchBox.put('recent_searches', searches);
   }
