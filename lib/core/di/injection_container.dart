@@ -44,7 +44,7 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<ErrorMapperRegistry>(() => defaultErrorMapper);
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepository(sl(), sl(), sl()),
+    () => AuthRepository(sl(), sl(), sl(), sl()),
   );
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepository(sl(), sl(), sl()),
@@ -71,4 +71,3 @@ Future<void> initDependencies({
   sl.registerFactory<PreferenceCubit>(() => PreferenceCubit(sl()));
   sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl()));
 }
-

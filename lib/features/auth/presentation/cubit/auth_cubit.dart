@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -86,6 +88,9 @@ class AuthCubit extends Cubit<AuthState> {
     required String fullName,
     required String email,
     required String password,
+    Uint8List? avatarBytes,
+    String? avatarFileName,
+    String? avatarContentType,
   }) async {
     if (!state.termsAccepted) {
       emit(
@@ -102,6 +107,9 @@ class AuthCubit extends Cubit<AuthState> {
       fullName: fullName,
       email: email,
       password: password,
+      avatarBytes: avatarBytes,
+      avatarFileName: avatarFileName,
+      avatarContentType: avatarContentType,
     );
 
     await result.fold(

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
@@ -59,6 +61,9 @@ class _FakeAuthRepository implements AuthRepository {
     required String fullName,
     required String email,
     required String password,
+    Uint8List? avatarBytes,
+    String? avatarFileName,
+    String? avatarContentType,
   }) {
     throw UnimplementedError();
   }

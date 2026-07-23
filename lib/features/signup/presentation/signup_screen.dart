@@ -13,6 +13,8 @@ import 'package:cinmovies_app/features/login/presentation/widgets/login_with_but
 import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -20,10 +22,8 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AuthCubit(
-        sl<AuthRepository>(),
-        sl<PreferenceRepository>(),
-      ),
+      create: (_) =>
+          AuthCubit(sl<AuthRepository>(), sl<PreferenceRepository>()),
       child: const _SignupView(),
     );
   }
@@ -37,11 +37,21 @@ class _SignupView extends StatefulWidget {
 }
 
 class _SignupViewState extends State<_SignupView> {
+  static const _allowedImageContentTypes = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  };
+
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _imagePicker = ImagePicker();
+  Uint8List? _profileImageBytes;
+  String? _profileImageName;
+  String? _profileImageContentType;
 
   @override
   void dispose() {
@@ -63,9 +73,9 @@ class _SignupViewState extends State<_SignupView> {
 
         if (state.status == AuthSubmissionStatus.failure &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
@@ -78,6 +88,14 @@ class _SignupViewState extends State<_SignupView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: _ProfileImagePicker(
+                        imageBytes: _profileImageBytes,
+                        onTap: state.isLoading ? null : _pickProfileImage,
+                        onRemove: state.isLoading ? null : _removeProfileImage,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     AppTextField(
                       label: 'Full Name',
                       hintText: 'John Doe',
@@ -153,9 +171,8 @@ class _SignupViewState extends State<_SignupView> {
               ),
               const SizedBox(height: 32),
               _LoginPrompt(
-                onLoginPressed: () => context.pushNamedAndRemoveUntil(
-                  Routes.login,
-                ),
+                onLoginPressed: () =>
+                    context.pushNamedAndRemoveUntil(Routes.login),
               ),
             ],
           );
@@ -191,10 +208,184 @@ class _SignupViewState extends State<_SignupView> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<AuthCubit>().signup(
-          fullName: _fullNameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      avatarBytes: _profileImageBytes,
+      avatarFileName: _profileImageName,
+      avatarContentType: _profileImageContentType,
+    );
+  }
+
+  Future<void> _pickProfileImage() async {
+    XFile? pickedImage;
+    try {
+      pickedImage = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 900,
+        imageQuality: 85,
+      );
+    } on PlatformException catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open the photo picker. Rebuild the app and try again.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final image = pickedImage;
+    if (image == null) return;
+
+    final contentType = _contentTypeForImage(image);
+    if (!_allowedImageContentTypes.contains(contentType)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose a JPG, PNG, or WebP image.'),
+        ),
+      );
+      return;
+    }
+
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _profileImageBytes = bytes;
+      _profileImageName = image.name;
+      _profileImageContentType = contentType;
+    });
+  }
+
+  void _removeProfileImage() {
+    setState(() {
+      _profileImageBytes = null;
+      _profileImageName = null;
+      _profileImageContentType = null;
+    });
+  }
+
+  String _contentTypeForImage(XFile image) {
+    final mimeType = image.mimeType;
+    if (mimeType != null && mimeType.isNotEmpty) return mimeType;
+
+    final lowerName = image.name.toLowerCase();
+    if (lowerName.endsWith('.png')) return 'image/png';
+    if (lowerName.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+}
+
+class _ProfileImagePicker extends StatelessWidget {
+  const _ProfileImagePicker({
+    required this.imageBytes,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final Uint8List? imageBytes;
+  final VoidCallback? onTap;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imageBytes != null;
+
+    return Column(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                width: 96,
+                height: 96,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.loginPrimary,
+                      AppColors.comingSoonPurple,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(27),
+                  child: hasImage
+                      ? Image.memory(imageBytes!, fit: BoxFit.cover)
+                      : Container(
+                          color: AppColors.surface,
+                          child: const Icon(
+                            Icons.person_add_alt_1,
+                            color: AppColors.textMuted,
+                            size: 34,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -4,
+              bottom: -4,
+              child: IconButton(
+                tooltip: hasImage
+                    ? 'Change profile image'
+                    : 'Add profile image',
+                onPressed: onTap,
+                style: IconButton.styleFrom(
+                  backgroundColor: LoginStyles.primaryColor,
+                  foregroundColor: AppColors.white,
+                  fixedSize: const Size(36, 36),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.photo_camera_outlined, size: 18),
+              ),
+            ),
+            if (hasImage)
+              Positioned(
+                left: -4,
+                bottom: -4,
+                child: IconButton(
+                  tooltip: 'Remove profile image',
+                  onPressed: onRemove,
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.surface,
+                    foregroundColor: AppColors.textMuted,
+                    fixedSize: const Size(36, 36),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close, size: 18),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextButton.icon(
+          onPressed: onTap,
+          icon: Icon(
+            hasImage ? Icons.swap_horiz : Icons.add_photo_alternate_outlined,
+            size: 18,
+          ),
+          label: Text(hasImage ? 'Change photo' : 'Add profile photo'),
+          style: TextButton.styleFrom(
+            foregroundColor: LoginStyles.primaryColor,
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
   }
 }
 
