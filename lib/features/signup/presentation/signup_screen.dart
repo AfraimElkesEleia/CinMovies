@@ -37,11 +37,8 @@ class _SignupView extends StatefulWidget {
 }
 
 class _SignupViewState extends State<_SignupView> {
-  static const _allowedImageContentTypes = {
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-  };
+  static const _allowedImageContentTypes = {'image/jpeg', 'image/png'};
+  static const _maxProfileImageBytes = 5 * 1024 * 1024;
 
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
@@ -220,11 +217,7 @@ class _SignupViewState extends State<_SignupView> {
   Future<void> _pickProfileImage() async {
     XFile? pickedImage;
     try {
-      pickedImage = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 900,
-        imageQuality: 85,
-      );
+      pickedImage = await _imagePicker.pickImage(source: ImageSource.gallery);
     } on PlatformException catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,15 +237,20 @@ class _SignupViewState extends State<_SignupView> {
     if (!_allowedImageContentTypes.contains(contentType)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please choose a JPG, PNG, or WebP image.'),
-        ),
+        const SnackBar(content: Text('Please choose a JPG or PNG image.')),
       );
       return;
     }
 
     final bytes = await image.readAsBytes();
     if (!mounted) return;
+    if (bytes.length > _maxProfileImageBytes) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose an image smaller than 5 MB.')),
+      );
+      return;
+    }
+
     setState(() {
       _profileImageBytes = bytes;
       _profileImageName = image.name;
@@ -270,11 +268,11 @@ class _SignupViewState extends State<_SignupView> {
 
   String _contentTypeForImage(XFile image) {
     final mimeType = image.mimeType;
+    if (mimeType == 'image/jpg') return 'image/jpeg';
     if (mimeType != null && mimeType.isNotEmpty) return mimeType;
 
     final lowerName = image.name.toLowerCase();
     if (lowerName.endsWith('.png')) return 'image/png';
-    if (lowerName.endsWith('.webp')) return 'image/webp';
     return 'image/jpeg';
   }
 }

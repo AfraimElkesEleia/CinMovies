@@ -7,11 +7,13 @@ class ProfileHeader extends StatelessWidget {
     this.fullName = 'Movie Explorer',
     this.subtitle = 'CinMovies member',
     this.avatarUrl,
+    this.onEditPressed,
   });
 
   final String fullName;
   final String subtitle;
   final String? avatarUrl;
+  final VoidCallback? onEditPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class ProfileHeader extends StatelessWidget {
               ),
               const Spacer(),
               IconButton(
-                onPressed: () {},
+                onPressed: onEditPressed,
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.surface,
                   foregroundColor: AppColors.textMuted,

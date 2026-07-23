@@ -63,17 +63,23 @@ class AuthRepository {
         password: password,
         data: {'full_name': fullName},
       );
-      if (avatarBytes != null) {
-        final avatarUrl = await _uploadSignupAvatar(
-          response: response,
-          fullName: fullName,
-          bytes: avatarBytes,
-          fileName: avatarFileName ?? 'profile-image.jpg',
-          contentType: avatarContentType,
-        );
-        await _database.client.auth.updateUser(
-          UserAttributes(data: {'full_name': fullName, 'avatar_url': avatarUrl}),
-        );
+      if (avatarBytes != null && _database.currentUser != null) {
+        try {
+          final avatarUrl = await _uploadSignupAvatar(
+            fullName: fullName,
+            bytes: avatarBytes,
+            fileName: avatarFileName ?? 'profile-image.jpg',
+            contentType: avatarContentType,
+          );
+          await _database.updateUser(
+            UserAttributes(
+              data: {'full_name': fullName, 'avatar_url': avatarUrl},
+            ),
+          );
+        } on Object {
+          // Profile images are optional. Do not fail an already-created account
+          // because the storage upload was rejected.
+        }
       }
       return Right(response);
     } catch (error) {
@@ -83,19 +89,23 @@ class AuthRepository {
 
   Future<void> signOut() => _database.signOut();
 
+  Future<Either<Failure, void>> updatePassword(String password) async {
+    try {
+      await _database.updateUser(UserAttributes(password: password));
+      return const Right(null);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
+
   Future<String> _uploadSignupAvatar({
-    required AuthResponse response,
     required String fullName,
     required Uint8List bytes,
     required String fileName,
     String? contentType,
   }) async {
-    final userId = response.user?.id ?? _database.currentUser?.id;
-    if (userId == null) {
-      throw StateError(
-        'Account created, but the profile image could not be uploaded before sign in.',
-      );
-    }
+    final userId = _database.currentUser?.id;
+    if (userId == null) throw StateError('No authenticated user.');
 
     final path = 'profiles/$userId/${_timestampedFileName(fileName)}';
     await _storage.uploadBytes(
@@ -103,6 +113,7 @@ class AuthRepository {
       path: path,
       bytes: bytes,
       contentType: contentType,
+      upsert: false,
     );
     final avatarUrl = _storage.publicUrl(bucket: avatarBucket, path: path);
 

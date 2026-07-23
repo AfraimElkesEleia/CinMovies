@@ -57,6 +57,7 @@ class _ProfileView extends StatelessWidget {
                         ? 'Movie Explorer'
                         : '@${state.username}',
                     avatarUrl: state.avatarUrl,
+                    onEditPressed: () => _openEditProfile(context),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -105,5 +106,11 @@ class _ProfileView extends StatelessWidget {
     await context.read<ProfileCubit>().logout();
     if (!context.mounted) return;
     context.pushNamedAndRemoveUntil(Routes.login);
+  }
+
+  Future<void> _openEditProfile(BuildContext context) async {
+    final updated = await context.pushNamed(Routes.editProfile);
+    if (!context.mounted || updated != true) return;
+    await context.read<ProfileCubit>().load();
   }
 }

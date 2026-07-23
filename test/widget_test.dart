@@ -70,4 +70,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<Either<Failure, void>> updatePassword(String password) {
+    throw UnimplementedError();
+  }
 }

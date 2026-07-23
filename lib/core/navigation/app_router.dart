@@ -5,6 +5,7 @@ import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.
 import 'package:cinmovies_app/features/movie_details/presentation/movie_details_screen.dart';
 import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
 import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
+import 'package:cinmovies_app/features/profile/presentation/edit_profile_screen.dart';
 import 'package:cinmovies_app/features/search/presentation/search_screen.dart';
 import 'package:cinmovies_app/features/signup/presentation/signup_screen.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,8 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const PreferenceOnboardingScreen(),
         );
+      case Routes.editProfile:
+        return MaterialPageRoute(builder: (_) => const EditProfileScreen());
     }
 
     return null;

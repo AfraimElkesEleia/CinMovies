@@ -50,12 +50,13 @@ class SupabaseStorageErrorMapper implements ErrorMapper {
       );
     }
 
-    if (statusCode == '415' ||
+    if (statusCode == '400' ||
+        statusCode == '415' ||
         message.contains('mime type') ||
         message.contains('file type')) {
       return const StorageFailure(
         type: StorageFailureType.invalidFile,
-        message: 'This file type is not supported.',
+        message: 'This image could not be uploaded. Please choose a JPG or PNG file.',
       );
     }
 

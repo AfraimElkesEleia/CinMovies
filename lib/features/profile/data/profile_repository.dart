@@ -45,13 +45,17 @@ class ProfileRepository {
     String? avatarUrl,
     String? bio,
     bool? onboardingCompleted,
+    bool clearUsername = false,
+    bool clearBio = false,
   }) async {
     try {
       final values = <String, dynamic>{};
       if (fullName != null) values['full_name'] = fullName;
-      if (username != null) values['username'] = username;
+      if (username != null || clearUsername) {
+        values['username'] = clearUsername ? null : username;
+      }
       if (avatarUrl != null) values['avatar_url'] = avatarUrl;
-      if (bio != null) values['bio'] = bio;
+      if (bio != null || clearBio) values['bio'] = clearBio ? null : bio;
       if (onboardingCompleted != null) {
         values['onboarding_completed'] = onboardingCompleted;
       }
@@ -72,13 +76,14 @@ class ProfileRepository {
     try {
       final path = _storage.userScopedPath(
         bucketFolder: 'profiles',
-        fileName: fileName,
+        fileName: _timestampedFileName(fileName),
       );
       await _storage.uploadBytes(
         bucket: avatarBucket,
         path: path,
         bytes: bytes,
         contentType: contentType,
+        upsert: false,
       );
       final url = _storage.publicUrl(bucket: avatarBucket, path: path);
       await updateProfile(avatarUrl: url);
@@ -87,5 +92,13 @@ class ProfileRepository {
       return Left(_errorMapper.map(error));
     }
   }
-}
 
+  String _timestampedFileName(String fileName) {
+    final sanitized = fileName
+        .trim()
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '-')
+        .replaceAll(RegExp(r'-+'), '-');
+    final fallback = sanitized.isEmpty ? 'profile-image.jpg' : sanitized;
+    return '${DateTime.now().millisecondsSinceEpoch}-$fallback';
+  }
+}

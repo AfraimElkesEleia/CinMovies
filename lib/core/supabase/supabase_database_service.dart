@@ -28,6 +28,10 @@ class SupabaseDatabaseService {
 
   Future<void> signOut() => _client.auth.signOut();
 
+  Future<UserResponse> updateUser(UserAttributes attributes) {
+    return _client.auth.updateUser(attributes);
+  }
+
   SupabaseQueryBuilder from(String table) => _client.from(table);
 
   PostgrestFilterBuilder<dynamic> rpc(
