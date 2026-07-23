@@ -47,12 +47,27 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> load() async {
     emit(const ProfileState(status: ProfileStatus.loading));
     try {
-      final profile = await _profileRepository.currentProfile();
-      final counts = await Future.wait([
+      final profileResult = await _profileRepository.currentProfile();
+      final countResults = await Future.wait([
         _libraryRepository.count(UserMovieListType.watched),
         _libraryRepository.count(UserMovieListType.watchlist),
       ]);
 
+      // If profile fetch failed, emit failure.
+      if (profileResult.isLeft()) {
+        emit(const ProfileState(status: ProfileStatus.failure));
+        return;
+      }
+
+      // If any count failed, emit failure.
+      for (final result in countResults) {
+        if (result.isLeft()) {
+          emit(const ProfileState(status: ProfileStatus.failure));
+          return;
+        }
+      }
+
+      final profile = profileResult.getOrElse(() => null);
       final fullName = profile?['full_name'] as String?;
       emit(
         ProfileState(
@@ -62,8 +77,8 @@ class ProfileCubit extends Cubit<ProfileState> {
               : 'Movie Explorer',
           username: profile?['username'] as String?,
           avatarUrl: profile?['avatar_url'] as String?,
-          watchedCount: counts[0],
-          watchlistCount: counts[1],
+          watchedCount: countResults[0].getOrElse(() => 0),
+          watchlistCount: countResults[1].getOrElse(() => 0),
         ),
       );
     } catch (_) {
@@ -73,3 +88,4 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> logout() => _authRepository.signOut();
 }
+

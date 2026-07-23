@@ -61,18 +61,25 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login({required String email, required String password}) async {
     emit(state.copyWith(status: AuthSubmissionStatus.loading, clearError: true));
-    try {
-      await _authRepository.signIn(email: email, password: password);
+    final result = await _authRepository.signIn(
+      email: email,
+      password: password,
+    );
+
+    await result.fold(
+      (failure) async {
+        emit(
+          state.copyWith(
+            status: AuthSubmissionStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (_) async {
       await _syncCachedGenres();
       emit(state.copyWith(status: AuthSubmissionStatus.success));
-    } catch (error) {
-      emit(
-        state.copyWith(
-          status: AuthSubmissionStatus.failure,
-          errorMessage: error.toString(),
-        ),
-      );
-    }
+      },
+    );
   }
 
   Future<void> signup({
@@ -91,22 +98,26 @@ class AuthCubit extends Cubit<AuthState> {
     }
 
     emit(state.copyWith(status: AuthSubmissionStatus.loading, clearError: true));
-    try {
-      await _authRepository.signUp(
-        fullName: fullName,
-        email: email,
-        password: password,
-      );
+    final result = await _authRepository.signUp(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
+
+    await result.fold(
+      (failure) async {
+        emit(
+          state.copyWith(
+            status: AuthSubmissionStatus.failure,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (_) async {
       await _syncCachedGenres();
       emit(state.copyWith(status: AuthSubmissionStatus.success));
-    } catch (error) {
-      emit(
-        state.copyWith(
-          status: AuthSubmissionStatus.failure,
-          errorMessage: error.toString(),
-        ),
-      );
-    }
+      },
+    );
   }
 
   Future<void> logout() => _authRepository.signOut();

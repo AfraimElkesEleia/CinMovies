@@ -30,3 +30,74 @@ class NetworkFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure({required String message}) : super(message);
 }
+
+enum AuthFailureType {
+  invalidCredentials,
+  emailNotConfirmed,
+  weakPassword,
+  emailAlreadyInUse,
+  sessionExpired,
+  rateLimited,
+  signupDisabled,
+  otpExpired,
+  reauthenticationRequired,
+  providerDisabled,
+  unknown,
+}
+
+class AuthFailure extends Failure {
+  final AuthFailureType type;
+
+  const AuthFailure({
+    required this.type,
+    required String message,
+  }) : super(message);
+
+  @override
+  List<Object?> get props => [type, message];
+}
+
+enum DatabaseFailureType {
+  uniqueViolation,
+  foreignKeyViolation,
+  permissionDenied,
+  notFound,
+  invalidInput,
+  unavailable,
+  unknown,
+}
+
+class DatabaseFailure extends Failure {
+  final DatabaseFailureType type;
+
+  const DatabaseFailure({
+    required this.type,
+    required String message,
+  }) : super(message);
+
+  @override
+  List<Object?> get props => [type, message];
+}
+
+enum StorageFailureType {
+  notFound,
+  alreadyExists,
+  permissionDenied,
+  payloadTooLarge,
+  invalidFile,
+  quotaExceeded,
+  unavailable,
+  unknown,
+}
+
+class StorageFailure extends Failure {
+  final StorageFailureType type;
+
+  const StorageFailure({
+    required this.type,
+    required String message,
+  }) : super(message);
+
+  @override
+  List<Object?> get props => [type, message];
+}

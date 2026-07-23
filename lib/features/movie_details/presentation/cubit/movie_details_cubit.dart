@@ -54,11 +54,15 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
 
   Future<void> loadSavedState() async {
     try {
-      final states = await Future.wait([
+      final results = await Future.wait([
         _repository.contains(_movie, UserMovieListType.favorite),
         _repository.contains(_movie, UserMovieListType.watchlist),
       ]);
-      emit(state.copyWith(isFavorite: states[0], inWatchlist: states[1]));
+      // Silently ignore failures — we'll just leave isFavorite/inWatchlist at false.
+      emit(state.copyWith(
+        isFavorite: results[0].getOrElse(() => false),
+        inWatchlist: results[1].getOrElse(() => false),
+      ));
     } catch (_) {}
   }
 
@@ -97,9 +101,17 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     emit(state.copyWith(isSaving: true));
     emitOptimistic(nextValue);
     try {
-      await _repository.setListed(_movie, type, listed: nextValue);
+      final result = await _repository.setListed(
+        _movie,
+        type,
+        listed: nextValue,
+      );
       emit(state.copyWith(isSaving: false));
-      return true;
+      return result.fold((_) {
+        // Revert optimistic update on failure.
+        emitOptimistic(current);
+        return false;
+      }, (_) => true);
     } catch (_) {
       emitOptimistic(current);
       emit(state.copyWith(isSaving: false));
@@ -107,3 +119,4 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     }
   }
 }
+

@@ -1,7 +1,11 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/error_mapper.dart';
+import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
+import 'package:dartz/dartz.dart';
 
 enum UserMovieListType {
   favorite('favorite'),
@@ -15,11 +19,17 @@ enum UserMovieListType {
 }
 
 class LibraryRepository {
-  const LibraryRepository(this._database, this._movieRepository, this._cache);
+  const LibraryRepository(
+    this._database,
+    this._movieRepository,
+    this._cache, [
+    this._errorMapper = defaultErrorMapper,
+  ]);
 
   final SupabaseDatabaseService _database;
   final MovieRepository _movieRepository;
   final HiveCacheService _cache;
+  final ErrorMapperRegistry _errorMapper;
 
   String get _userId {
     final id = _database.currentUser?.id;
@@ -27,64 +37,96 @@ class LibraryRepository {
     return id;
   }
 
-  Future<bool> contains(HomeMovieModel movie, UserMovieListType type) async {
-    final movieId = await _movieRepository.cacheMovie(movie);
-    final row = await _database
-        .from('user_movie_lists')
-        .select('movie_id')
-        .eq('user_id', _userId)
-        .eq('movie_id', movieId)
-        .eq('list_type', type.value)
-        .maybeSingle();
-    return row != null;
+  Future<Either<Failure, bool>> contains(
+    HomeMovieModel movie,
+    UserMovieListType type,
+  ) async {
+    try {
+      final movieIdResult = await _movieRepository.cacheMovie(movie);
+      return movieIdResult.fold(
+        Left.new,
+        (movieId) async {
+          final row = await _database
+              .from('user_movie_lists')
+              .select('movie_id')
+              .eq('user_id', _userId)
+              .eq('movie_id', movieId)
+              .eq('list_type', type.value)
+              .maybeSingle();
+          return Right(row != null);
+        },
+      );
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
   }
 
-  Future<void> setListed(
+  Future<Either<Failure, void>> setListed(
     HomeMovieModel movie,
     UserMovieListType type, {
     required bool listed,
   }) async {
-    final movieId = await _movieRepository.cacheMovie(movie);
-    if (listed) {
-      await _database.from('user_movie_lists').upsert({
-        'user_id': _userId,
-        'movie_id': movieId,
-        'list_type': type.value,
-      });
-      return;
+    try {
+      final movieIdResult = await _movieRepository.cacheMovie(movie);
+      return movieIdResult.fold(
+        Left.new,
+        (movieId) async {
+          if (listed) {
+            await _database.from('user_movie_lists').upsert({
+              'user_id': _userId,
+              'movie_id': movieId,
+              'list_type': type.value,
+            });
+          } else {
+            await _database
+                .from('user_movie_lists')
+                .delete()
+                .eq('user_id', _userId)
+                .eq('movie_id', movieId)
+                .eq('list_type', type.value);
+          }
+          return const Right(null);
+        },
+      );
+    } catch (error) {
+      return Left(_errorMapper.map(error));
     }
-
-    await _database
-        .from('user_movie_lists')
-        .delete()
-        .eq('user_id', _userId)
-        .eq('movie_id', movieId)
-        .eq('list_type', type.value);
   }
 
-  Future<List<Map<String, dynamic>>> movieRows(UserMovieListType type) async {
-    final rows = await _database
-        .from('user_movie_lists')
-        .select('movies(*)')
-        .eq('user_id', _userId)
-        .eq('list_type', type.value)
-        .order('added_at', ascending: false);
+  Future<Either<Failure, List<Map<String, dynamic>>>> movieRows(
+    UserMovieListType type,
+  ) async {
+    try {
+      final rows = await _database
+          .from('user_movie_lists')
+          .select('movies(*)')
+          .eq('user_id', _userId)
+          .eq('list_type', type.value)
+          .order('added_at', ascending: false);
 
-    final movieRows = rows
-        .map<Map<String, dynamic>>(
-          (row) => Map<String, dynamic>.from(row['movies'] as Map),
-        )
-        .toList();
-    await _cache.cacheUserSnapshot('library_${type.value}', movieRows);
-    return movieRows;
+      final movieRows = rows
+          .map<Map<String, dynamic>>(
+            (row) => Map<String, dynamic>.from(row['movies'] as Map),
+          )
+          .toList();
+      await _cache.cacheUserSnapshot('library_${type.value}', movieRows);
+      return Right(movieRows);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
   }
 
-  Future<int> count(UserMovieListType type) async {
-    final rows = await _database
-        .from('user_movie_lists')
-        .select('movie_id')
-        .eq('user_id', _userId)
-        .eq('list_type', type.value);
-    return rows.length;
+  Future<Either<Failure, int>> count(UserMovieListType type) async {
+    try {
+      final rows = await _database
+          .from('user_movie_lists')
+          .select('movie_id')
+          .eq('user_id', _userId)
+          .eq('list_type', type.value);
+      return Right(rows.length);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
   }
 }
+

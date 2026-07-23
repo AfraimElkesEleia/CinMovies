@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/features/ai/data/ai_history_repository.dart';
@@ -40,13 +42,22 @@ Future<void> initDependencies({
   sl.registerLazySingleton<LocalPreferencesService>(
     () => LocalPreferencesService(sharedPreferences),
   );
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepository(sl(), sl()));
-  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepository(sl(), sl()));
-  sl.registerLazySingleton<MovieRepository>(() => MovieRepository(sl(), sl()));
-  sl.registerLazySingleton<LibraryRepository>(
-    () => LibraryRepository(sl(), sl(), sl()),
+  sl.registerLazySingleton<ErrorMapperRegistry>(() => defaultErrorMapper);
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepository(sl(), sl(), sl()),
   );
-  sl.registerLazySingleton<ReviewRepository>(() => ReviewRepository(sl(), sl()));
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepository(sl(), sl(), sl()),
+  );
+  sl.registerLazySingleton<MovieRepository>(
+    () => MovieRepository(sl(), sl(), sl()),
+  );
+  sl.registerLazySingleton<LibraryRepository>(
+    () => LibraryRepository(sl(), sl(), sl(), sl()),
+  );
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepository(sl(), sl(), sl()),
+  );
   sl.registerLazySingleton<PreferenceRepository>(
     () => PreferenceRepository(sl(), sl(), sl()),
   );
@@ -60,3 +71,4 @@ Future<void> initDependencies({
   sl.registerFactory<PreferenceCubit>(() => PreferenceCubit(sl()));
   sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl()));
 }
+

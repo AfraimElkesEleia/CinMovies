@@ -29,16 +29,27 @@ class LibraryCubit extends Cubit<LibraryState> {
   Future<void> load() async {
     emit(const LibraryState(status: LibraryStatus.loading));
     try {
-      final rows = await Future.wait([
+      final results = await Future.wait([
         _repository.movieRows(UserMovieListType.watched),
         _repository.movieRows(UserMovieListType.watchlist),
         _repository.movieRows(UserMovieListType.favorite),
         _repository.movieRows(UserMovieListType.downloaded),
       ]);
+
+      // If any tab returned a failure, emit the failure state.
+      for (final result in results) {
+        if (result.isLeft()) {
+          emit(const LibraryState(status: LibraryStatus.failure));
+          return;
+        }
+      }
+
       emit(
         LibraryState(
           status: LibraryStatus.loaded,
-          tabs: _buildTabsFromRows(rows),
+          tabs: _buildTabsFromRows(
+            results.map((e) => e.getOrElse(() => [])).toList(),
+          ),
         ),
       );
     } catch (_) {

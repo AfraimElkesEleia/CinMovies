@@ -1,7 +1,9 @@
+import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +47,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<String> resolveInitialRoute() async => Routes.onBoarding;
 
   @override
-  Future<AuthResponse> signIn({
+  Future<Either<Failure, AuthResponse>> signIn({
     required String email,
     required String password,
   }) {
@@ -53,7 +55,7 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthResponse> signUp({
+  Future<Either<Failure, AuthResponse>> signUp({
     required String fullName,
     required String email,
     required String password,
