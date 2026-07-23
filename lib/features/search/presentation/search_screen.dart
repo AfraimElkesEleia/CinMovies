@@ -103,6 +103,10 @@ class _SearchViewState extends State<_SearchView> {
                           query: state.query,
                           movies: state.results,
                           status: state.status,
+                          sortMode: state.sortMode,
+                          onSortModeChanged: context
+                              .read<SearchCubit>()
+                              .setSortMode,
                           isLoadingMore: state.isLoadingMore,
                           failureMessage: state.failure?.message,
                           onMoviePressed: (_) {

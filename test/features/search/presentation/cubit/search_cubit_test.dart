@@ -114,6 +114,44 @@ void main() {
     expect(repository.requests, ['batman:1', 'batman:2']);
   });
 
+  test('setSortMode sorts loaded search results', () async {
+    final repository = _FakeSearchRepository({
+      'movie:1': SearchMoviesPage(
+        movies: [
+          _movie('1', 'Zulu', rating: 6, year: '2020'),
+          _movie('2', 'Alpha', rating: 8, year: '2018'),
+          _movie('3', 'Middle', rating: 7, year: '2024'),
+        ],
+        page: 1,
+        totalPages: 1,
+      ),
+    });
+    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    addTearDown(cubit.close);
+
+    await cubit.submit('movie');
+
+    expect(cubit.state.results.map((movie) => movie.title), [
+      'Alpha',
+      'Middle',
+      'Zulu',
+    ]);
+
+    cubit.setSortMode(SearchSortMode.title);
+    expect(cubit.state.results.map((movie) => movie.title), [
+      'Alpha',
+      'Middle',
+      'Zulu',
+    ]);
+
+    cubit.setSortMode(SearchSortMode.time);
+    expect(cubit.state.results.map((movie) => movie.title), [
+      'Middle',
+      'Zulu',
+      'Alpha',
+    ]);
+  });
+
   test('failed search emits failure state', () async {
     final repository = _FakeSearchRepository(const {}, failures: {'bad:1'});
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
@@ -154,14 +192,19 @@ class _FakeSearchRepository extends SearchRepository {
   }
 }
 
-HomeMovieModel _movie(String id, String title) {
+HomeMovieModel _movie(
+  String id,
+  String title, {
+  double rating = 7,
+  String year = '2026',
+}) {
   return HomeMovieModel(
     id: id,
     title: title,
     imageAsset: 'assets/images/movie_ex1.jpg',
     genres: const [],
-    rating: 7,
-    year: '2026',
+    rating: rating,
+    year: year,
     duration: 'N/A',
     ageRating: 'NR',
     synopsis: 'Synopsis',

@@ -16,6 +16,7 @@ class SearchState extends Equatable {
     this.totalPages = 1,
     this.isLoadingMore = false,
     this.recentSearches = const [],
+    this.sortMode = SearchSortMode.rating,
     this.failure,
   });
 
@@ -26,6 +27,7 @@ class SearchState extends Equatable {
   final int totalPages;
   final bool isLoadingMore;
   final List<String> recentSearches;
+  final SearchSortMode sortMode;
   final Failure? failure;
 
   bool get hasQuery => query.trim().isNotEmpty;
@@ -40,6 +42,7 @@ class SearchState extends Equatable {
     int? totalPages,
     bool? isLoadingMore,
     List<String>? recentSearches,
+    SearchSortMode? sortMode,
     Failure? failure,
   }) {
     return SearchState(
@@ -50,6 +53,7 @@ class SearchState extends Equatable {
       totalPages: totalPages ?? this.totalPages,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       recentSearches: recentSearches ?? this.recentSearches,
+      sortMode: sortMode ?? this.sortMode,
       failure: failure,
     );
   }
@@ -63,11 +67,22 @@ class SearchState extends Equatable {
     totalPages,
     isLoadingMore,
     recentSearches,
+    sortMode,
     failure,
   ];
 }
 
 enum SearchStatus { initial, loading, loaded, failure }
+
+enum SearchSortMode {
+  rating('Rating'),
+  title('A-Z'),
+  time('Time');
+
+  const SearchSortMode(this.label);
+
+  final String label;
+}
 
 class SearchCubit extends Cubit<SearchState> {
   SearchCubit(
@@ -152,6 +167,16 @@ class SearchCubit extends Cubit<SearchState> {
     emit(state.copyWith(recentSearches: _cache.getRecentSearches()));
   }
 
+  void setSortMode(SearchSortMode mode) {
+    if (mode == state.sortMode) return;
+    emit(
+      state.copyWith(
+        sortMode: mode,
+        results: _sortedMovies(state.results, mode),
+      ),
+    );
+  }
+
   Future<void> loadNextPage() async {
     if (state.status != SearchStatus.loaded ||
         state.isLoadingMore ||
@@ -178,7 +203,10 @@ class SearchCubit extends Cubit<SearchState> {
       (page) => emit(
         state.copyWith(
           status: SearchStatus.loaded,
-          results: [...state.results, ...page.movies],
+          results: _sortedMovies(
+            [...state.results, ...page.movies],
+            state.sortMode,
+          ),
           currentPage: page.page,
           totalPages: page.totalPages,
           isLoadingMore: false,
@@ -206,7 +234,7 @@ class SearchCubit extends Cubit<SearchState> {
       (page) => emit(
         state.copyWith(
           status: SearchStatus.loaded,
-          results: page.movies,
+          results: _sortedMovies(page.movies, state.sortMode),
           currentPage: page.page,
           totalPages: page.totalPages,
           isLoadingMore: false,
@@ -222,6 +250,26 @@ class SearchCubit extends Cubit<SearchState> {
     await _cache.saveRecentSearch(query);
     emit(state.copyWith(recentSearches: _cache.getRecentSearches()));
   }
+
+  List<HomeMovieModel> _sortedMovies(
+    List<HomeMovieModel> movies,
+    SearchSortMode mode,
+  ) {
+    final sorted = [...movies];
+    switch (mode) {
+      case SearchSortMode.rating:
+        sorted.sort((a, b) => b.rating.compareTo(a.rating));
+      case SearchSortMode.title:
+        sorted.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        );
+      case SearchSortMode.time:
+        sorted.sort((a, b) => _yearValue(b.year).compareTo(_yearValue(a.year)));
+    }
+    return sorted;
+  }
+
+  int _yearValue(String year) => int.tryParse(year) ?? 0;
 
   @override
   Future<void> close() {

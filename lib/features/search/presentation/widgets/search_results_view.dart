@@ -14,6 +14,8 @@ class SearchResultsView extends StatelessWidget {
     required this.query,
     required this.movies,
     required this.status,
+    required this.sortMode,
+    required this.onSortModeChanged,
     this.isLoadingMore = false,
     this.failureMessage,
     this.controller,
@@ -23,6 +25,8 @@ class SearchResultsView extends StatelessWidget {
   final String query;
   final List<HomeMovieModel> movies;
   final SearchStatus status;
+  final SearchSortMode sortMode;
+  final ValueChanged<SearchSortMode> onSortModeChanged;
   final bool isLoadingMore;
   final String? failureMessage;
   final ScrollController? controller;
@@ -45,9 +49,22 @@ class SearchResultsView extends StatelessWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Text(
-            '${movies.length} result${movies.length == 1 ? '' : 's'} for "$query"',
-            style: const TextStyle(color: AppColors.iconMuted, fontSize: 13),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SearchSortChips(
+                activeMode: sortMode,
+                onChanged: onSortModeChanged,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${movies.length} result${movies.length == 1 ? '' : 's'} for "$query"',
+                style: const TextStyle(
+                  color: AppColors.iconMuted,
+                  fontSize: 13,
+                ),
+              ),
+            ],
           );
         }
 
@@ -67,6 +84,49 @@ class SearchResultsView extends StatelessWidget {
           child: SearchMovieTile(movie: movie),
         );
       },
+    );
+  }
+}
+
+class _SearchSortChips extends StatelessWidget {
+  const _SearchSortChips({required this.activeMode, required this.onChanged});
+
+  final SearchSortMode activeMode;
+  final ValueChanged<SearchSortMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: SearchSortMode.values.map((mode) {
+          final isActive = mode == activeMode;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(mode.label),
+              selected: isActive,
+              onSelected: (_) => onChanged(mode),
+              showCheckmark: false,
+              selectedColor: AppColors.loginPrimary,
+              backgroundColor: AppColors.surface,
+              side: BorderSide(
+                color: isActive
+                    ? AppColors.loginPrimary
+                    : AppColors.surfaceBorder,
+              ),
+              labelStyle: TextStyle(
+                color: isActive ? AppColors.white : AppColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
