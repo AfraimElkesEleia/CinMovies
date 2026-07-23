@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_carousel_cubit.dart';
+import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -120,7 +121,7 @@ class _HeroMovieCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(movie.imageAsset, fit: BoxFit.cover),
+          MovieImage(path: movie.imageAsset),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

@@ -9,6 +9,8 @@ abstract class EnvConfig {
 
   static String get supabaseUrl => _required('SUPABASE_URL');
 
+  static String get tmdbAccessToken => _required('TMDB_API_KEY');
+
   static String get supabasePublishableKey {
     return dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ??
         dotenv.env['SUPABASE_ANON_KEY'] ??

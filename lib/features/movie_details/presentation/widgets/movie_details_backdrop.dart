@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_primitives.dart';
 import 'package:flutter/material.dart';
 
@@ -26,7 +27,7 @@ class MovieDetailsBackdrop extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(movie.imageAsset, fit: BoxFit.cover),
+          MovieImage(path: movie.imageAsset),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

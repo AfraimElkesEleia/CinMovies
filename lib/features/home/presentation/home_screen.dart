@@ -1,14 +1,29 @@
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
+import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
+import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_section_header.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<HomeCubit>()..loadMovies(),
+      child: const _HomeView(),
+    );
+  }
+}
+
+class _HomeView extends StatelessWidget {
+  const _HomeView();
 
   @override
   Widget build(BuildContext context) {
@@ -19,72 +34,155 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: _HomeTopBar()),
-            const SliverToBoxAdapter(child: SizedBox(height: 14)),
-            SliverToBoxAdapter(
-              child: HomeMovieCarousel(
-                movies: kHomeMovies,
-                onMoviePressed: openDetails,
+        child: BlocBuilder<HomeCubit, HomeState>(
+          builder: (context, state) {
+            return RefreshIndicator(
+              color: AppColors.loginPrimary,
+              backgroundColor: AppColors.surface,
+              onRefresh: context.read<HomeCubit>().loadMovies,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  const SliverToBoxAdapter(child: _HomeTopBar()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                  SliverToBoxAdapter(
+                    child: HomeMovieCarousel(
+                      movies: state.carouselMovies,
+                      onMoviePressed: openDetails,
+                    ),
+                  ),
+                  if (state.status == HomeStatus.failure &&
+                      state.failure != null)
+                    SliverToBoxAdapter(
+                      child: _HomeErrorBanner(message: state.failure!.message),
+                    )
+                  else if (state.status == HomeStatus.loading)
+                    const SliverToBoxAdapter(child: _HomeLoadingLabel()),
+                  const SliverToBoxAdapter(child: SizedBox(height: 26)),
+                  SliverToBoxAdapter(
+                    child: HomeSectionHeader(
+                      title: 'Trending Now',
+                      onSeeAllPressed: () {},
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  SliverToBoxAdapter(
+                    child: _HomeMovieRow(
+                      movies: state.popularMovies,
+                      onMoviePressed: openDetails,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  SliverToBoxAdapter(
+                    child: HomeSectionHeader(
+                      title: 'New Releases',
+                      onSeeAllPressed: () {},
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  SliverToBoxAdapter(
+                    child: _HomeMovieRow(
+                      movies: state.upcomingMovies,
+                      onMoviePressed: openDetails,
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                ],
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 26)),
-            SliverToBoxAdapter(
-              child: HomeSectionHeader(
-                title: 'Trending Now',
-                onSeeAllPressed: () {},
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 206,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: kHomeMovies.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    return MovieCard(
-                      movie: kHomeMovies[index],
-                      onTap: () => openDetails(kHomeMovies[index]),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            SliverToBoxAdapter(
-              child: HomeSectionHeader(
-                title: 'New Releases',
-                onSeeAllPressed: () {},
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 206,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: kHomeMovies.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final movie = kHomeMovies.reversed.toList()[index];
-                    return MovieCard(
-                      movie: movie,
-                      onTap: () => openDetails(movie),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
-          ],
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+class _HomeMovieRow extends StatelessWidget {
+  const _HomeMovieRow({
+    required this.movies,
+    required this.onMoviePressed,
+  });
+
+  final List<HomeMovieModel> movies;
+  final ValueChanged<HomeMovieModel> onMoviePressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 206,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        scrollDirection: Axis.horizontal,
+        itemCount: movies.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final movie = movies[index];
+          return MovieCard(
+            movie: movie,
+            onTap: () => onMoviePressed(movie),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HomeErrorBanner extends StatelessWidget {
+  const _HomeErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.loginPrimary.withValues(alpha: 0.3)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                color: AppColors.loginPrimary,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeLoadingLabel extends StatelessWidget {
+  const _HomeLoadingLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
+      child: LinearProgressIndicator(
+        minHeight: 2,
+        color: AppColors.loginPrimary,
+        backgroundColor: AppColors.surface,
       ),
     );
   }
