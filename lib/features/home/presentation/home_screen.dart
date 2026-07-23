@@ -5,6 +5,7 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
+import 'package:cinmovies_app/features/home/presentation/widgets/home_loading_shimmer.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_section_header.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,15 @@ class _HomeView extends StatelessWidget {
       body: SafeArea(
         child: BlocBuilder<HomeCubit, HomeState>(
           builder: (context, state) {
+            if (state.status == HomeStatus.loading) {
+              return RefreshIndicator(
+                color: AppColors.loginPrimary,
+                backgroundColor: AppColors.surface,
+                onRefresh: context.read<HomeCubit>().loadMovies,
+                child: const HomeLoadingShimmer(),
+              );
+            }
+
             return RefreshIndicator(
               color: AppColors.loginPrimary,
               backgroundColor: AppColors.surface,
@@ -55,9 +65,7 @@ class _HomeView extends StatelessWidget {
                       state.failure != null)
                     SliverToBoxAdapter(
                       child: _HomeErrorBanner(message: state.failure!.message),
-                    )
-                  else if (state.status == HomeStatus.loading)
-                    const SliverToBoxAdapter(child: _HomeLoadingLabel()),
+                    ),
                   const SliverToBoxAdapter(child: SizedBox(height: 26)),
                   SliverToBoxAdapter(
                     child: HomeSectionHeader(
@@ -98,10 +106,7 @@ class _HomeView extends StatelessWidget {
 }
 
 class _HomeMovieRow extends StatelessWidget {
-  const _HomeMovieRow({
-    required this.movies,
-    required this.onMoviePressed,
-  });
+  const _HomeMovieRow({required this.movies, required this.onMoviePressed});
 
   final List<HomeMovieModel> movies;
   final ValueChanged<HomeMovieModel> onMoviePressed;
@@ -117,10 +122,7 @@ class _HomeMovieRow extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final movie = movies[index];
-          return MovieCard(
-            movie: movie,
-            onTap: () => onMoviePressed(movie),
-          );
+          return MovieCard(movie: movie, onTap: () => onMoviePressed(movie));
         },
       ),
     );
@@ -140,7 +142,9 @@ class _HomeErrorBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.loginPrimary.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: AppColors.loginPrimary.withValues(alpha: 0.3),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -167,22 +171,6 @@ class _HomeErrorBanner extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HomeLoadingLabel extends StatelessWidget {
-  const _HomeLoadingLabel();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
-      child: LinearProgressIndicator(
-        minHeight: 2,
-        color: AppColors.loginPrimary,
-        backgroundColor: AppColors.surface,
       ),
     );
   }

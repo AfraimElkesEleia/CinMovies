@@ -41,10 +41,7 @@ class HomeRepository {
   }
 
   Map<String, Object> _queryParameters() {
-    return {
-      'language': 'en-US',
-      'page': 1,
-    };
+    return {'language': 'en-US', 'page': 1};
   }
 
   Options _authOptions() {
