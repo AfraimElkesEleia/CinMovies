@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
 import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
@@ -105,18 +106,14 @@ class _MovieDetailsView extends StatelessWidget {
   Future<void> _toggleFavorite(BuildContext context) async {
     final success = await context.read<MovieDetailsCubit>().toggleFavorite();
     if (!success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to update your favorite movies.')),
-      );
+      AppSnackBar.showInfo(context, 'Sign in to update your favorite movies.');
     }
   }
 
   Future<void> _toggleWatchlist(BuildContext context) async {
     final success = await context.read<MovieDetailsCubit>().toggleWatchlist();
     if (!success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to update your watchlist.')),
-      );
+      AppSnackBar.showInfo(context, 'Sign in to update your watchlist.');
     }
   }
 

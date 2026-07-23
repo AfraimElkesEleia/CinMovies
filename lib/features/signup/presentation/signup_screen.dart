@@ -2,6 +2,7 @@ import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/core/widgets/app_text_field.dart';
 import 'package:cinmovies_app/core/widgets/auth_screen_layout.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
@@ -70,9 +71,7 @@ class _SignupViewState extends State<_SignupView> {
 
         if (state.status == AuthSubmissionStatus.failure &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          AppSnackBar.showError(context, state.errorMessage!);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
@@ -220,12 +219,9 @@ class _SignupViewState extends State<_SignupView> {
       pickedImage = await _imagePicker.pickImage(source: ImageSource.gallery);
     } on PlatformException catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not open the photo picker. Rebuild the app and try again.',
-          ),
-        ),
+      AppSnackBar.showError(
+        context,
+        'Could not open the photo picker. Rebuild the app and try again.',
       );
       return;
     }
@@ -236,18 +232,14 @@ class _SignupViewState extends State<_SignupView> {
     final contentType = _contentTypeForImage(image);
     if (!_allowedImageContentTypes.contains(contentType)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a JPG or PNG image.')),
-      );
+      AppSnackBar.showError(context, 'Please choose a JPG or PNG image.');
       return;
     }
 
     final bytes = await image.readAsBytes();
     if (!mounted) return;
     if (bytes.length > _maxProfileImageBytes) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose an image smaller than 5 MB.')),
-      );
+      AppSnackBar.showError(context, 'Choose an image smaller than 5 MB.');
       return;
     }
 

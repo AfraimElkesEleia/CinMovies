@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/core/widgets/app_text_field.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_primary_button.dart';
@@ -74,9 +75,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
         if (state.status == ProfileEditStatus.failure &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          AppSnackBar.showError(context, state.errorMessage!);
         }
       },
       builder: (context, state) {
@@ -221,9 +220,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
       pickedImage = await _imagePicker.pickImage(source: ImageSource.gallery);
     } on PlatformException catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the photo picker.')),
-      );
+      AppSnackBar.showError(context, 'Could not open the photo picker.');
       return;
     }
 
@@ -233,18 +230,14 @@ class _EditProfileViewState extends State<_EditProfileView> {
     final contentType = _contentTypeForImage(image);
     if (!_allowedImageContentTypes.contains(contentType)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a JPG or PNG image.')),
-      );
+      AppSnackBar.showError(context, 'Please choose a JPG or PNG image.');
       return;
     }
 
     final bytes = await image.readAsBytes();
     if (!mounted) return;
     if (bytes.length > _maxProfileImageBytes) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose an image smaller than 5 MB.')),
-      );
+      AppSnackBar.showError(context, 'Choose an image smaller than 5 MB.');
       return;
     }
 
@@ -278,9 +271,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (!mounted) return;
     final state = context.read<ProfileEditCubit>().state;
     if (state.status == ProfileEditStatus.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated.')),
-      );
+      AppSnackBar.showSuccess(context, 'Profile updated.');
       Navigator.pop(context, true);
     }
   }
@@ -297,9 +288,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (state.status == ProfileEditStatus.success) {
       _passwordController.clear();
       _confirmPasswordController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated.')),
-      );
+      AppSnackBar.showSuccess(context, 'Password updated.');
     }
   }
 

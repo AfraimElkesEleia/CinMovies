@@ -1,6 +1,7 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/core/widgets/auth_screen_layout.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
@@ -61,9 +62,7 @@ class _LoginViewState extends State<_LoginView> {
 
         if (state.status == AuthSubmissionStatus.failure &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          AppSnackBar.showError(context, state.errorMessage!);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(

@@ -8,6 +8,8 @@ class AppColors {
   static const Color white = Colors.white;
   static const Color grey = Colors.grey;
   static const Color redAccent = Colors.redAccent;
+  static const Color successGreen = Color(0xFF16A34A);
+  static const Color warningAmber = Color(0xFFF59E0B);
 
   static const Color scaffoldBackground = Color(0xFF080B14);
   static const Color surface = Color(0xFF0F1320);
