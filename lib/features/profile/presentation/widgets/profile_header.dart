@@ -5,13 +5,15 @@ class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
     super.key,
     this.fullName = 'Movie Explorer',
-    this.subtitle = 'CinMovies member',
+    this.bio,
+    this.email,
     this.avatarUrl,
     this.onEditPressed,
   });
 
   final String fullName;
-  final String subtitle;
+  final String? bio;
+  final String? email;
   final String? avatarUrl;
   final VoidCallback? onEditPressed;
 
@@ -77,15 +79,53 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+          if (bio?.trim().isNotEmpty == true) ...[
+            Text(
+              bio!.trim(),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+          ],
+          if (email?.trim().isNotEmpty == true)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border.all(color: AppColors.surfaceBorder),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.email_outlined,
+                    color: AppColors.loginPrimary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      email!.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

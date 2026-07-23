@@ -51,53 +51,58 @@ class _ProfileView extends StatelessWidget {
           body: SafeArea(
             child: state.status == ProfileStatus.loading
                 ? const ProfileLoadingShimmer()
-                : CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: ProfileHeader(
-                          fullName: state.fullName,
-                          subtitle: state.username == null
-                              ? 'Movie Explorer'
-                              : '@${state.username}',
-                          avatarUrl: state.avatarUrl,
-                          onEditPressed: () => _openEditProfile(context),
+                : RefreshIndicator(
+                    color: AppColors.loginPrimary,
+                    backgroundColor: AppColors.surface,
+                    onRefresh: () => context.read<ProfileCubit>().load(),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: ProfileHeader(
+                            fullName: state.fullName,
+                            bio: state.bio,
+                            email: state.email,
+                            avatarUrl: state.avatarUrl,
+                            onEditPressed: () => _openEditProfile(context),
+                          ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(
-                        child: ProfileStatsRow(
-                          watchedCount: state.watchedCount,
-                          watchlistCount: state.watchlistCount,
-                          reviewCount: state.reviewCount,
+                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                        SliverToBoxAdapter(
+                          child: ProfileStatsRow(
+                            watchedCount: state.watchedCount,
+                            watchlistCount: state.watchlistCount,
+                            reviewCount: state.reviewCount,
+                          ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: ProfileMovieSection(
-                          title: 'Favorites',
-                          movies: favoriteMovies,
-                          onMoviePressed: openMovieDetails,
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: ProfileMovieSection(
+                            title: 'Favorites',
+                            movies: favoriteMovies,
+                            onMoviePressed: openMovieDetails,
+                          ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: ProfileMovieSection(
-                          title: 'Watchlist',
-                          movies: watchlistMovies,
-                          onMoviePressed: openMovieDetails,
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: ProfileMovieSection(
+                            title: 'Watchlist',
+                            movies: watchlistMovies,
+                            onMoviePressed: openMovieDetails,
+                          ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: ProfileAccountSection(
-                          onMyReviewsPressed: () {},
-                          onFavoriteGenresPressed: () {},
-                          onSupportHelpPressed: () {},
-                          onLogoutPressed: () => _logout(context),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: ProfileAccountSection(
+                            onMyReviewsPressed: () {},
+                            onFavoriteGenresPressed: () {},
+                            onSupportHelpPressed: () {},
+                            onLogoutPressed: () => _logout(context),
+                          ),
                         ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                    ],
+                        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                      ],
+                    ),
                   ),
           ),
         );
@@ -146,11 +151,7 @@ class _LogoutConfirmationDialog extends StatelessWidget {
       ),
       content: const Text(
         'Are you sure you want to log out of your account?',
-        style: TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 14,
-          height: 1.4,
-        ),
+        style: TextStyle(color: AppColors.textMuted, fontSize: 14, height: 1.4),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
       actions: [

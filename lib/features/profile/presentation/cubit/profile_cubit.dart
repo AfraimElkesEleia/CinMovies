@@ -11,6 +11,8 @@ class ProfileState extends Equatable {
     this.status = ProfileStatus.initial,
     this.fullName = 'Movie Explorer',
     this.username,
+    this.email,
+    this.bio,
     this.avatarUrl,
     this.watchedCount = 0,
     this.watchlistCount = 0,
@@ -19,6 +21,8 @@ class ProfileState extends Equatable {
   final ProfileStatus status;
   final String fullName;
   final String? username;
+  final String? email;
+  final String? bio;
   final String? avatarUrl;
   final int watchedCount;
   final int watchlistCount;
@@ -30,6 +34,8 @@ class ProfileState extends Equatable {
         status,
         fullName,
         username,
+        email,
+        bio,
         avatarUrl,
         watchedCount,
         watchlistCount,
@@ -76,6 +82,8 @@ class ProfileCubit extends Cubit<ProfileState> {
               ? fullName!
               : 'Movie Explorer',
           username: profile?['username'] as String?,
+          email: _authRepository.currentUser?.email,
+          bio: profile?['bio'] as String?,
           avatarUrl: profile?['avatar_url'] as String?,
           watchedCount: countResults[0].getOrElse(() => 0),
           watchlistCount: countResults[1].getOrElse(() => 0),
@@ -88,4 +96,3 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> logout() => _authRepository.signOut();
 }
-
