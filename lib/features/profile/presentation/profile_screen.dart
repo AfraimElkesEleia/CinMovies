@@ -10,6 +10,7 @@ import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_account_section.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_header.dart';
+import 'package:cinmovies_app/features/profile/presentation/widgets/profile_loading_shimmer.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_movie_section.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_stats_row.dart';
 import 'package:flutter/material.dart';
@@ -48,54 +49,56 @@ class _ProfileView extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
           body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: ProfileHeader(
-                    fullName: state.fullName,
-                    subtitle: state.username == null
-                        ? 'Movie Explorer'
-                        : '@${state.username}',
-                    avatarUrl: state.avatarUrl,
-                    onEditPressed: () => _openEditProfile(context),
+            child: state.status == ProfileStatus.loading
+                ? const ProfileLoadingShimmer()
+                : CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: ProfileHeader(
+                          fullName: state.fullName,
+                          subtitle: state.username == null
+                              ? 'Movie Explorer'
+                              : '@${state.username}',
+                          avatarUrl: state.avatarUrl,
+                          onEditPressed: () => _openEditProfile(context),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(
+                        child: ProfileStatsRow(
+                          watchedCount: state.watchedCount,
+                          watchlistCount: state.watchlistCount,
+                          reviewCount: state.reviewCount,
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      SliverToBoxAdapter(
+                        child: ProfileMovieSection(
+                          title: 'Favorites',
+                          movies: favoriteMovies,
+                          onMoviePressed: openMovieDetails,
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      SliverToBoxAdapter(
+                        child: ProfileMovieSection(
+                          title: 'Watchlist',
+                          movies: watchlistMovies,
+                          onMoviePressed: openMovieDetails,
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      SliverToBoxAdapter(
+                        child: ProfileAccountSection(
+                          onMyReviewsPressed: () {},
+                          onFavoriteGenresPressed: () {},
+                          onSupportHelpPressed: () {},
+                          onLogoutPressed: () => _logout(context),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                    ],
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                SliverToBoxAdapter(
-                  child: ProfileStatsRow(
-                    watchedCount: state.watchedCount,
-                    watchlistCount: state.watchlistCount,
-                    reviewCount: state.reviewCount,
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: ProfileMovieSection(
-                    title: 'Favorites',
-                    movies: favoriteMovies,
-                    onMoviePressed: openMovieDetails,
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: ProfileMovieSection(
-                    title: 'Watchlist',
-                    movies: watchlistMovies,
-                    onMoviePressed: openMovieDetails,
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: ProfileAccountSection(
-                    onMyReviewsPressed: () {},
-                    onFavoriteGenresPressed: () {},
-                    onSupportHelpPressed: () {},
-                    onLogoutPressed: () => _logout(context),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 28)),
-              ],
-            ),
           ),
         );
       },
