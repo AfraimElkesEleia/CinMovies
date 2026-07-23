@@ -17,6 +17,25 @@ class PreferenceRepository {
 
   Set<String> cachedFavoriteGenres() => _cache.getFavoriteGenres();
 
+  Future<Set<String>> favoriteGenres() async {
+    final rows = await _database
+        .from('user_genre_preferences')
+        .select('genres(name)')
+        .eq('user_id', _userId);
+
+    final genres = rows
+        .map<String?>((row) {
+          final genre = row['genres'];
+          if (genre is! Map<String, dynamic>) return null;
+          return genre['name'] as String?;
+        })
+        .whereType<String>()
+        .toSet();
+
+    await _cache.cacheFavoriteGenres(genres);
+    return genres;
+  }
+
   Future<void> saveSelectedGenres(Set<String> genreNames) async {
     await _cache.cacheFavoriteGenres(genreNames);
     await _preferences.setHasPassedOnboarding(true);

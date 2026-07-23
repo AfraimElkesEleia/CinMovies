@@ -95,7 +95,8 @@ class _ProfileView extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: ProfileAccountSection(
                             onMyReviewsPressed: () {},
-                            onFavoriteGenresPressed: () {},
+                            onFavoriteGenresPressed: () =>
+                                _openFavoriteGenres(context),
                             onSupportHelpPressed: () {},
                             onLogoutPressed: () => _logout(context),
                           ),
@@ -124,6 +125,12 @@ class _ProfileView extends StatelessWidget {
 
   Future<void> _openEditProfile(BuildContext context) async {
     final updated = await context.pushNamed(Routes.editProfile);
+    if (!context.mounted || updated != true) return;
+    await context.read<ProfileCubit>().load();
+  }
+
+  Future<void> _openFavoriteGenres(BuildContext context) async {
+    final updated = await context.pushNamed(Routes.favoriteGenres);
     if (!context.mounted || updated != true) return;
     await context.read<ProfileCubit>().load();
   }
