@@ -1,5 +1,7 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:equatable/equatable.dart';
@@ -7,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MovieSectionState extends Equatable {
   const MovieSectionState({
-    required this.section,
+    required this.args,
     this.status = SearchStatus.initial,
     this.movies = const [],
     this.query = '',
@@ -18,7 +20,7 @@ class MovieSectionState extends Equatable {
     this.failure,
   });
 
-  final HomeMovieSection section;
+  final MovieSectionArgs args;
   final SearchStatus status;
   final List<Movie> movies;
   final String query;
@@ -30,7 +32,15 @@ class MovieSectionState extends Equatable {
 
   bool get hasQuery => query.trim().isNotEmpty;
 
-  bool get canLoadMore => currentPage < totalPages;
+  bool get canLoadMore => !args.isLibrarySection && currentPage < totalPages;
+
+  String get title => args.title;
+
+  String get heroTagPrefix {
+    final homeSection = args.homeSection;
+    if (homeSection != null) return 'movie-section-${homeSection.name}';
+    return 'movie-section-${args.libraryListType!.value}';
+  }
 
   List<Movie> get visibleMovies {
     final normalizedQuery = query.trim().toLowerCase();
@@ -54,7 +64,7 @@ class MovieSectionState extends Equatable {
     Failure? failure,
   }) {
     return MovieSectionState(
-      section: section,
+      args: args,
       status: status ?? this.status,
       movies: movies ?? this.movies,
       query: query ?? this.query,
@@ -88,7 +98,7 @@ class MovieSectionState extends Equatable {
 
   @override
   List<Object?> get props => [
-    section,
+    args,
     status,
     movies,
     query,
@@ -101,10 +111,15 @@ class MovieSectionState extends Equatable {
 }
 
 class MovieSectionCubit extends Cubit<MovieSectionState> {
-  MovieSectionCubit(this._repository, HomeMovieSection section)
-    : super(MovieSectionState(section: section));
+  MovieSectionCubit(
+    this._homeRepository,
+    MovieSectionArgs args, [
+    this._libraryRepository,
+  ])
+    : super(MovieSectionState(args: args));
 
-  final HomeRepository _repository;
+  final HomeRepository _homeRepository;
+  final LibraryRepository? _libraryRepository;
 
   Future<void> loadInitial() async {
     emit(
@@ -118,8 +133,14 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       ),
     );
 
-    final result = await _repository.fetchMovieSection(
-      section: state.section,
+    final homeSection = state.args.homeSection;
+    if (homeSection == null) {
+      await _loadLibrarySection();
+      return;
+    }
+
+    final result = await _homeRepository.fetchMovieSection(
+      section: homeSection,
       page: 1,
     );
 
@@ -166,8 +187,11 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
 
     emit(state.copyWith(isLoadingMore: true, failure: null));
 
-    final result = await _repository.fetchMovieSection(
-      section: state.section,
+    final homeSection = state.args.homeSection;
+    if (homeSection == null) return;
+
+    final result = await _homeRepository.fetchMovieSection(
+      section: homeSection,
       page: state.currentPage + 1,
     );
 
@@ -181,6 +205,43 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
           currentPage: page.page,
           totalPages: page.totalPages,
           isLoadingMore: false,
+          failure: null,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadLibrarySection() async {
+    final type = state.args.libraryListType;
+    if (type == null) return;
+
+    final repository = _libraryRepository;
+    if (repository == null) {
+      emit(
+        state.copyWith(
+          status: SearchStatus.failure,
+          failure: const CacheFailure(message: 'Library is unavailable.'),
+        ),
+      );
+      return;
+    }
+
+    final result = await repository.movies(type);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: SearchStatus.failure,
+          currentPage: 0,
+          totalPages: 1,
+          failure: failure,
+        ),
+      ),
+      (movies) => emit(
+        state.copyWith(
+          status: SearchStatus.loaded,
+          movies: movies,
+          currentPage: 1,
+          totalPages: 1,
           failure: null,
         ),
       ),

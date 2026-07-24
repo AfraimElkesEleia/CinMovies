@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
@@ -16,7 +17,10 @@ void main() {
         totalPages: 2,
       ),
     });
-    final cubit = MovieSectionCubit(repository, HomeMovieSection.popular);
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs(section: HomeMovieSection.popular),
+    );
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
@@ -40,7 +44,10 @@ void main() {
         totalPages: 2,
       ),
     });
-    final cubit = MovieSectionCubit(repository, HomeMovieSection.popular);
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs(section: HomeMovieSection.popular),
+    );
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
@@ -65,7 +72,10 @@ void main() {
         totalPages: 1,
       ),
     });
-    final cubit = MovieSectionCubit(repository, HomeMovieSection.upcoming);
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs(section: HomeMovieSection.upcoming),
+    );
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
@@ -86,7 +96,10 @@ void main() {
         totalPages: 1,
       ),
     });
-    final cubit = MovieSectionCubit(repository, HomeMovieSection.popular);
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs(section: HomeMovieSection.popular),
+    );
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
@@ -114,7 +127,10 @@ void main() {
 
   test('failure emits failure state without fake data', () async {
     final repository = _FakeHomeRepository(const {}, failures: {'popular:1'});
-    final cubit = MovieSectionCubit(repository, HomeMovieSection.popular);
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs(section: HomeMovieSection.popular),
+    );
     addTearDown(cubit.close);
 
     await cubit.loadInitial();

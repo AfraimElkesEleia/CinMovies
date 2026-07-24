@@ -3,6 +3,7 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
@@ -79,16 +80,26 @@ class _ProfileView extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: ProfileMovieSection(
                             title: 'Favorites',
-                            movies: const [],
+                            movies: state.favoriteMovies.take(10).toList(),
                             onMoviePressed: openMovieDetails,
+                            onSeeAllPressed: () => _openLibrarySection(
+                              context,
+                              title: 'Favorites',
+                              type: UserMovieListType.favorite,
+                            ),
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         SliverToBoxAdapter(
                           child: ProfileMovieSection(
                             title: 'Watchlist',
-                            movies: const [],
+                            movies: state.watchlistMovies.take(10).toList(),
                             onMoviePressed: openMovieDetails,
+                            onSeeAllPressed: () => _openLibrarySection(
+                              context,
+                              title: 'Watchlist',
+                              type: UserMovieListType.watchlist,
+                            ),
                           ),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -133,6 +144,17 @@ class _ProfileView extends StatelessWidget {
     final updated = await context.pushNamed(Routes.favoriteGenres);
     if (!context.mounted || updated != true) return;
     await context.read<ProfileCubit>().load();
+  }
+
+  void _openLibrarySection(
+    BuildContext context, {
+    required String title,
+    required UserMovieListType type,
+  }) {
+    context.pushNamed(
+      Routes.movieSection,
+      arguments: MovieSectionArgs.library(title: title, type: type),
+    );
   }
 }
 

@@ -1,6 +1,6 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/data/home_repository.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_input_field.dart';
@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MovieSectionScreen extends StatelessWidget {
-  const MovieSectionScreen({super.key, required this.section});
+  const MovieSectionScreen({super.key, required this.args});
 
-  final HomeMovieSection section;
+  final MovieSectionArgs args;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<MovieSectionCubit>(param1: section)..loadInitial(),
+      create: (_) => sl<MovieSectionCubit>(param1: args)..loadInitial(),
       child: const _MovieSectionView(),
     );
   }
@@ -67,7 +67,7 @@ class _MovieSectionViewState extends State<_MovieSectionView> {
             return Column(
               children: [
                 _MovieSectionHeader(
-                  title: state.section.title,
+                  title: state.title,
                   onBackPressed: () => Navigator.pop(context),
                 ),
                 SearchInputField(
@@ -87,15 +87,14 @@ class _MovieSectionViewState extends State<_MovieSectionView> {
                           controller: _scrollController,
                           query: state.hasQuery
                               ? state.query
-                              : state.section.title,
+                              : state.title,
                           movies: state.visibleMovies,
                           status: state.status,
                           sortMode: state.sortMode,
                           onSortModeChanged: cubit.setSortMode,
                           isLoadingMore: state.isLoadingMore,
                           failureMessage: state.failure?.message,
-                          heroTagPrefix:
-                              'movie-section-${state.section.name}',
+                          heroTagPrefix: state.heroTagPrefix,
                         ),
                 ),
               ],

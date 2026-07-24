@@ -95,6 +95,11 @@ class _FakeLibraryRepository implements LibraryRepository {
   }
 
   @override
+  Future<Either<Failure, List<Movie>>> movies(UserMovieListType type) async {
+    return const Right([]);
+  }
+
+  @override
   Future<Either<Failure, void>> setListed(
     Movie movie,
     UserMovieListType type, {

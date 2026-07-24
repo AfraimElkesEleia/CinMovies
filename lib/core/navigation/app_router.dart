@@ -29,7 +29,7 @@ class AppRouter {
         final args = settings.arguments;
         if (args is MovieSectionArgs) {
           return MaterialPageRoute(
-            builder: (_) => MovieSectionScreen(section: args.section),
+            builder: (_) => MovieSectionScreen(args: args),
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());

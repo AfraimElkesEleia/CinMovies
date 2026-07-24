@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,6 +17,8 @@ class ProfileState extends Equatable {
     this.avatarUrl,
     this.watchedCount = 0,
     this.watchlistCount = 0,
+    this.favoriteMovies = const [],
+    this.watchlistMovies = const [],
   });
 
   final ProfileStatus status;
@@ -26,6 +29,8 @@ class ProfileState extends Equatable {
   final String? avatarUrl;
   final int watchedCount;
   final int watchlistCount;
+  final List<Movie> favoriteMovies;
+  final List<Movie> watchlistMovies;
 
   int get reviewCount => 0;
 
@@ -39,6 +44,8 @@ class ProfileState extends Equatable {
         avatarUrl,
         watchedCount,
         watchlistCount,
+        favoriteMovies,
+        watchlistMovies,
       ];
 }
 
@@ -58,6 +65,10 @@ class ProfileCubit extends Cubit<ProfileState> {
         _libraryRepository.count(UserMovieListType.watched),
         _libraryRepository.count(UserMovieListType.watchlist),
       ]);
+      final movieResults = await Future.wait([
+        _libraryRepository.movies(UserMovieListType.favorite),
+        _libraryRepository.movies(UserMovieListType.watchlist),
+      ]);
 
       // If profile fetch failed, emit failure.
       if (profileResult.isLeft()) {
@@ -67,6 +78,12 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       // If any count failed, emit failure.
       for (final result in countResults) {
+        if (result.isLeft()) {
+          emit(const ProfileState(status: ProfileStatus.failure));
+          return;
+        }
+      }
+      for (final result in movieResults) {
         if (result.isLeft()) {
           emit(const ProfileState(status: ProfileStatus.failure));
           return;
@@ -87,6 +104,8 @@ class ProfileCubit extends Cubit<ProfileState> {
           avatarUrl: profile?['avatar_url'] as String?,
           watchedCount: countResults[0].getOrElse(() => 0),
           watchlistCount: countResults[1].getOrElse(() => 0),
+          favoriteMovies: movieResults[0].getOrElse(() => const []),
+          watchlistMovies: movieResults[1].getOrElse(() => const []),
         ),
       );
     } catch (_) {
