@@ -1,7 +1,7 @@
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/features/login/presentation/login_screen.dart';
 import 'package:cinmovies_app/features/main/presentation/main_navigation_screen.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/movie_details_screen.dart';
 import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
@@ -33,7 +33,7 @@ class AppRouter {
             ),
           );
         }
-        if (args is HomeMovieModel) {
+        if (args is Movie) {
           return MaterialPageRoute(
             builder: (_) => MovieDetailsScreen(
               movie: args,

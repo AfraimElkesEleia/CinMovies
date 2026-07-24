@@ -2,8 +2,7 @@ import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +34,7 @@ void main() {
     expect(cubit.state.totalPages, 2);
   });
 
-  test('loadInitial falls back to mock movies when first movie load fails', () async {
+  test('loadInitial emits failure with no fake movies when first page fails', () async {
     final repository = _FakeBrowseRepository(
       genresResult: const Left(NetworkFailure(message: 'No connection')),
       failureKeys: {'All:1'},
@@ -46,7 +45,7 @@ void main() {
     await cubit.loadInitial();
 
     expect(cubit.state.status, BrowseStatus.failure);
-    expect(cubit.state.movies, kHomeMovies);
+    expect(cubit.state.movies, isEmpty);
     expect(cubit.state.failure?.message, 'No connection');
   });
 
@@ -141,8 +140,8 @@ class _FakeBrowseRepository extends BrowseRepository {
   }
 }
 
-HomeMovieModel _movie(String id, String title) {
-  return HomeMovieModel(
+Movie _movie(String id, String title) {
+  return Movie(
     id: id,
     title: title,
     imageAsset: 'assets/images/movie_ex1.jpg',

@@ -1,5 +1,5 @@
-class HomeMovieModel {
-  const HomeMovieModel({
+class Movie {
+  const Movie({
     required this.id,
     required this.title,
     required this.imageAsset,

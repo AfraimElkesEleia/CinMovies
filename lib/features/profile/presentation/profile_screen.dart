@@ -3,8 +3,7 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
@@ -38,10 +37,7 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final favoriteMovies = kHomeMovies.take(2).toList();
-    final watchlistMovies = kHomeMovies.skip(2).take(2).toList();
-
-    void openMovieDetails(HomeMovieModel movie, String heroTag) {
+    void openMovieDetails(Movie movie, String heroTag) {
       context.pushNamed(
         Routes.movieDetails,
         arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
@@ -83,7 +79,7 @@ class _ProfileView extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: ProfileMovieSection(
                             title: 'Favorites',
-                            movies: favoriteMovies,
+                            movies: const [],
                             onMoviePressed: openMovieDetails,
                           ),
                         ),
@@ -91,7 +87,7 @@ class _ProfileView extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: ProfileMovieSection(
                             title: 'Watchlist',
-                            movies: watchlistMovies,
+                            movies: const [],
                             onMoviePressed: openMovieDetails,
                           ),
                         ),

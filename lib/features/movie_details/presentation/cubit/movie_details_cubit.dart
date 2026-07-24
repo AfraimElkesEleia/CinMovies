@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/error/failures.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
@@ -23,7 +23,7 @@ class MovieDetailsState extends Equatable {
     this.failure,
   });
 
-  const MovieDetailsState.initial(HomeMovieModel movie)
+  const MovieDetailsState.initial(Movie movie)
     : this(
         status: MovieDetailsStatus.loaded,
         movie: movie,
@@ -33,8 +33,8 @@ class MovieDetailsState extends Equatable {
       );
 
   final MovieDetailsStatus status;
-  final HomeMovieModel movie;
-  final List<HomeMovieModel> similarMovies;
+  final Movie movie;
+  final List<Movie> similarMovies;
   final MovieDetailsTab activeTab;
   final bool isDetailsLoading;
   final bool isFavoriteLoading;
@@ -48,8 +48,8 @@ class MovieDetailsState extends Equatable {
 
   MovieDetailsState copyWith({
     MovieDetailsStatus? status,
-    HomeMovieModel? movie,
-    List<HomeMovieModel>? similarMovies,
+    Movie? movie,
+    List<Movie>? similarMovies,
     MovieDetailsTab? activeTab,
     bool? isDetailsLoading,
     bool? isFavoriteLoading,
@@ -103,7 +103,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   MovieDetailsCubit(
     this._detailsRepository,
     this._libraryRepository,
-    HomeMovieModel movie,
+    Movie movie,
   ) : super(MovieDetailsState.initial(movie));
 
   final MovieDetailsRepository _detailsRepository;

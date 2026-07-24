@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_carousel_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
@@ -16,9 +16,9 @@ class HomeMovieCarousel extends StatefulWidget {
     required this.heroTagFor,
   });
 
-  final List<HomeMovieModel> movies;
-  final ValueChanged<HomeMovieModel> onMoviePressed;
-  final String Function(HomeMovieModel movie) heroTagFor;
+  final List<Movie> movies;
+  final void Function(Movie movie, String heroTag) onMoviePressed;
+  final String Function(Movie movie, int index) heroTagFor;
 
   @override
   State<HomeMovieCarousel> createState() => _HomeMovieCarouselState();
@@ -72,13 +72,15 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
                 itemCount: widget.movies.length,
                 onPageChanged: _cubit.setIndex,
                 itemBuilder: (context, index) {
+                  final movie = widget.movies[index];
+                  final heroTag = widget.heroTagFor(movie, index);
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _HeroMovieCard(
-                      movie: widget.movies[index],
-                      heroTag: widget.heroTagFor(widget.movies[index]),
-                      onPressed: () =>
-                          widget.onMoviePressed(widget.movies[index]),
+                      movie: movie,
+                      heroTag: heroTag,
+                      onPressed: () => widget.onMoviePressed(movie, heroTag),
                     ),
                   );
                 },
@@ -118,7 +120,7 @@ class _HeroMovieCard extends StatelessWidget {
     required this.onPressed,
   });
 
-  final HomeMovieModel movie;
+  final Movie movie;
   final String heroTag;
   final VoidCallback onPressed;
 

@@ -1,8 +1,8 @@
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 
 class MovieDetailsArgs {
   const MovieDetailsArgs({required this.movie, required this.heroTag});
 
-  final HomeMovieModel movie;
+  final Movie movie;
   final String heroTag;
 }

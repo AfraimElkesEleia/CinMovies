@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/error/failures.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
@@ -63,7 +63,7 @@ class _FakeDetailsRepository extends MovieDetailsRepository {
 
   @override
   Future<Either<Failure, MovieDetailsResult>> fetchMovieDetails(
-    HomeMovieModel seed,
+    Movie seed,
   ) async {
     return result;
   }
@@ -76,7 +76,7 @@ class _FakeLibraryRepository implements LibraryRepository {
 
   @override
   Future<Either<Failure, bool>> contains(
-    HomeMovieModel movie,
+    Movie movie,
     UserMovieListType type,
   ) async {
     return Right(containsResults[type] ?? false);
@@ -96,7 +96,7 @@ class _FakeLibraryRepository implements LibraryRepository {
 
   @override
   Future<Either<Failure, void>> setListed(
-    HomeMovieModel movie,
+    Movie movie,
     UserMovieListType type, {
     required bool listed,
   }) async {
@@ -104,8 +104,8 @@ class _FakeLibraryRepository implements LibraryRepository {
   }
 }
 
-HomeMovieModel _movie(String id, String title) {
-  return HomeMovieModel(
+Movie _movie(String id, String title) {
+  return Movie(
     id: id,
     title: title,
     imageAsset: 'assets/images/movie_ex1.jpg',

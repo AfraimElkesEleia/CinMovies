@@ -2,7 +2,7 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_shimmer.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_empty_state.dart';
@@ -24,14 +24,14 @@ class SearchResultsView extends StatelessWidget {
   });
 
   final String query;
-  final List<HomeMovieModel> movies;
+  final List<Movie> movies;
   final SearchStatus status;
   final SearchSortMode sortMode;
   final ValueChanged<SearchSortMode> onSortModeChanged;
   final bool isLoadingMore;
   final String? failureMessage;
   final ScrollController? controller;
-  final ValueChanged<HomeMovieModel>? onMoviePressed;
+  final ValueChanged<Movie>? onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +76,7 @@ class SearchResultsView extends StatelessWidget {
         }
 
         final movie = movies[movieIndex];
-        final heroTag = 'search-tile-${movie.id}';
+        final heroTag = 'search-tile-$movieIndex-${movie.id}';
 
         return GestureDetector(
           onTap: () async {

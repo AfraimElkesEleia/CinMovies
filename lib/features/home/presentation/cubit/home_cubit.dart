@@ -1,7 +1,6 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,21 +14,21 @@ class HomeState extends Equatable {
 
   const HomeState.initial()
     : status = HomeStatus.initial,
-      popularMovies = kHomeMovies,
-      upcomingMovies = kHomeMovies,
+      popularMovies = const [],
+      upcomingMovies = const [],
       failure = null;
 
   final HomeStatus status;
-  final List<HomeMovieModel> popularMovies;
-  final List<HomeMovieModel> upcomingMovies;
+  final List<Movie> popularMovies;
+  final List<Movie> upcomingMovies;
   final Failure? failure;
 
-  List<HomeMovieModel> get carouselMovies => popularMovies.take(5).toList();
+  List<Movie> get carouselMovies => popularMovies.take(5).toList();
 
   HomeState copyWith({
     HomeStatus? status,
-    List<HomeMovieModel>? popularMovies,
-    List<HomeMovieModel>? upcomingMovies,
+    List<Movie>? popularMovies,
+    List<Movie>? upcomingMovies,
     Failure? failure,
   }) {
     return HomeState(
@@ -59,24 +58,16 @@ class HomeCubit extends Cubit<HomeState> {
       (failure) => emit(
         HomeState(
           status: HomeStatus.failure,
-          popularMovies: state.popularMovies.isEmpty
-              ? kHomeMovies
-              : state.popularMovies,
-          upcomingMovies: state.upcomingMovies.isEmpty
-              ? kHomeMovies
-              : state.upcomingMovies,
+          popularMovies: state.popularMovies,
+          upcomingMovies: state.upcomingMovies,
           failure: failure,
         ),
       ),
       (movies) => emit(
         HomeState(
           status: HomeStatus.loaded,
-          popularMovies: movies.popularMovies.isEmpty
-              ? kHomeMovies
-              : movies.popularMovies,
-          upcomingMovies: movies.upcomingMovies.isEmpty
-              ? kHomeMovies
-              : movies.upcomingMovies,
+          popularMovies: movies.popularMovies,
+          upcomingMovies: movies.upcomingMovies,
         ),
       ),
     );

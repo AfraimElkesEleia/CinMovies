@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,7 +22,7 @@ class SearchState extends Equatable {
 
   final String query;
   final SearchStatus status;
-  final List<HomeMovieModel> results;
+  final List<Movie> results;
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
@@ -37,7 +37,7 @@ class SearchState extends Equatable {
   SearchState copyWith({
     String? query,
     SearchStatus? status,
-    List<HomeMovieModel>? results,
+    List<Movie>? results,
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
@@ -251,8 +251,8 @@ class SearchCubit extends Cubit<SearchState> {
     emit(state.copyWith(recentSearches: _cache.getRecentSearches()));
   }
 
-  List<HomeMovieModel> _sortedMovies(
-    List<HomeMovieModel> movies,
+  List<Movie> _sortedMovies(
+    List<Movie> movies,
     SearchSortMode mode,
   ) {
     final sorted = [...movies];

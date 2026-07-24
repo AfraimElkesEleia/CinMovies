@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:flutter/material.dart';
 
@@ -11,8 +11,8 @@ class SimilarMoviesSection extends StatelessWidget {
     this.onSeeAllPressed,
   });
 
-  final List<HomeMovieModel> movies;
-  final ValueChanged<HomeMovieModel> onMoviePressed;
+  final List<Movie> movies;
+  final void Function(Movie movie, String heroTag) onMoviePressed;
   final VoidCallback? onSeeAllPressed;
 
   @override
@@ -61,10 +61,11 @@ class SimilarMoviesSection extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final movie = movies[index];
+                final heroTag = 'similar-card-$index-${movie.id}';
 
                 return GestureDetector(
-                  onTap: () => onMoviePressed(movie),
-                  child: _SimilarMoviePoster(movie: movie),
+                  onTap: () => onMoviePressed(movie, heroTag),
+                  child: _SimilarMoviePoster(movie: movie, heroTag: heroTag),
                 );
               },
             ),
@@ -76,9 +77,10 @@ class SimilarMoviesSection extends StatelessWidget {
 }
 
 class _SimilarMoviePoster extends StatelessWidget {
-  const _SimilarMoviePoster({required this.movie});
+  const _SimilarMoviePoster({required this.movie, required this.heroTag});
 
-  final HomeMovieModel movie;
+  final Movie movie;
+  final String heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +92,7 @@ class _SimilarMoviePoster extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Hero(
-              tag: 'similar-card-${movie.id}',
+              tag: heroTag,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: MovieImage(path: movie.imageAsset),

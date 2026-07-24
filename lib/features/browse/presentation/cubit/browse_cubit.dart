@@ -1,8 +1,7 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,7 +39,7 @@ class BrowseState extends Equatable {
   final BrowseStatus status;
   final List<BrowseGenre> genres;
   final BrowseGenre activeGenre;
-  final List<HomeMovieModel> movies;
+  final List<Movie> movies;
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
@@ -52,7 +51,7 @@ class BrowseState extends Equatable {
     BrowseStatus? status,
     List<BrowseGenre>? genres,
     BrowseGenre? activeGenre,
-    List<HomeMovieModel>? movies,
+    List<Movie>? movies,
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
@@ -107,7 +106,7 @@ class BrowseCubit extends Cubit<BrowseState> {
           status: BrowseStatus.failure,
           genres: genres,
           activeGenre: BrowseGenre.all,
-          movies: kHomeMovies,
+          movies: const [],
           currentPage: 1,
           totalPages: 1,
           failure: failure,
@@ -118,7 +117,7 @@ class BrowseCubit extends Cubit<BrowseState> {
           status: BrowseStatus.loaded,
           genres: genres,
           activeGenre: BrowseGenre.all,
-          movies: page.movies.isEmpty ? kHomeMovies : page.movies,
+          movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
         ),
@@ -148,7 +147,7 @@ class BrowseCubit extends Cubit<BrowseState> {
       (failure) => emit(
         state.copyWith(
           status: BrowseStatus.failure,
-          movies: _fallbackMoviesForGenre(genre),
+          movies: const [],
           currentPage: 1,
           totalPages: 1,
           failure: failure,
@@ -196,10 +195,4 @@ class BrowseCubit extends Cubit<BrowseState> {
     );
   }
 
-  List<HomeMovieModel> _fallbackMoviesForGenre(BrowseGenre genre) {
-    if (genre.isAll) return kHomeMovies;
-    return kHomeMovies
-        .where((movie) => movie.genres.contains(genre.name))
-        .toList();
-  }
 }

@@ -4,7 +4,7 @@ import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
@@ -16,7 +16,7 @@ class MovieDetailsRepository {
   final Map<String, MovieDetailsResult> _detailsCache = {};
 
   Future<Either<Failure, MovieDetailsResult>> fetchMovieDetails(
-    HomeMovieModel seed,
+    Movie seed,
   ) async {
     final cached = _detailsCache[seed.id];
     if (cached != null) return Right(cached);
@@ -47,7 +47,7 @@ class MovieDetailsResult {
 
   factory MovieDetailsResult.fromJson(
     Map<String, dynamic>? json,
-    HomeMovieModel seed,
+    Movie seed,
   ) {
     if (json == null) {
       return MovieDetailsResult(movie: seed, similarMovies: const []);
@@ -59,17 +59,17 @@ class MovieDetailsResult {
     );
   }
 
-  final HomeMovieModel movie;
-  final List<HomeMovieModel> similarMovies;
+  final Movie movie;
+  final List<Movie> similarMovies;
 
-  static HomeMovieModel _movieFromJson(
+  static Movie _movieFromJson(
     Map<String, dynamic> json,
-    HomeMovieModel seed,
+    Movie seed,
   ) {
     final voteCount = (json['vote_count'] as num?)?.toInt();
     final runtime = (json['runtime'] as num?)?.toInt();
 
-    return HomeMovieModel(
+    return Movie(
       id: (json['id'] as num?)?.toInt().toString() ?? seed.id,
       title:
           (json['title'] as String?) ??

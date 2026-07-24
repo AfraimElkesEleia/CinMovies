@@ -1,4 +1,4 @@
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_cast_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_overview_tab.dart';
@@ -13,7 +13,7 @@ class MovieDetailsTabContent extends StatelessWidget {
   });
 
   final MovieDetailsTab activeTab;
-  final HomeMovieModel movie;
+  final Movie movie;
 
   @override
   Widget build(BuildContext context) {

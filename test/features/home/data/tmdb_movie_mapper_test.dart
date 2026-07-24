@@ -31,7 +31,9 @@ void main() {
 
       expect(movie.id, '1');
       expect(movie.title, 'Original Title');
-      expect(movie.imageAsset, 'assets/images/movie_ex1.jpg');
+      expect(movie.imageAsset, 'assets/images/app_logo.png');
+      expect(movie.cast, isEmpty);
+      expect(movie.reviews, isEmpty);
       expect(movie.year, 'N/A');
       expect(movie.rating, 0);
       expect(movie.votes, '0');

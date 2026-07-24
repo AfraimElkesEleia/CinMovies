@@ -1,13 +1,12 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 
 abstract class TmdbMovieMapper {
-  static HomeMovieModel fromJson(Map<String, dynamic> json) {
+  static Movie fromJson(Map<String, dynamic> json) {
     final releaseDate = json['release_date'] as String?;
     final voteCount = json['vote_count'] as int?;
 
-    return HomeMovieModel(
+    return Movie(
       id: (json['id'] as num?)?.toInt().toString() ?? '',
       title:
           (json['title'] as String?) ??
@@ -27,12 +26,12 @@ abstract class TmdbMovieMapper {
       director: 'Unknown',
       votes: _formatVotes(voteCount),
       availability: MovieAvailability.streaming,
-      cast: kMovieCast,
-      reviews: kMovieReviews,
+      cast: const [],
+      reviews: const [],
     );
   }
 
-  static List<HomeMovieModel> listFromResponse(Object? data) {
+  static List<Movie> listFromResponse(Object? data) {
     if (data is! Map<String, dynamic>) return const [];
     final results = data['results'];
     if (results is! List) return const [];
@@ -46,7 +45,7 @@ abstract class TmdbMovieMapper {
 
   static String _imageUrl(String? path) {
     if (path == null || path.trim().isEmpty) {
-      return 'assets/images/movie_ex1.jpg';
+      return 'assets/images/app_logo.png';
     }
     if (path.startsWith('http')) return path;
     return '${ApiConstants.imageBaseUrl}$path';

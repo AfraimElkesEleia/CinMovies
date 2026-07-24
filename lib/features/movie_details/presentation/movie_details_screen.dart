@@ -1,7 +1,7 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
@@ -21,7 +21,7 @@ class MovieDetailsScreen extends StatelessWidget {
     required this.heroTag,
   });
 
-  final HomeMovieModel movie;
+  final Movie movie;
   final String heroTag;
 
   @override
@@ -92,8 +92,8 @@ class _MovieDetailsView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: SimilarMoviesSection(
                       movies: state.similarMovies,
-                      onMoviePressed: (movie) =>
-                          _openSimilarMovie(context, movie),
+                      onMoviePressed: (movie, heroTag) =>
+                          _openSimilarMovie(context, movie, heroTag),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
@@ -122,12 +122,12 @@ class _MovieDetailsView extends StatelessWidget {
     }
   }
 
-  void _openSimilarMovie(BuildContext context, HomeMovieModel movie) {
+  void _openSimilarMovie(BuildContext context, Movie movie, String heroTag) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => MovieDetailsScreen(
           movie: movie,
-          heroTag: 'similar-card-${movie.id}',
+          heroTag: heroTag,
         ),
       ),
     );

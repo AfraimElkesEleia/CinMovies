@@ -4,7 +4,7 @@ import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
@@ -57,6 +57,6 @@ class HomeMoviesResult {
     required this.upcomingMovies,
   });
 
-  final List<HomeMovieModel> popularMovies;
-  final List<HomeMovieModel> upcomingMovies;
+  final List<Movie> popularMovies;
+  final List<Movie> upcomingMovies;
 }

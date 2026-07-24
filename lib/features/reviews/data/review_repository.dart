@@ -2,7 +2,7 @@ import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:dartz/dartz.dart';
 
@@ -24,7 +24,7 @@ class ReviewRepository {
   }
 
   Future<Either<Failure, void>> upsertReview({
-    required HomeMovieModel movie,
+    required Movie movie,
     required double rating,
     String? title,
     String? body,
@@ -52,7 +52,7 @@ class ReviewRepository {
   }
 
   Future<Either<Failure, List<Map<String, dynamic>>>> reviewsForMovie(
-    HomeMovieModel movie,
+    Movie movie,
   ) async {
     try {
       final movieIdResult = await _movieRepository.cacheMovie(movie);

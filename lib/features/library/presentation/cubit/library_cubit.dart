@@ -1,5 +1,4 @@
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
-import 'package:cinmovies_app/features/library/presentation/data/library_mock_data.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_movie_model.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_tab_model.dart';
 import 'package:equatable/equatable.dart';
@@ -11,8 +10,31 @@ enum LibraryStatus { initial, loading, loaded, failure }
 class LibraryState extends Equatable {
   const LibraryState({
     this.status = LibraryStatus.initial,
-    this.tabs = LibraryMockData.tabs,
+    this.tabs = _emptyTabs,
   });
+
+  static const _emptyTabs = [
+    LibraryTabModel(
+      label: 'History',
+      emptyLabel: 'No watch history yet',
+      movies: [],
+    ),
+    LibraryTabModel(
+      label: 'Watchlist',
+      emptyLabel: 'Your watchlist is empty',
+      movies: [],
+    ),
+    LibraryTabModel(
+      label: 'Favorites',
+      emptyLabel: 'No favorite movies yet',
+      movies: [],
+    ),
+    LibraryTabModel(
+      label: 'Downloaded',
+      emptyLabel: 'No downloads available',
+      movies: [],
+    ),
+  ];
 
   final LibraryStatus status;
   final List<LibraryTabModel> tabs;

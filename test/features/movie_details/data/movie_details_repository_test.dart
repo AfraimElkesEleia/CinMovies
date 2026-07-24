@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -109,8 +109,8 @@ class _FakeAdapter implements HttpClientAdapter {
   }
 }
 
-HomeMovieModel _seed() {
-  return const HomeMovieModel(
+Movie _seed() {
+  return const Movie(
     id: '10',
     title: 'Seed',
     imageAsset: 'assets/images/movie_ex1.jpg',
