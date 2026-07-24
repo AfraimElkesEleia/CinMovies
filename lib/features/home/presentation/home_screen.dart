@@ -3,11 +3,12 @@ import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_loading_shimmer.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_section_header.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,8 +29,11 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void openDetails(Object movie) {
-      context.pushNamed(Routes.movieDetails, arguments: movie);
+    void openDetails(HomeMovieModel movie, String heroTag) {
+      context.pushNamed(
+        Routes.movieDetails,
+        arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
+      );
     }
 
     return Scaffold(
@@ -58,7 +62,10 @@ class _HomeView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: HomeMovieCarousel(
                       movies: state.carouselMovies,
-                      onMoviePressed: openDetails,
+                      heroTagFor: (movie) => 'home-carousel-${movie.id}',
+                      onMoviePressed: (movie) {
+                        openDetails(movie, 'home-carousel-${movie.id}');
+                      },
                     ),
                   ),
                   if (state.status == HomeStatus.failure &&
@@ -77,6 +84,7 @@ class _HomeView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: _HomeMovieRow(
                       movies: state.popularMovies,
+                      heroTagPrefix: 'home-popular',
                       onMoviePressed: openDetails,
                     ),
                   ),
@@ -91,6 +99,7 @@ class _HomeView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: _HomeMovieRow(
                       movies: state.upcomingMovies,
+                      heroTagPrefix: 'home-upcoming',
                       onMoviePressed: openDetails,
                     ),
                   ),
@@ -106,10 +115,15 @@ class _HomeView extends StatelessWidget {
 }
 
 class _HomeMovieRow extends StatelessWidget {
-  const _HomeMovieRow({required this.movies, required this.onMoviePressed});
+  const _HomeMovieRow({
+    required this.movies,
+    required this.heroTagPrefix,
+    required this.onMoviePressed,
+  });
 
   final List<HomeMovieModel> movies;
-  final ValueChanged<HomeMovieModel> onMoviePressed;
+  final String heroTagPrefix;
+  final void Function(HomeMovieModel movie, String heroTag) onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -122,9 +136,11 @@ class _HomeMovieRow extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final movie = movies[index];
+          final heroTag = '$heroTagPrefix-${movie.id}';
           return MovieCard(
             movie: movie,
-            onTap: () => onMoviePressed(movie),
+            heroTag: heroTag,
+            onTap: () => onMoviePressed(movie, heroTag),
           );
         },
       ),

@@ -1,7 +1,8 @@
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/features/login/presentation/login_screen.dart';
 import 'package:cinmovies_app/features/main/presentation/main_navigation_screen.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/movie_details_screen.dart';
 import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
 import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
@@ -23,10 +24,21 @@ class AppRouter {
       case Routes.search:
         return MaterialPageRoute(builder: (_) => const SearchScreen());
       case Routes.movieDetails:
-        final movie = settings.arguments;
-        if (movie is HomeMovieModel) {
+        final args = settings.arguments;
+        if (args is MovieDetailsArgs) {
           return MaterialPageRoute(
-            builder: (_) => MovieDetailsScreen(movie: movie),
+            builder: (_) => MovieDetailsScreen(
+              movie: args.movie,
+              heroTag: args.heroTag,
+            ),
+          );
+        }
+        if (args is HomeMovieModel) {
+          return MaterialPageRoute(
+            builder: (_) => MovieDetailsScreen(
+              movie: args,
+              heroTag: 'movie-poster-${args.id}',
+            ),
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());

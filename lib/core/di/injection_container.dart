@@ -12,6 +12,7 @@ import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
+import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
 import 'package:cinmovies_app/features/onboarding_screen/presentation/cubit/onboarding_cubit.dart';
@@ -57,6 +58,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton<HomeRepository>(() => HomeRepository(sl(), sl()));
   sl.registerLazySingleton<BrowseRepository>(() => BrowseRepository(sl(), sl()));
   sl.registerLazySingleton<SearchRepository>(() => SearchRepository(sl(), sl()));
+  sl.registerLazySingleton<MovieDetailsRepository>(
+    () => MovieDetailsRepository(sl(), sl()),
+  );
   sl.registerLazySingleton<MovieRepository>(
     () => MovieRepository(sl(), sl(), sl()),
   );

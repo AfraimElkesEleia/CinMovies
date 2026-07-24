@@ -3,7 +3,7 @@ import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';

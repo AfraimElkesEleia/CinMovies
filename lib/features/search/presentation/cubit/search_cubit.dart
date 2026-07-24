@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

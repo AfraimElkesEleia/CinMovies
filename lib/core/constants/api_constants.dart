@@ -6,6 +6,7 @@ abstract class ApiConstants {
   static const String topRatedMovies = '/movie/top_rated';
   static const String upcomingMovies = '/movie/upcoming';
   static const String searchMovies = '/search/movie';
+  static const String movieDetails = '/movie';
   static const String discoverMovies = '/discover/movie';
   static const String movieGenres = '/genre/movie/list';
 }

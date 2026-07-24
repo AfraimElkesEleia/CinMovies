@@ -7,8 +7,9 @@ import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
 import 'package:cinmovies_app/features/browse/presentation/widgets/browse_loading_shimmer.dart';
 import 'package:cinmovies_app/features/browse/presentation/widgets/browse_search_bar.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -183,12 +184,14 @@ class _BrowseMovieGrid extends StatelessWidget {
         ),
         itemBuilder: (context, index) {
           final movie = movies[index];
+          final heroTag = 'browse-card-${movie.id}';
           return MovieCard(
             movie: movie,
+            heroTag: heroTag,
             onTap: () {
               context.pushNamed(
                 Routes.movieDetails,
-                arguments: movie,
+                arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
               );
             },
           );

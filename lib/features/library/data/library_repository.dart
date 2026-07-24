@@ -3,7 +3,7 @@ import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:dartz/dartz.dart';
 

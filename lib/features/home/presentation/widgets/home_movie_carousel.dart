@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_carousel_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
@@ -13,10 +13,12 @@ class HomeMovieCarousel extends StatefulWidget {
     super.key,
     required this.movies,
     required this.onMoviePressed,
+    required this.heroTagFor,
   });
 
   final List<HomeMovieModel> movies;
   final ValueChanged<HomeMovieModel> onMoviePressed;
+  final String Function(HomeMovieModel movie) heroTagFor;
 
   @override
   State<HomeMovieCarousel> createState() => _HomeMovieCarouselState();
@@ -74,6 +76,7 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _HeroMovieCard(
                       movie: widget.movies[index],
+                      heroTag: widget.heroTagFor(widget.movies[index]),
                       onPressed: () =>
                           widget.onMoviePressed(widget.movies[index]),
                     ),
@@ -109,9 +112,14 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
 }
 
 class _HeroMovieCard extends StatelessWidget {
-  const _HeroMovieCard({required this.movie, required this.onPressed});
+  const _HeroMovieCard({
+    required this.movie,
+    required this.heroTag,
+    required this.onPressed,
+  });
 
   final HomeMovieModel movie;
+  final String heroTag;
   final VoidCallback onPressed;
 
   @override
@@ -121,7 +129,13 @@ class _HeroMovieCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MovieImage(path: movie.imageAsset),
+          Hero(
+            tag: heroTag,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: MovieImage(path: movie.imageAsset),
+            ),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

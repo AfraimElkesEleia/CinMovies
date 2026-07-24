@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +14,7 @@ class ProfileMovieSection extends StatelessWidget {
 
   final String title;
   final List<HomeMovieModel> movies;
-  final ValueChanged<HomeMovieModel> onMoviePressed;
+  final void Function(HomeMovieModel movie, String heroTag) onMoviePressed;
   final VoidCallback? onSeeAllPressed;
 
   @override
@@ -64,7 +64,8 @@ class ProfileMovieSection extends StatelessWidget {
 
               return MovieCard(
                 movie: movie,
-                onTap: () => onMoviePressed(movie),
+                heroTag: 'profile-card-${movie.id}',
+                onTap: () => onMoviePressed(movie, 'profile-card-${movie.id}'),
               );
             },
           ),

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:dartz/dartz.dart';

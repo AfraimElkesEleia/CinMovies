@@ -13,66 +13,114 @@ class MovieImage extends StatefulWidget {
 }
 
 class _MovieImageState extends State<MovieImage> {
-  bool _isLoaded = false;
+  static const _fadeDuration = Duration(milliseconds: 420);
+
+  late String _activePath;
+  String? _nextPath;
+  bool _activeLoaded = false;
+  bool _nextLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _activePath = widget.path;
+  }
 
   @override
   void didUpdateWidget(covariant MovieImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.path != widget.path) {
-      _isLoaded = false;
+    if (oldWidget.path == widget.path) return;
+
+    if (!_activeLoaded) {
+      _activePath = widget.path;
+      _nextPath = null;
+      _nextLoaded = false;
+      return;
     }
+
+    _nextPath = widget.path;
+    _nextLoaded = false;
   }
 
-  void _markLoaded() {
-    if (_isLoaded || !mounted) return;
+  void _markActiveLoaded() {
+    if (_activeLoaded || !mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _isLoaded = true);
+      if (mounted && !_activeLoaded) setState(() => _activeLoaded = true);
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final image = widget.path.startsWith('http')
+  void _markNextLoaded(String path) {
+    if (_nextLoaded || !mounted || _nextPath != path) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _nextLoaded || _nextPath != path) return;
+      setState(() => _nextLoaded = true);
+      Future<void>.delayed(_fadeDuration, () {
+        if (!mounted || _nextPath != path) return;
+        setState(() {
+          _activePath = path;
+          _nextPath = null;
+          _nextLoaded = false;
+          _activeLoaded = true;
+        });
+      });
+    });
+  }
+
+  Widget _buildImage(String path, VoidCallback onLoaded) {
+    return path.startsWith('http')
         ? Image.network(
-            widget.path,
+            path,
+            key: ValueKey(path),
             fit: widget.fit,
             errorBuilder: (context, error, stackTrace) {
-              _markLoaded();
+              onLoaded();
               return const _ImageFallback();
             },
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (frame != null || wasSynchronouslyLoaded) _markLoaded();
+              if (frame != null || wasSynchronouslyLoaded) onLoaded();
               return child;
             },
           )
         : Image.asset(
-            widget.path,
+            path,
+            key: ValueKey(path),
             fit: widget.fit,
             errorBuilder: (context, error, stackTrace) {
-              _markLoaded();
+              onLoaded();
               return const _ImageFallback();
             },
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (frame != null || wasSynchronouslyLoaded) _markLoaded();
+              if (frame != null || wasSynchronouslyLoaded) onLoaded();
               return child;
             },
           );
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final nextPath = _nextPath;
     return Stack(
       fit: StackFit.expand,
       children: [
         AnimatedOpacity(
-          opacity: _isLoaded ? 0 : 1,
+          opacity: _activeLoaded ? 0 : 1,
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
           child: const _ImageLoadingPlaceholder(),
         ),
         AnimatedOpacity(
-          opacity: _isLoaded ? 1 : 0,
-          duration: const Duration(milliseconds: 420),
+          opacity: _activeLoaded ? 1 : 0,
+          duration: _fadeDuration,
           curve: Curves.easeOutCubic,
-          child: image,
+          child: _buildImage(_activePath, _markActiveLoaded),
         ),
+        if (nextPath != null)
+          AnimatedOpacity(
+            opacity: _nextLoaded ? 1 : 0,
+            duration: _fadeDuration,
+            curve: Curves.easeOutCubic,
+            child: _buildImage(nextPath, () => _markNextLoaded(nextPath)),
+          ),
       ],
     );
   }

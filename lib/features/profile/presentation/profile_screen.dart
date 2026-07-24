@@ -4,8 +4,9 @@ import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_account_section.dart';
@@ -40,8 +41,11 @@ class _ProfileView extends StatelessWidget {
     final favoriteMovies = kHomeMovies.take(2).toList();
     final watchlistMovies = kHomeMovies.skip(2).take(2).toList();
 
-    void openMovieDetails(HomeMovieModel movie) {
-      context.pushNamed(Routes.movieDetails, arguments: movie);
+    void openMovieDetails(HomeMovieModel movie, String heroTag) {
+      context.pushNamed(
+        Routes.movieDetails,
+        arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
+      );
     }
 
     return BlocBuilder<ProfileCubit, ProfileState>(

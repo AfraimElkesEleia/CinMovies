@@ -1,6 +1,6 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 
 abstract class TmdbMovieMapper {
   static HomeMovieModel fromJson(Map<String, dynamic> json) {

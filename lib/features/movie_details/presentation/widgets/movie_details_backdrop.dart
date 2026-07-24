@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_primitives.dart';
 import 'package:flutter/material.dart';
@@ -8,14 +8,18 @@ class MovieDetailsBackdrop extends StatelessWidget {
   const MovieDetailsBackdrop({
     super.key,
     required this.movie,
+    required this.heroTag,
     required this.isFavorite,
+    required this.isFavoriteLoading,
     required this.onBackPressed,
     required this.onFavoritePressed,
     required this.onSharePressed,
   });
 
   final HomeMovieModel movie;
+  final String heroTag;
   final bool isFavorite;
+  final bool isFavoriteLoading;
   final VoidCallback onBackPressed;
   final VoidCallback onFavoritePressed;
   final VoidCallback onSharePressed;
@@ -27,7 +31,13 @@ class MovieDetailsBackdrop extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MovieImage(path: movie.imageAsset),
+          Hero(
+            tag: heroTag,
+            child: ClipRRect(
+              borderRadius: BorderRadius.zero,
+              child: MovieImage(path: movie.imageAsset),
+            ),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -65,6 +75,7 @@ class MovieDetailsBackdrop extends StatelessWidget {
                       : Icons.favorite_border_rounded,
                   color: isFavorite ? AppColors.loginPrimary : AppColors.white,
                   onPressed: onFavoritePressed,
+                  isLoading: isFavoriteLoading,
                   size: 19,
                 ),
               ],

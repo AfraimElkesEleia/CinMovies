@@ -1,9 +1,9 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
-import 'package:cinmovies_app/features/home/presentation/data/home_mock_data.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
+import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_backdrop.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_info.dart';
@@ -15,37 +15,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MovieDetailsScreen extends StatelessWidget {
-  const MovieDetailsScreen({super.key, required this.movie});
+  const MovieDetailsScreen({
+    super.key,
+    required this.movie,
+    required this.heroTag,
+  });
 
   final HomeMovieModel movie;
+  final String heroTag;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => MovieDetailsCubit(sl<LibraryRepository>(), movie)
-        ..loadSavedState(),
-      child: _MovieDetailsView(movie: movie),
+      create: (_) => MovieDetailsCubit(
+        sl<MovieDetailsRepository>(),
+        sl<LibraryRepository>(),
+        movie,
+      )..load(),
+      child: _MovieDetailsView(heroTag: heroTag),
     );
   }
 }
 
 class _MovieDetailsView extends StatelessWidget {
-  const _MovieDetailsView({required this.movie});
+  const _MovieDetailsView({required this.heroTag});
 
-  final HomeMovieModel movie;
-
-  List<HomeMovieModel> get _similarMovies {
-    return kHomeMovies.where((candidate) {
-      if (candidate.id == movie.id) return false;
-      return candidate.genres.any(movie.genres.contains);
-    }).toList();
-  }
+  final String heroTag;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MovieDetailsCubit, MovieDetailsState>(
       builder: (context, state) {
         final cubit = context.read<MovieDetailsCubit>();
+        final movie = state.movie;
 
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
@@ -56,7 +58,10 @@ class _MovieDetailsView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: MovieDetailsBackdrop(
                       movie: movie,
+                      heroTag: heroTag,
                       isFavorite: state.isFavorite,
+                      isFavoriteLoading:
+                          state.isFavoriteLoading || state.isFavoriteSaving,
                       onBackPressed: Navigator.of(context).pop,
                       onFavoritePressed: () => _toggleFavorite(context),
                       onSharePressed: _shareMovie,
@@ -66,6 +71,8 @@ class _MovieDetailsView extends StatelessWidget {
                     child: MovieDetailsInfo(
                       movie: movie,
                       inWatchlist: state.inWatchlist,
+                      isWatchlistLoading:
+                          state.isWatchlistLoading || state.isWatchlistSaving,
                       onTrailerPressed: cubit.showTrailer,
                       onWatchlistPressed: () => _toggleWatchlist(context),
                     ),
@@ -84,11 +91,9 @@ class _MovieDetailsView extends StatelessWidget {
                   ),
                   SliverToBoxAdapter(
                     child: SimilarMoviesSection(
-                      movies: _similarMovies,
-                      onMoviePressed: (movie) => _openSimilarMovie(
-                        context,
-                        movie,
-                      ),
+                      movies: state.similarMovies,
+                      onMoviePressed: (movie) =>
+                          _openSimilarMovie(context, movie),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 30)),
@@ -119,7 +124,12 @@ class _MovieDetailsView extends StatelessWidget {
 
   void _openSimilarMovie(BuildContext context, HomeMovieModel movie) {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => MovieDetailsScreen(movie: movie)),
+      MaterialPageRoute(
+        builder: (_) => MovieDetailsScreen(
+          movie: movie,
+          heroTag: 'similar-card-${movie.id}',
+        ),
+      ),
     );
   }
 

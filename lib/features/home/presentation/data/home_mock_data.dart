@@ -1,4 +1,4 @@
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 
 const List<MovieCastMember> kMovieCast = [
   MovieCastMember(

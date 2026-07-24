@@ -2,7 +2,8 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_shimmer.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_empty_state.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_movie_tile.dart';
@@ -75,13 +76,17 @@ class SearchResultsView extends StatelessWidget {
         }
 
         final movie = movies[movieIndex];
+        final heroTag = 'search-tile-${movie.id}';
 
         return GestureDetector(
           onTap: () async {
             onMoviePressed?.call(movie);
-            context.pushNamed(Routes.movieDetails, arguments: movie);
+            context.pushNamed(
+              Routes.movieDetails,
+              arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
+            );
           },
-          child: SearchMovieTile(movie: movie),
+          child: SearchMovieTile(movie: movie, heroTag: heroTag),
         );
       },
     );

@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_tab.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
 import 'package:flutter/material.dart';
 
 class MovieDetailsTabs extends StatelessWidget {

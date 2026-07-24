@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:flutter/material.dart';
 
 class DetailsGlassIconButton extends StatelessWidget {
@@ -9,24 +9,36 @@ class DetailsGlassIconButton extends StatelessWidget {
     required this.onPressed,
     this.color = AppColors.white,
     this.size = 22,
+    this.isLoading = false,
   });
 
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color color;
   final double size;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: IconButton.styleFrom(
         backgroundColor: AppColors.scaffoldBackground.withValues(alpha: 0.72),
         foregroundColor: color,
+        disabledForegroundColor: color,
         fixedSize: const Size(40, 40),
         shape: const CircleBorder(),
       ),
-      icon: Icon(icon, size: size),
+      icon: isLoading
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: color,
+              ),
+            )
+          : Icon(icon, size: size),
     );
   }
 }

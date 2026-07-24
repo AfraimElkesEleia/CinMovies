@@ -1,14 +1,15 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
 import 'package:flutter/material.dart';
 
 class MovieCard extends StatelessWidget {
-  const MovieCard({super.key, required this.movie, this.onTap});
+  const MovieCard({super.key, required this.movie, this.onTap, this.heroTag});
 
   final HomeMovieModel movie;
   final VoidCallback? onTap;
+  final String? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,13 @@ class MovieCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MovieImage(path: movie.imageAsset),
+                Hero(
+                  tag: heroTag ?? 'movie-card-${movie.id}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: MovieImage(path: movie.imageAsset),
+                  ),
+                ),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

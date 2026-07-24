@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/model/home_movie_model.dart';
+import 'package:cinmovies_app/features/home/data/model/home_movie_model.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_primitives.dart';
 import 'package:flutter/material.dart';
 
@@ -8,12 +8,14 @@ class MovieDetailsInfo extends StatelessWidget {
     super.key,
     required this.movie,
     required this.inWatchlist,
+    required this.isWatchlistLoading,
     required this.onTrailerPressed,
     required this.onWatchlistPressed,
   });
 
   final HomeMovieModel movie;
   final bool inWatchlist;
+  final bool isWatchlistLoading;
   final VoidCallback onTrailerPressed;
   final VoidCallback onWatchlistPressed;
 
@@ -94,6 +96,7 @@ class MovieDetailsInfo extends StatelessWidget {
               const SizedBox(width: 12),
               _WatchlistButton(
                 inWatchlist: inWatchlist,
+                isLoading: isWatchlistLoading,
                 onPressed: onWatchlistPressed,
               ),
             ],
@@ -148,17 +151,19 @@ class _MovieRatingSummary extends StatelessWidget {
 class _WatchlistButton extends StatelessWidget {
   const _WatchlistButton({
     required this.inWatchlist,
+    required this.isLoading,
     required this.onPressed,
   });
 
   final bool inWatchlist;
+  final bool isLoading;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: onPressed,
+      onTap: isLoading ? null : onPressed,
       child: Container(
         width: 56,
         height: 52,
@@ -173,9 +178,26 @@ class _WatchlistButton extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Icon(
-          inWatchlist ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-          color: inWatchlist ? AppColors.loginPrimary : AppColors.textMuted,
+        child: Center(
+          child: isLoading
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: inWatchlist
+                        ? AppColors.loginPrimary
+                        : AppColors.textMuted,
+                  ),
+                )
+              : Icon(
+                  inWatchlist
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  color: inWatchlist
+                      ? AppColors.loginPrimary
+                      : AppColors.textMuted,
+                ),
         ),
       ),
     );
