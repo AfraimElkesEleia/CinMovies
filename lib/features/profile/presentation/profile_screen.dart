@@ -16,6 +16,7 @@ import 'package:cinmovies_app/features/profile/presentation/widgets/profile_movi
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_stats_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -108,7 +109,8 @@ class _ProfileView extends StatelessWidget {
                             onMyReviewsPressed: () {},
                             onFavoriteGenresPressed: () =>
                                 _openFavoriteGenres(context),
-                            onSupportHelpPressed: () {},
+                            onSupportHelpPressed: () =>
+                                _openSupportHelp(context),
                             onLogoutPressed: () => _logout(context),
                           ),
                         ),
@@ -154,6 +156,145 @@ class _ProfileView extends StatelessWidget {
     context.pushNamed(
       Routes.movieSection,
       arguments: MovieSectionArgs.library(title: title, type: type),
+    );
+  }
+
+  Future<void> _openSupportHelp(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _SupportHelpDialog(),
+    );
+  }
+}
+
+class _SupportHelpDialog extends StatelessWidget {
+  const _SupportHelpDialog();
+
+  static const _email = 'afraimeleia200@gmail.com';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: AppColors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppColors.surfaceBorder),
+      ),
+      title: const Text(
+        'Support & Help',
+        style: TextStyle(
+          color: AppColors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Contact email',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            _email,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _openFacebook(context),
+                  icon: const Icon(Icons.facebook_rounded, size: 19),
+                  label: const Text('Facebook'),
+                  style: _buttonStyle(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => _openGmail(context),
+                  icon: const Icon(Icons.mail_outline_rounded, size: 19),
+                  label: const Text('Gmail'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.loginPrimary,
+                    foregroundColor: AppColors.white,
+                    minimumSize: const Size.fromHeight(46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+
+  static ButtonStyle _buttonStyle() {
+    return OutlinedButton.styleFrom(
+      foregroundColor: AppColors.loginPrimary,
+      side: BorderSide(color: AppColors.loginPrimary.withValues(alpha: 0.55)),
+      minimumSize: const Size.fromHeight(46),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+    );
+  }
+
+  static Future<void> _openFacebook(BuildContext context) async {
+    final uri = Uri.https('www.facebook.com', '/search/top/', {'q': _email});
+    await _launch(context, uri);
+  }
+
+  static Future<void> _openGmail(BuildContext context) async {
+    final gmailUri = Uri.https('mail.google.com', '/mail/', {
+      'view': 'cm',
+      'fs': '1',
+      'to': _email,
+    });
+    if (await launchUrl(gmailUri, mode: LaunchMode.externalApplication)) {
+      return;
+    }
+    if (!context.mounted) return;
+
+    final mailUri = Uri(
+      scheme: 'mailto',
+      path: _email,
+      queryParameters: const {'subject': 'CinMovies support'},
+    );
+    await _launch(context, mailUri);
+  }
+
+  static Future<void> _launch(BuildContext context, Uri uri) async {
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (launched || !context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open this link.')),
     );
   }
 }
