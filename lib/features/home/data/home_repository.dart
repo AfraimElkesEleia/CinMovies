@@ -40,8 +40,25 @@ class HomeRepository {
     }
   }
 
-  Map<String, Object> _queryParameters() {
-    return {'language': 'en-US', 'page': 1};
+  Future<Either<Failure, MovieSectionPage>> fetchMovieSection({
+    required HomeMovieSection section,
+    required int page,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        section.path,
+        queryParameters: _queryParameters(page),
+        options: _authOptions(),
+      );
+
+      return Right(MovieSectionPage.fromJson(response.data));
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
+
+  Map<String, Object> _queryParameters([int page = 1]) {
+    return {'language': 'en-US', 'page': page};
   }
 
   Options _authOptions() {
@@ -49,6 +66,16 @@ class HomeRepository {
       headers: {'Authorization': 'Bearer ${EnvConfig.tmdbAccessToken}'},
     );
   }
+}
+
+enum HomeMovieSection {
+  popular('Trending Now', ApiConstants.popularMovies),
+  upcoming('New Releases', ApiConstants.upcomingMovies);
+
+  const HomeMovieSection(this.title, this.path);
+
+  final String title;
+  final String path;
 }
 
 class HomeMoviesResult {
@@ -59,4 +86,28 @@ class HomeMoviesResult {
 
   final List<Movie> popularMovies;
   final List<Movie> upcomingMovies;
+}
+
+class MovieSectionPage {
+  const MovieSectionPage({
+    required this.movies,
+    required this.page,
+    required this.totalPages,
+  });
+
+  factory MovieSectionPage.fromJson(Object? data) {
+    if (data is! Map<String, dynamic>) {
+      return const MovieSectionPage(movies: [], page: 1, totalPages: 1);
+    }
+
+    return MovieSectionPage(
+      movies: TmdbMovieMapper.listFromResponse(data),
+      page: ((data['page'] as num?) ?? 1).toInt(),
+      totalPages: ((data['total_pages'] as num?) ?? 1).toInt(),
+    );
+  }
+
+  final List<Movie> movies;
+  final int page;
+  final int totalPages;
 }

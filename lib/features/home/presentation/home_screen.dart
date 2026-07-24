@@ -2,6 +2,8 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/features/home/data/home_repository.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_loading_shimmer.dart';
@@ -79,7 +81,10 @@ class _HomeView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: HomeSectionHeader(
                       title: 'Trending Now',
-                      onSeeAllPressed: () {},
+                      onSeeAllPressed: () => _openSection(
+                        context,
+                        HomeMovieSection.popular,
+                      ),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -94,7 +99,10 @@ class _HomeView extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: HomeSectionHeader(
                       title: 'New Releases',
-                      onSeeAllPressed: () {},
+                      onSeeAllPressed: () => _openSection(
+                        context,
+                        HomeMovieSection.upcoming,
+                      ),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -112,6 +120,13 @@ class _HomeView extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  void _openSection(BuildContext context, HomeMovieSection section) {
+    context.pushNamed(
+      Routes.movieSection,
+      arguments: MovieSectionArgs(section: section),
     );
   }
 }

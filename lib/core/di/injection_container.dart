@@ -9,6 +9,7 @@ import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
+import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
@@ -78,6 +79,9 @@ Future<void> initDependencies({
   sl.registerFactory<AuthCubit>(() => AuthCubit(sl(), sl()));
   sl.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
   sl.registerFactory<HomeCubit>(() => HomeCubit(sl()));
+  sl.registerFactoryParam<MovieSectionCubit, HomeMovieSection, void>(
+    (section, _) => MovieSectionCubit(sl(), section),
+  );
   sl.registerFactory<BrowseCubit>(() => BrowseCubit(sl()));
   sl.registerFactory<SearchCubit>(() => SearchCubit(sl(), sl()));
   sl.registerFactory<LibraryCubit>(() => LibraryCubit(sl()));

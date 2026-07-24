@@ -4,6 +4,8 @@ import 'package:cinmovies_app/features/main/presentation/main_navigation_screen.
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/movie_details_screen.dart';
+import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/movie_section_screen.dart';
 import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
 import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/edit_profile_screen.dart';
@@ -23,6 +25,14 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
       case Routes.search:
         return MaterialPageRoute(builder: (_) => const SearchScreen());
+      case Routes.movieSection:
+        final args = settings.arguments;
+        if (args is MovieSectionArgs) {
+          return MaterialPageRoute(
+            builder: (_) => MovieSectionScreen(section: args.section),
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
       case Routes.movieDetails:
         final args = settings.arguments;
         if (args is MovieDetailsArgs) {

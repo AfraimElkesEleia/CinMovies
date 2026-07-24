@@ -21,6 +21,7 @@ class SearchResultsView extends StatelessWidget {
     this.failureMessage,
     this.controller,
     this.onMoviePressed,
+    this.heroTagPrefix = 'search-tile',
   });
 
   final String query;
@@ -32,6 +33,7 @@ class SearchResultsView extends StatelessWidget {
   final String? failureMessage;
   final ScrollController? controller;
   final ValueChanged<Movie>? onMoviePressed;
+  final String heroTagPrefix;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,7 @@ class SearchResultsView extends StatelessWidget {
         }
 
         final movie = movies[movieIndex];
-        final heroTag = 'search-tile-$movieIndex-${movie.id}';
+        final heroTag = '$heroTagPrefix-$movieIndex-${movie.id}';
 
         return GestureDetector(
           onTap: () async {
