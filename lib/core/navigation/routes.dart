@@ -10,4 +10,5 @@ abstract class Routes {
   static const String preferenceOnboarding = '/preferenceOnboarding';
   static const String editProfile = '/editProfile';
   static const String favoriteGenres = '/favoriteGenres';
+  static const String myReviews = '/myReviews';
 }

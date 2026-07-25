@@ -7,10 +7,12 @@ import 'package:cinmovies_app/features/movie_details/data/movie_details_reposito
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_backdrop.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_info.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_reviews_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_tab_content.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_tabs.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/similar_movies_section.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/trailer_overlay.dart';
+import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,6 +32,7 @@ class MovieDetailsScreen extends StatelessWidget {
       create: (_) => MovieDetailsCubit(
         sl<MovieDetailsRepository>(),
         sl<LibraryRepository>(),
+        sl<ReviewRepository>(),
         movie,
       )..load(),
       child: _MovieDetailsView(heroTag: heroTag),
@@ -87,6 +90,12 @@ class _MovieDetailsView extends StatelessWidget {
                     child: MovieDetailsTabContent(
                       activeTab: state.activeTab,
                       movie: movie,
+                      reviews: state.reviews,
+                      isReviewsLoading: state.isReviewsLoading,
+                      isReviewSaving: state.isReviewSaving,
+                      onWriteReviewPressed: () => _writeReview(context),
+                      onReviewReactionPressed: (review, reaction) =>
+                          cubit.toggleReviewReaction(review, reaction),
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -119,6 +128,30 @@ class _MovieDetailsView extends StatelessWidget {
     final success = await context.read<MovieDetailsCubit>().toggleWatchlist();
     if (!success && context.mounted) {
       AppSnackBar.showInfo(context, 'Sign in to update your watchlist.');
+    }
+  }
+
+  Future<void> _writeReview(BuildContext context) async {
+    final request = await showModalBottomSheet<ReviewComposerRequest>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (_) => const ReviewComposerSheet(),
+    );
+    if (request == null || !context.mounted) return;
+
+    final success = await context.read<MovieDetailsCubit>().submitReview(
+      rating: request.rating,
+      title: request.title,
+      body: request.body,
+      spoiler: request.spoiler,
+    );
+    if (!context.mounted) return;
+
+    if (success) {
+      AppSnackBar.showSuccess(context, 'Review saved.');
+    } else {
+      AppSnackBar.showError(context, 'Could not save your review.');
     }
   }
 

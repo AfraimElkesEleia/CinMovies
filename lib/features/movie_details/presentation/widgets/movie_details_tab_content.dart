@@ -3,6 +3,7 @@ import 'package:cinmovies_app/features/movie_details/data/model/movie_details_ta
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_cast_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_overview_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_reviews_tab.dart';
+import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
 import 'package:flutter/material.dart';
 
 class MovieDetailsTabContent extends StatelessWidget {
@@ -10,10 +11,21 @@ class MovieDetailsTabContent extends StatelessWidget {
     super.key,
     required this.activeTab,
     required this.movie,
+    required this.reviews,
+    required this.isReviewsLoading,
+    required this.isReviewSaving,
+    required this.onWriteReviewPressed,
+    required this.onReviewReactionPressed,
   });
 
   final MovieDetailsTab activeTab;
   final Movie movie;
+  final List<AppReview> reviews;
+  final bool isReviewsLoading;
+  final bool isReviewSaving;
+  final VoidCallback onWriteReviewPressed;
+  final Future<bool> Function(AppReview review, ReviewReaction reaction)
+  onReviewReactionPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +35,11 @@ class MovieDetailsTabContent extends StatelessWidget {
         MovieDetailsTab.overview => MovieDetailsOverviewTab(movie: movie),
         MovieDetailsTab.cast => MovieDetailsCastTab(cast: movie.cast),
         MovieDetailsTab.reviews => MovieDetailsReviewsTab(
-          reviews: movie.reviews,
+          reviews: reviews,
+          isLoading: isReviewsLoading,
+          isReviewSaving: isReviewSaving,
+          onWriteReviewPressed: onWriteReviewPressed,
+          onReactionPressed: onReviewReactionPressed,
         ),
       },
     );

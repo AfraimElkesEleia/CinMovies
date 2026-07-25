@@ -88,5 +88,5 @@ Future<void> initDependencies({
   sl.registerFactory<LibraryCubit>(() => LibraryCubit(sl()));
   sl.registerFactory<OnboardingCubit>(() => OnboardingCubit(sl()));
   sl.registerFactory<PreferenceCubit>(() => PreferenceCubit(sl()));
-  sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl()));
+  sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl(), sl()));
 }

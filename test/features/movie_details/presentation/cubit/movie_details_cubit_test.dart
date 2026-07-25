@@ -3,6 +3,8 @@ import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
+import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,7 @@ void main() {
           UserMovieListType.watchlist: true,
         },
       ),
+      _FakeReviewRepository(),
       seed,
     );
     addTearDown(cubit.close);
@@ -44,6 +47,7 @@ void main() {
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(const Left(NetworkFailure(message: 'No connection'))),
       _FakeLibraryRepository(),
+      _FakeReviewRepository(),
       seed,
     );
     addTearDown(cubit.close);
@@ -54,6 +58,47 @@ void main() {
     expect(cubit.state.movie.title, 'Seed');
     expect(cubit.state.failure?.message, 'No connection');
   });
+}
+
+class _FakeReviewRepository implements ReviewRepository {
+  @override
+  Future<Either<Failure, int>> countForCurrentUser() async {
+    return const Right(0);
+  }
+
+  @override
+  Future<Either<Failure, void>> clearReaction(String reviewId) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, List<AppReview>>> reviewsForCurrentUser() async {
+    return const Right([]);
+  }
+
+  @override
+  Future<Either<Failure, List<AppReview>>> reviewsForMovie(Movie movie) async {
+    return const Right([]);
+  }
+
+  @override
+  Future<Either<Failure, void>> setReaction({
+    required String reviewId,
+    required ReviewReaction reaction,
+  }) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> upsertReview({
+    required Movie movie,
+    required double rating,
+    String? title,
+    String? body,
+    bool spoiler = false,
+  }) async {
+    return const Right(null);
+  }
 }
 
 class _FakeDetailsRepository extends MovieDetailsRepository {

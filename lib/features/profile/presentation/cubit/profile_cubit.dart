@@ -1,7 +1,7 @@
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
-import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
+import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,8 +17,7 @@ class ProfileState extends Equatable {
     this.avatarUrl,
     this.watchedCount = 0,
     this.watchlistCount = 0,
-    this.favoriteMovies = const [],
-    this.watchlistMovies = const [],
+    this.reviewCount = 0,
   });
 
   final ProfileStatus status;
@@ -29,10 +28,7 @@ class ProfileState extends Equatable {
   final String? avatarUrl;
   final int watchedCount;
   final int watchlistCount;
-  final List<Movie> favoriteMovies;
-  final List<Movie> watchlistMovies;
-
-  int get reviewCount => 0;
+  final int reviewCount;
 
   @override
   List<Object?> get props => [
@@ -44,18 +40,23 @@ class ProfileState extends Equatable {
         avatarUrl,
         watchedCount,
         watchlistCount,
-        favoriteMovies,
-        watchlistMovies,
+        reviewCount,
       ];
 }
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit(this._profileRepository, this._libraryRepository, this._authRepository)
+  ProfileCubit(
+    this._profileRepository,
+    this._libraryRepository,
+    this._authRepository,
+    this._reviewRepository,
+  )
       : super(const ProfileState());
 
   final ProfileRepository _profileRepository;
   final LibraryRepository _libraryRepository;
   final AuthRepository _authRepository;
+  final ReviewRepository _reviewRepository;
 
   Future<void> load() async {
     emit(const ProfileState(status: ProfileStatus.loading));
@@ -64,12 +65,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       final countResults = await Future.wait([
         _libraryRepository.count(UserMovieListType.watched),
         _libraryRepository.count(UserMovieListType.watchlist),
+        _reviewRepository.countForCurrentUser(),
       ]);
-      final movieResults = await Future.wait([
-        _libraryRepository.movies(UserMovieListType.favorite),
-        _libraryRepository.movies(UserMovieListType.watchlist),
-      ]);
-
       // If profile fetch failed, emit failure.
       if (profileResult.isLeft()) {
         emit(const ProfileState(status: ProfileStatus.failure));
@@ -83,13 +80,6 @@ class ProfileCubit extends Cubit<ProfileState> {
           return;
         }
       }
-      for (final result in movieResults) {
-        if (result.isLeft()) {
-          emit(const ProfileState(status: ProfileStatus.failure));
-          return;
-        }
-      }
-
       final profile = profileResult.getOrElse(() => null);
       final fullName = profile?['full_name'] as String?;
       emit(
@@ -104,8 +94,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           avatarUrl: profile?['avatar_url'] as String?,
           watchedCount: countResults[0].getOrElse(() => 0),
           watchlistCount: countResults[1].getOrElse(() => 0),
-          favoriteMovies: movieResults[0].getOrElse(() => const []),
-          watchlistMovies: movieResults[1].getOrElse(() => const []),
+          reviewCount: countResults[2].getOrElse(() => 0),
         ),
       );
     } catch (_) {

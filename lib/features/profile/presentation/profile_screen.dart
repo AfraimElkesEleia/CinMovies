@@ -3,17 +3,14 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
-import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_account_section.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_header.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_loading_shimmer.dart';
-import 'package:cinmovies_app/features/profile/presentation/widgets/profile_movie_section.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/profile_stats_row.dart';
+import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,6 +25,7 @@ class ProfileScreen extends StatelessWidget {
         sl<ProfileRepository>(),
         sl<LibraryRepository>(),
         sl<AuthRepository>(),
+        sl<ReviewRepository>(),
       )..load(),
       child: const _ProfileView(),
     );
@@ -39,13 +37,6 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void openMovieDetails(Movie movie, String heroTag) {
-      context.pushNamed(
-        Routes.movieDetails,
-        arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
-      );
-    }
-
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         return Scaffold(
@@ -79,34 +70,9 @@ class _ProfileView extends StatelessWidget {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         SliverToBoxAdapter(
-                          child: ProfileMovieSection(
-                            title: 'Favorites',
-                            movies: state.favoriteMovies.take(10).toList(),
-                            onMoviePressed: openMovieDetails,
-                            onSeeAllPressed: () => _openLibrarySection(
-                              context,
-                              title: 'Favorites',
-                              type: UserMovieListType.favorite,
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: ProfileMovieSection(
-                            title: 'Watchlist',
-                            movies: state.watchlistMovies.take(10).toList(),
-                            onMoviePressed: openMovieDetails,
-                            onSeeAllPressed: () => _openLibrarySection(
-                              context,
-                              title: 'Watchlist',
-                              type: UserMovieListType.watchlist,
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
                           child: ProfileAccountSection(
-                            onMyReviewsPressed: () {},
+                            onMyReviewsPressed: () =>
+                                context.pushNamed(Routes.myReviews),
                             onFavoriteGenresPressed: () =>
                                 _openFavoriteGenres(context),
                             onSupportHelpPressed: () =>
@@ -146,17 +112,6 @@ class _ProfileView extends StatelessWidget {
     final updated = await context.pushNamed(Routes.favoriteGenres);
     if (!context.mounted || updated != true) return;
     await context.read<ProfileCubit>().load();
-  }
-
-  void _openLibrarySection(
-    BuildContext context, {
-    required String title,
-    required UserMovieListType type,
-  }) {
-    context.pushNamed(
-      Routes.movieSection,
-      arguments: MovieSectionArgs.library(title: title, type: type),
-    );
   }
 
   Future<void> _openSupportHelp(BuildContext context) async {
