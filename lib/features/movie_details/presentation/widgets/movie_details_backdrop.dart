@@ -81,11 +81,6 @@ class MovieDetailsBackdrop extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            left: 20,
-            bottom: 20,
-            child: DetailsAvailabilityBadge(availability: movie.availability),
-          ),
         ],
       ),
     );

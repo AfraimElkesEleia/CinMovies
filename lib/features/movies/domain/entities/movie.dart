@@ -11,7 +11,6 @@ class Movie {
     required this.synopsis,
     required this.director,
     required this.votes,
-    required this.availability,
     required this.cast,
     required this.reviews,
   });
@@ -27,12 +26,9 @@ class Movie {
   final String synopsis;
   final String director;
   final String votes;
-  final MovieAvailability availability;
   final List<MovieCastMember> cast;
   final List<MovieReview> reviews;
 }
-
-enum MovieAvailability { streaming, comingSoon, rental }
 
 class MovieCastMember {
   const MovieCastMember({

@@ -1,5 +1,4 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
 
 class DetailsGlassIconButton extends StatelessWidget {
@@ -39,54 +38,6 @@ class DetailsGlassIconButton extends StatelessWidget {
               ),
             )
           : Icon(icon, size: size),
-    );
-  }
-}
-
-class DetailsAvailabilityBadge extends StatelessWidget {
-  const DetailsAvailabilityBadge({super.key, required this.availability});
-
-  final MovieAvailability availability;
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (availability) {
-      MovieAvailability.streaming => ('STREAMING NOW', const Color(0xFF059669)),
-      MovieAvailability.comingSoon => (
-        'COMING SOON',
-        AppColors.comingSoonPurple,
-      ),
-      MovieAvailability.rental => ('RENTAL ONLY', AppColors.ratingAmber),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5,
-            height: 5,
-            decoration: const BoxDecoration(
-              color: AppColors.white,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -182,7 +182,6 @@ Movie _movie(String id, String title) {
     synopsis: 'Synopsis',
     director: 'Unknown',
     votes: '1K',
-    availability: MovieAvailability.streaming,
     cast: const [],
     reviews: const [],
   );

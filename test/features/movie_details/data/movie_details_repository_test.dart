@@ -122,7 +122,6 @@ Movie _seed() {
     synopsis: 'Seed synopsis',
     director: 'Unknown',
     votes: '1K',
-    availability: MovieAvailability.streaming,
     cast: [],
     reviews: [],
   );

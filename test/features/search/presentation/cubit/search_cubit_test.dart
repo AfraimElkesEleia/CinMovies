@@ -210,7 +210,6 @@ Movie _movie(
     synopsis: 'Synopsis',
     director: 'Unknown',
     votes: '1K',
-    availability: MovieAvailability.streaming,
     cast: const [],
     reviews: const [],
   );

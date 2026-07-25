@@ -203,7 +203,6 @@ class AppReview extends Equatable {
           : 'No synopsis available.',
       director: 'Unknown',
       votes: _formatVotes(voteCount),
-      availability: MovieAvailability.streaming,
       cast: const [],
       reviews: const [],
     );

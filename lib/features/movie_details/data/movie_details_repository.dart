@@ -90,7 +90,6 @@ class MovieDetailsResult {
           : seed.synopsis,
       director: _director(json['credits'], seed.director),
       votes: _formatVotes(voteCount, seed.votes),
-      availability: seed.availability,
       cast: _cast(json['credits'], seed.cast),
       reviews: _reviews(json['reviews'], seed.reviews),
     );

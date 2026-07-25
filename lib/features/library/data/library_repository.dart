@@ -177,7 +177,6 @@ class LibraryRepository {
           : 'No synopsis available.',
       director: 'Unknown',
       votes: _formatVotes(voteCount),
-      availability: MovieAvailability.streaming,
       cast: const [],
       reviews: const [],
     );
