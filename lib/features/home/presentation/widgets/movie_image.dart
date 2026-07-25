@@ -32,8 +32,7 @@ class _MovieImageState extends State<MovieImage> {
     if (oldWidget.path == widget.path) return;
 
     if (!_activeLoaded) {
-      _activePath = widget.path;
-      _nextPath = null;
+      _nextPath = widget.path;
       _nextLoaded = false;
       return;
     }
