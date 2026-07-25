@@ -60,4 +60,24 @@ class MyReviewsCubit extends Cubit<MyReviewsState> {
       ),
     );
   }
+
+  Future<bool> deleteReview(AppReview review) async {
+    final previousReviews = state.reviews;
+    emit(
+      state.copyWith(
+        reviews: previousReviews
+            .where((item) => item.id != review.id)
+            .toList(),
+      ),
+    );
+
+    final result = await _reviewRepository.deleteReview(review.id);
+    return result.fold(
+      (_) {
+        emit(state.copyWith(reviews: previousReviews));
+        return false;
+      },
+      (_) => true,
+    );
+  }
 }

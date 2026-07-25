@@ -1,55 +1,67 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_movie_model.dart';
-import 'package:cinmovies_app/features/library/presentation/widgets/library_donut_progress.dart';
 import 'package:flutter/material.dart';
 
 class LibraryMovieCard extends StatelessWidget {
   const LibraryMovieCard({
     super.key,
     required this.movie,
+    required this.heroTag,
+    required this.onPressed,
+    required this.onRemovePressed,
     this.showDownloadActions = false,
   });
 
   final LibraryMovieModel movie;
+  final String heroTag;
+  final VoidCallback onPressed;
+  final VoidCallback onRemovePressed;
   final bool showDownloadActions;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 340;
-        final posterWidth = isCompact ? 64.0 : 78.0;
-        final posterHeight = isCompact ? 98.0 : 112.0;
-        final horizontalGap = isCompact ? 8.0 : 12.0;
-        final actionGap = isCompact ? 6.0 : 10.0;
+        final isTight = constraints.maxWidth < 360;
+        final posterWidth = isTight ? 56.0 : 72.0;
+        final posterHeight = isTight ? 84.0 : 108.0;
+        final horizontalGap = isTight ? 8.0 : 12.0;
 
-        return Container(
-          constraints: BoxConstraints(minHeight: isCompact ? 118 : 132),
-          padding: EdgeInsets.all(isCompact ? 8 : 10),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
+        return Material(
+          color: AppColors.transparent,
+          child: InkWell(
+            onTap: onPressed,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.surfaceBorder),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _MoviePoster(
-                imageAsset: movie.imageAsset,
-                width: posterWidth,
-                height: posterHeight,
+            child: Ink(
+              padding: EdgeInsets.all(isTight ? 8 : 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.surfaceBorder),
               ),
-              SizedBox(width: horizontalGap),
-              Expanded(
-                child: _MovieCardContent(movie: movie, isCompact: isCompact),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Hero(
+                    tag: heroTag,
+                    child: _MoviePoster(
+                      imageAsset: movie.imageAsset,
+                      width: posterWidth,
+                      height: posterHeight,
+                    ),
+                  ),
+                  SizedBox(width: horizontalGap),
+                  Expanded(
+                    child: _MovieCardContent(
+                      movie: movie,
+                      isTight: isTight,
+                      showDownloadActions: showDownloadActions,
+                      onRemovePressed: onRemovePressed,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: actionGap),
-              _MovieCardActions(
-                movie: movie,
-                isCompact: isCompact,
-                showDownloadActions: showDownloadActions,
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -72,21 +84,62 @@ class _MoviePoster extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
-      child: Image.asset(
-        imageAsset,
+      child: imageAsset.startsWith('http')
+          ? Image.network(
+              imageAsset,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _PosterFallback(width: width, height: height),
+            )
+          : Image.asset(
+              imageAsset,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _PosterFallback(width: width, height: height),
+            ),
+    );
+  }
+}
+
+class _PosterFallback extends StatelessWidget {
+  const _PosterFallback({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.surfaceBorder,
+      child: SizedBox(
         width: width,
         height: height,
-        fit: BoxFit.cover,
+        child: const Icon(
+          Icons.movie_creation_outlined,
+          color: AppColors.textMuted,
+          size: 22,
+        ),
       ),
     );
   }
 }
 
 class _MovieCardContent extends StatelessWidget {
-  const _MovieCardContent({required this.movie, required this.isCompact});
+  const _MovieCardContent({
+    required this.movie,
+    required this.isTight,
+    required this.showDownloadActions,
+    required this.onRemovePressed,
+  });
 
   final LibraryMovieModel movie;
-  final bool isCompact;
+  final bool isTight;
+  final bool showDownloadActions;
+  final VoidCallback onRemovePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +149,7 @@ class _MovieCardContent extends StatelessWidget {
       children: [
         Text(
           movie.title,
-          maxLines: 2,
+          maxLines: isTight ? 2 : 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: AppColors.white,
@@ -104,7 +157,7 @@ class _MovieCardContent extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
-        SizedBox(height: isCompact ? 4 : 6),
+        SizedBox(height: isTight ? 3 : 5),
         Text(
           '${movie.year} • ${movie.genre}',
           maxLines: 1,
@@ -115,19 +168,14 @@ class _MovieCardContent extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: isCompact ? 10 : 18),
-        _MovieMetaRow(movie: movie, isCompact: isCompact),
-        SizedBox(height: isCompact ? 8 : 10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: movie.progress.clamp(0.0, 1.0),
-            minHeight: 5,
-            backgroundColor: AppColors.surfaceBorder,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              AppColors.loginPrimary,
-            ),
-          ),
+        SizedBox(height: isTight ? 8 : 12),
+        _MovieMetaRow(movie: movie, isTight: isTight),
+        SizedBox(height: isTight ? 8 : 10),
+        _MovieCardActions(
+          movie: movie,
+          isTight: isTight,
+          showDownloadActions: showDownloadActions,
+          onRemovePressed: onRemovePressed,
         ),
       ],
     );
@@ -135,16 +183,16 @@ class _MovieCardContent extends StatelessWidget {
 }
 
 class _MovieMetaRow extends StatelessWidget {
-  const _MovieMetaRow({required this.movie, required this.isCompact});
+  const _MovieMetaRow({required this.movie, required this.isTight});
 
   final LibraryMovieModel movie;
-  final bool isCompact;
+  final bool isTight;
 
   @override
   Widget build(BuildContext context) {
     final status = Text(
       movie.status,
-      maxLines: isCompact ? 2 : 1,
+      maxLines: isTight ? 2 : 1,
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
         color: AppColors.loginPrimary,
@@ -153,7 +201,7 @@ class _MovieMetaRow extends StatelessWidget {
       ),
     );
 
-    if (isCompact) {
+    if (isTight) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -206,66 +254,63 @@ class _DurationLabel extends StatelessWidget {
 class _MovieCardActions extends StatelessWidget {
   const _MovieCardActions({
     required this.movie,
-    required this.isCompact,
+    required this.isTight,
     required this.showDownloadActions,
+    required this.onRemovePressed,
   });
 
   final LibraryMovieModel movie;
-  final bool isCompact;
+  final bool isTight;
   final bool showDownloadActions;
+  final VoidCallback onRemovePressed;
 
   @override
   Widget build(BuildContext context) {
-    final progress = movie.progress.clamp(0.0, 1.0);
-
     if (showDownloadActions) {
-      if (progress >= 1) {
-        return _ActionIcon(
-          icon: Icons.delete_outline_rounded,
-          isCompact: isCompact,
-        );
-      }
-
-      if (isCompact) {
-        return _ActionIcon(
-          icon: Icons.downloading_rounded,
-          isCompact: isCompact,
-        );
-      }
-
-      return LibraryDonutProgress(progress: progress, size: 46);
+      return _ActionIcon(
+        icon: Icons.delete_outline_rounded,
+        isTight: isTight,
+        onPressed: onRemovePressed,
+      );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _ActionIcon(icon: movie.actionIcon, isCompact: isCompact),
-        if (!isCompact) ...[
-          const SizedBox(height: 32),
-          LibraryDonutProgress(progress: progress, size: 46),
-        ],
-      ],
+    return _ActionIcon(
+      icon: movie.actionIcon,
+      isTight: isTight,
+      onPressed: onRemovePressed,
     );
   }
 }
 
 class _ActionIcon extends StatelessWidget {
-  const _ActionIcon({required this.icon, required this.isCompact});
+  const _ActionIcon({
+    required this.icon,
+    required this.isTight,
+    required this.onPressed,
+  });
 
   final IconData icon;
-  final bool isCompact;
+  final bool isTight;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: isCompact ? 32 : 34,
-      height: isCompact ? 32 : 34,
-      decoration: BoxDecoration(
-        color: AppColors.scaffoldBackground,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.surfaceBorder),
+        child: Container(
+          width: isTight ? 34 : 38,
+          height: isTight ? 34 : 38,
+          decoration: BoxDecoration(
+            color: AppColors.scaffoldBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.surfaceBorder),
+          ),
+          child: Icon(icon, color: AppColors.white, size: isTight ? 18 : 20),
+        ),
       ),
-      child: Icon(icon, color: AppColors.white, size: isCompact ? 18 : 19),
     );
   }
 }

@@ -16,21 +16,25 @@ class LibraryState extends Equatable {
   static const _emptyTabs = [
     LibraryTabModel(
       label: 'History',
+      type: 'watched',
       emptyLabel: 'No watch history yet',
       movies: [],
     ),
     LibraryTabModel(
       label: 'Watchlist',
+      type: 'watchlist',
       emptyLabel: 'Your watchlist is empty',
       movies: [],
     ),
     LibraryTabModel(
       label: 'Favorites',
+      type: 'favorite',
       emptyLabel: 'No favorite movies yet',
       movies: [],
     ),
     LibraryTabModel(
       label: 'Downloaded',
+      type: 'downloaded',
       emptyLabel: 'No downloads available',
       movies: [],
     ),
@@ -85,6 +89,7 @@ class LibraryCubit extends Cubit<LibraryState> {
     return [
       LibraryTabModel(
         label: 'History',
+        type: UserMovieListType.watched.value,
         emptyLabel: 'No watch history yet',
         movies: rows[0]
             .map((row) => _movieFromRow(row, 'Continue watching', 1))
@@ -92,6 +97,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       ),
       LibraryTabModel(
         label: 'Watchlist',
+        type: UserMovieListType.watchlist.value,
         emptyLabel: 'Your watchlist is empty',
         movies: rows[1]
             .map((row) => _movieFromRow(row, 'Saved for later', 0))
@@ -99,6 +105,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       ),
       LibraryTabModel(
         label: 'Favorites',
+        type: UserMovieListType.favorite.value,
         emptyLabel: 'No favorite movies yet',
         movies: rows[2]
             .map((row) => _movieFromRow(row, 'Favorite', 1))
@@ -106,6 +113,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       ),
       LibraryTabModel(
         label: 'Downloaded',
+        type: UserMovieListType.downloaded.value,
         emptyLabel: 'No downloads available',
         movies: rows[3]
             .map((row) => _movieFromRow(row, 'Downloaded', 1))
@@ -119,7 +127,11 @@ class LibraryCubit extends Cubit<LibraryState> {
     String status,
     double progress,
   ) {
+    final movie = LibraryRepository.movieFromRow(row);
+
     return LibraryMovieModel(
+      movieId: row['id'] as String? ?? '',
+      movie: movie,
       title: row['title'] as String? ?? 'Untitled',
       imageAsset:
           row['poster_path'] as String? ?? 'assets/images/movie_ex1.jpg',
@@ -130,6 +142,48 @@ class LibraryCubit extends Cubit<LibraryState> {
       progress: progress,
       actionIcon: _iconForStatus(status),
     );
+  }
+
+  Future<bool> removeFromList(LibraryMovieModel movie, String typeValue) async {
+    final type = _typeFromValue(typeValue);
+    if (type == null || movie.movieId.trim().isEmpty) return false;
+
+    final previousTabs = state.tabs;
+    final nextTabs = previousTabs
+        .map(
+          (tab) => tab.type == typeValue
+              ? LibraryTabModel(
+                  label: tab.label,
+                  type: tab.type,
+                  emptyLabel: tab.emptyLabel,
+                  movies: tab.movies
+                      .where((item) => item.movieId != movie.movieId)
+                      .toList(),
+                )
+              : tab,
+        )
+        .toList();
+    emit(LibraryState(status: state.status, tabs: nextTabs));
+
+    final result = await _repository.removeMovieIdFromList(
+      movieId: movie.movieId,
+      type: type,
+    );
+
+    return result.fold(
+      (_) {
+        emit(LibraryState(status: state.status, tabs: previousTabs));
+        return false;
+      },
+      (_) => true,
+    );
+  }
+
+  UserMovieListType? _typeFromValue(String value) {
+    for (final type in UserMovieListType.values) {
+      if (type.value == value) return type;
+    }
+    return null;
   }
 
   String _duration(int? minutes) {

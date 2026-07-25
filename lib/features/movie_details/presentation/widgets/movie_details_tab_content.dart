@@ -16,6 +16,7 @@ class MovieDetailsTabContent extends StatelessWidget {
     required this.isReviewSaving,
     required this.onWriteReviewPressed,
     required this.onReviewReactionPressed,
+    required this.onReviewDeletePressed,
   });
 
   final MovieDetailsTab activeTab;
@@ -26,6 +27,7 @@ class MovieDetailsTabContent extends StatelessWidget {
   final VoidCallback onWriteReviewPressed;
   final Future<bool> Function(AppReview review, ReviewReaction reaction)
   onReviewReactionPressed;
+  final Future<bool> Function(AppReview review) onReviewDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +42,7 @@ class MovieDetailsTabContent extends StatelessWidget {
           isReviewSaving: isReviewSaving,
           onWriteReviewPressed: onWriteReviewPressed,
           onReactionPressed: onReviewReactionPressed,
+          onDeletePressed: onReviewDeletePressed,
         ),
       },
     );

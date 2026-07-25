@@ -45,7 +45,9 @@ void main() {
   test('load falls back to seed movie when TMDB details fail', () async {
     final seed = _movie('1', 'Seed');
     final cubit = MovieDetailsCubit(
-      _FakeDetailsRepository(const Left(NetworkFailure(message: 'No connection'))),
+      _FakeDetailsRepository(
+        const Left(NetworkFailure(message: 'No connection')),
+      ),
       _FakeLibraryRepository(),
       _FakeReviewRepository(),
       seed,
@@ -68,6 +70,11 @@ class _FakeReviewRepository implements ReviewRepository {
 
   @override
   Future<Either<Failure, void>> clearReaction(String reviewId) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteReview(String reviewId) async {
     return const Right(null);
   }
 
@@ -149,6 +156,14 @@ class _FakeLibraryRepository implements LibraryRepository {
     Movie movie,
     UserMovieListType type, {
     required bool listed,
+  }) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> removeMovieIdFromList({
+    required String movieId,
+    required UserMovieListType type,
   }) async {
     return const Right(null);
   }

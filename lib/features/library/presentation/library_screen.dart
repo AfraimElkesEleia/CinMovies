@@ -1,7 +1,10 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
+import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_header.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_movie_list.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_tab_bar.dart';
@@ -39,6 +42,18 @@ class LibraryScreen extends StatelessWidget {
                                 movies: tab.movies,
                                 emptyLabel: tab.emptyLabel,
                                 showDownloadActions: tab.label == 'Downloaded',
+                                onMoviePressed: (movie, heroTag) {
+                                  context.pushNamed(
+                                    Routes.movieDetails,
+                                    arguments: MovieDetailsArgs(
+                                      movie: movie.movie,
+                                      heroTag: heroTag,
+                                    ),
+                                  );
+                                },
+                                onRemovePressed: (movie) => context
+                                    .read<LibraryCubit>()
+                                    .removeFromList(movie, tab.type),
                               ),
                             )
                             .toList(),

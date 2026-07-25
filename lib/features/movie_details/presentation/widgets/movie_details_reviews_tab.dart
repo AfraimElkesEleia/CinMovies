@@ -10,6 +10,7 @@ class MovieDetailsReviewsTab extends StatelessWidget {
     required this.isReviewSaving,
     required this.onWriteReviewPressed,
     required this.onReactionPressed,
+    required this.onDeletePressed,
   });
 
   final List<AppReview> reviews;
@@ -18,6 +19,7 @@ class MovieDetailsReviewsTab extends StatelessWidget {
   final VoidCallback onWriteReviewPressed;
   final Future<bool> Function(AppReview review, ReviewReaction reaction)
   onReactionPressed;
+  final Future<bool> Function(AppReview review) onDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +80,7 @@ class MovieDetailsReviewsTab extends StatelessWidget {
             ReviewCard(
               review: visibleReviews[index],
               onReactionPressed: onReactionPressed,
+              onDeletePressed: onDeletePressed,
             ),
             if (index < visibleReviews.length - 1) const SizedBox(height: 14),
           ],
@@ -429,6 +432,7 @@ class ReviewCard extends StatelessWidget {
     this.showMovie = false,
     this.onMoviePressed,
     this.onReactionPressed,
+    this.onDeletePressed,
   });
 
   final AppReview review;
@@ -436,6 +440,7 @@ class ReviewCard extends StatelessWidget {
   final VoidCallback? onMoviePressed;
   final Future<bool> Function(AppReview review, ReviewReaction reaction)?
   onReactionPressed;
+  final Future<bool> Function(AppReview review)? onDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -487,6 +492,7 @@ class ReviewCard extends StatelessWidget {
           _ReviewActions(
             review: review,
             onReactionPressed: onReactionPressed,
+            onDeletePressed: onDeletePressed,
           ),
         ],
       ),
@@ -684,11 +690,13 @@ class _ReviewActions extends StatelessWidget {
   const _ReviewActions({
     required this.review,
     required this.onReactionPressed,
+    required this.onDeletePressed,
   });
 
   final AppReview review;
   final Future<bool> Function(AppReview review, ReviewReaction reaction)?
   onReactionPressed;
+  final Future<bool> Function(AppReview review)? onDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -713,7 +721,21 @@ class _ReviewActions extends StatelessWidget {
           onPressed: () =>
               onReactionPressed?.call(review, ReviewReaction.dislike),
         ),
-        if (review.isOwnReview) ...[
+        if (review.isOwnReview && onDeletePressed != null) ...[
+          const Spacer(),
+          InkWell(
+            onTap: () => onDeletePressed?.call(review),
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: AppColors.loginPrimary,
+                size: 18,
+              ),
+            ),
+          ),
+        ] else if (review.isOwnReview) ...[
           const Spacer(),
           const Text(
             'Your review',

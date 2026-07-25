@@ -12,6 +12,7 @@ import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_tabs.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/similar_movies_section.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/trailer_overlay.dart';
+import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -96,6 +97,8 @@ class _MovieDetailsView extends StatelessWidget {
                       onWriteReviewPressed: () => _writeReview(context),
                       onReviewReactionPressed: (review, reaction) =>
                           cubit.toggleReviewReaction(review, reaction),
+                      onReviewDeletePressed: (review) =>
+                          _deleteReview(context, review),
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -153,6 +156,18 @@ class _MovieDetailsView extends StatelessWidget {
     } else {
       AppSnackBar.showError(context, 'Could not save your review.');
     }
+  }
+
+  Future<bool> _deleteReview(BuildContext context, AppReview review) async {
+    final success = await context.read<MovieDetailsCubit>().deleteReview(review);
+    if (!context.mounted) return success;
+
+    if (success) {
+      AppSnackBar.showSuccess(context, 'Review removed.');
+    } else {
+      AppSnackBar.showError(context, 'Could not remove your review.');
+    }
+    return success;
   }
 
   void _openSimilarMovie(BuildContext context, Movie movie, String heroTag) {

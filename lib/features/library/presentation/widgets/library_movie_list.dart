@@ -8,11 +8,15 @@ class LibraryMovieList extends StatelessWidget {
     super.key,
     required this.movies,
     required this.emptyLabel,
+    required this.onRemovePressed,
+    required this.onMoviePressed,
     this.showDownloadActions = false,
   });
 
   final List<LibraryMovieModel> movies;
   final String emptyLabel;
+  final ValueChanged<LibraryMovieModel> onRemovePressed;
+  final void Function(LibraryMovieModel movie, String heroTag) onMoviePressed;
   final bool showDownloadActions;
 
   @override
@@ -35,9 +39,14 @@ class LibraryMovieList extends StatelessWidget {
       itemCount: movies.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
+        final movie = movies[index];
+        final heroTag = 'library-${movie.movieId}-$index';
         return LibraryMovieCard(
-          movie: movies[index],
+          movie: movie,
+          heroTag: heroTag,
           showDownloadActions: showDownloadActions,
+          onPressed: () => onMoviePressed(movie, heroTag),
+          onRemovePressed: () => onRemovePressed(movie),
         );
       },
     );

@@ -210,8 +210,9 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   void hideTrailer() => emit(state.copyWith(showTrailer: false));
 
   Future<bool> toggleFavorite() {
-    if (state.isFavoriteLoading || state.isFavoriteSaving)
+    if (state.isFavoriteLoading || state.isFavoriteSaving) {
       return Future.value(false);
+    }
 
     final current = state.isFavorite;
     return _toggle(
@@ -260,6 +261,23 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
             reaction: reaction,
           );
 
+    return result.fold((_) {
+      emit(state.copyWith(reviews: previousReviews));
+      return false;
+    }, (_) => true);
+  }
+
+  Future<bool> deleteReview(AppReview review) async {
+    if (!review.isOwnReview) return false;
+
+    final previousReviews = state.reviews;
+    emit(
+      state.copyWith(
+        reviews: previousReviews.where((item) => item.id != review.id).toList(),
+      ),
+    );
+
+    final result = await _reviewRepository.deleteReview(review.id);
     return result.fold((_) {
       emit(state.copyWith(reviews: previousReviews));
       return false;

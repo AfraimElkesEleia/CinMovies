@@ -2,9 +2,11 @@ import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_reviews_tab.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/my_reviews_cubit.dart';
+import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,6 +62,8 @@ class _MyReviewsView extends StatelessWidget {
                   return ReviewCard(
                     review: review,
                     showMovie: true,
+                    onDeletePressed: (review) =>
+                        _deleteReview(context, review),
                     onMoviePressed: () {
                       context.pushNamed(
                         Routes.movieDetails,
@@ -79,6 +83,18 @@ class _MyReviewsView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<bool> _deleteReview(BuildContext context, AppReview review) async {
+    final success = await context.read<MyReviewsCubit>().deleteReview(review);
+    if (!context.mounted) return success;
+
+    if (success) {
+      AppSnackBar.showSuccess(context, 'Review removed.');
+    } else {
+      AppSnackBar.showError(context, 'Could not remove your review.');
+    }
+    return success;
   }
 }
 

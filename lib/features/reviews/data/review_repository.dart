@@ -153,5 +153,18 @@ class ReviewRepository {
       return Left(_errorMapper.map(error));
     }
   }
+
+  Future<Either<Failure, void>> deleteReview(String reviewId) async {
+    try {
+      await _database
+          .from('user_reviews')
+          .delete()
+          .eq('id', reviewId)
+          .eq('user_id', _userId);
+      return const Right(null);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
 }
 

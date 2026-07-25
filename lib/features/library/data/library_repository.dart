@@ -44,19 +44,16 @@ class LibraryRepository {
   ) async {
     try {
       final movieIdResult = await _movieRepository.cacheMovie(movie);
-      return movieIdResult.fold(
-        Left.new,
-        (movieId) async {
-          final row = await _database
-              .from('user_movie_lists')
-              .select('movie_id')
-              .eq('user_id', _userId)
-              .eq('movie_id', movieId)
-              .eq('list_type', type.value)
-              .maybeSingle();
-          return Right(row != null);
-        },
-      );
+      return movieIdResult.fold(Left.new, (movieId) async {
+        final row = await _database
+            .from('user_movie_lists')
+            .select('movie_id')
+            .eq('user_id', _userId)
+            .eq('movie_id', movieId)
+            .eq('list_type', type.value)
+            .maybeSingle();
+        return Right(row != null);
+      });
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
@@ -69,26 +66,23 @@ class LibraryRepository {
   }) async {
     try {
       final movieIdResult = await _movieRepository.cacheMovie(movie);
-      return movieIdResult.fold(
-        Left.new,
-        (movieId) async {
-          if (listed) {
-            await _database.from('user_movie_lists').upsert({
-              'user_id': _userId,
-              'movie_id': movieId,
-              'list_type': type.value,
-            });
-          } else {
-            await _database
-                .from('user_movie_lists')
-                .delete()
-                .eq('user_id', _userId)
-                .eq('movie_id', movieId)
-                .eq('list_type', type.value);
-          }
-          return const Right(null);
-        },
-      );
+      return movieIdResult.fold(Left.new, (movieId) async {
+        if (listed) {
+          await _database.from('user_movie_lists').upsert({
+            'user_id': _userId,
+            'movie_id': movieId,
+            'list_type': type.value,
+          });
+        } else {
+          await _database
+              .from('user_movie_lists')
+              .delete()
+              .eq('user_id', _userId)
+              .eq('movie_id', movieId)
+              .eq('list_type', type.value);
+        }
+        return const Right(null);
+      });
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
@@ -112,6 +106,23 @@ class LibraryRepository {
           .toList();
       await _cache.cacheUserSnapshot('library_${type.value}', movieRows);
       return Right(movieRows);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
+
+  Future<Either<Failure, void>> removeMovieIdFromList({
+    required String movieId,
+    required UserMovieListType type,
+  }) async {
+    try {
+      await _database
+          .from('user_movie_lists')
+          .delete()
+          .eq('user_id', _userId)
+          .eq('movie_id', movieId)
+          .eq('list_type', type.value);
+      return const Right(null);
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
@@ -200,4 +211,3 @@ class LibraryRepository {
     return value.toString();
   }
 }
-
