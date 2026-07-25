@@ -19,7 +19,36 @@ enum UserMovieListType {
   final String value;
 }
 
-class LibraryRepository {
+abstract class LibraryRepositoryContract {
+  Future<Either<Failure, bool>> contains(Movie movie, UserMovieListType type);
+
+  Future<Either<Failure, void>> setListed(
+    Movie movie,
+    UserMovieListType type, {
+    required bool listed,
+  });
+
+  Future<Either<Failure, List<Map<String, dynamic>>>> movieRows(
+    UserMovieListType type,
+  );
+
+  Future<Either<Failure, List<Map<String, dynamic>>>> movieRowsPage({
+    required UserMovieListType type,
+    required int page,
+    required int pageSize,
+  });
+
+  Future<Either<Failure, void>> removeMovieIdFromList({
+    required String movieId,
+    required UserMovieListType type,
+  });
+
+  Future<Either<Failure, List<Movie>>> movies(UserMovieListType type);
+
+  Future<Either<Failure, int>> count(UserMovieListType type);
+}
+
+class LibraryRepository implements LibraryRepositoryContract {
   const LibraryRepository(
     this._database,
     this._movieRepository,
@@ -38,6 +67,7 @@ class LibraryRepository {
     return id;
   }
 
+  @override
   Future<Either<Failure, bool>> contains(
     Movie movie,
     UserMovieListType type,
@@ -59,6 +89,7 @@ class LibraryRepository {
     }
   }
 
+  @override
   Future<Either<Failure, void>> setListed(
     Movie movie,
     UserMovieListType type, {
@@ -88,16 +119,29 @@ class LibraryRepository {
     }
   }
 
+  @override
   Future<Either<Failure, List<Map<String, dynamic>>>> movieRows(
     UserMovieListType type,
   ) async {
+    return movieRowsPage(type: type, page: 0, pageSize: 1000);
+  }
+
+  @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> movieRowsPage({
+    required UserMovieListType type,
+    required int page,
+    required int pageSize,
+  }) async {
     try {
+      final from = page * pageSize;
+      final to = from + pageSize - 1;
       final rows = await _database
           .from('user_movie_lists')
-          .select('movies(*)')
+          .select('added_at, movies(*)')
           .eq('user_id', _userId)
           .eq('list_type', type.value)
-          .order('added_at', ascending: false);
+          .order('added_at', ascending: false)
+          .range(from, to);
 
       final movieRows = rows
           .map<Map<String, dynamic>>(
@@ -111,6 +155,7 @@ class LibraryRepository {
     }
   }
 
+  @override
   Future<Either<Failure, void>> removeMovieIdFromList({
     required String movieId,
     required UserMovieListType type,
@@ -128,6 +173,7 @@ class LibraryRepository {
     }
   }
 
+  @override
   Future<Either<Failure, List<Movie>>> movies(UserMovieListType type) async {
     final result = await movieRows(type);
     return result.map(
@@ -138,6 +184,7 @@ class LibraryRepository {
     );
   }
 
+  @override
   Future<Either<Failure, int>> count(UserMovieListType type) async {
     try {
       final rows = await _database

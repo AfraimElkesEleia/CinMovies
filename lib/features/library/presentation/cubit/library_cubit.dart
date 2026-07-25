@@ -50,16 +50,34 @@ class LibraryState extends Equatable {
 class LibraryCubit extends Cubit<LibraryState> {
   LibraryCubit(this._repository) : super(const LibraryState());
 
-  final LibraryRepository _repository;
+  static const pageSize = 20;
+
+  final LibraryRepositoryContract _repository;
 
   Future<void> load() async {
     emit(const LibraryState(status: LibraryStatus.loading));
     try {
       final results = await Future.wait([
-        _repository.movieRows(UserMovieListType.watched),
-        _repository.movieRows(UserMovieListType.watchlist),
-        _repository.movieRows(UserMovieListType.favorite),
-        _repository.movieRows(UserMovieListType.downloaded),
+        _repository.movieRowsPage(
+          type: UserMovieListType.watched,
+          page: 0,
+          pageSize: pageSize,
+        ),
+        _repository.movieRowsPage(
+          type: UserMovieListType.watchlist,
+          page: 0,
+          pageSize: pageSize,
+        ),
+        _repository.movieRowsPage(
+          type: UserMovieListType.favorite,
+          page: 0,
+          pageSize: pageSize,
+        ),
+        _repository.movieRowsPage(
+          type: UserMovieListType.downloaded,
+          page: 0,
+          pageSize: pageSize,
+        ),
       ]);
 
       // If any tab returned a failure, emit the failure state.
@@ -91,6 +109,7 @@ class LibraryCubit extends Cubit<LibraryState> {
         label: 'History',
         type: UserMovieListType.watched.value,
         emptyLabel: 'No watch history yet',
+        hasMore: rows[0].length == pageSize,
         movies: rows[0]
             .map((row) => _movieFromRow(row, 'Continue watching', 1))
             .toList(),
@@ -99,6 +118,7 @@ class LibraryCubit extends Cubit<LibraryState> {
         label: 'Watchlist',
         type: UserMovieListType.watchlist.value,
         emptyLabel: 'Your watchlist is empty',
+        hasMore: rows[1].length == pageSize,
         movies: rows[1]
             .map((row) => _movieFromRow(row, 'Saved for later', 0))
             .toList(),
@@ -107,6 +127,7 @@ class LibraryCubit extends Cubit<LibraryState> {
         label: 'Favorites',
         type: UserMovieListType.favorite.value,
         emptyLabel: 'No favorite movies yet',
+        hasMore: rows[2].length == pageSize,
         movies: rows[2]
             .map((row) => _movieFromRow(row, 'Favorite', 1))
             .toList(),
@@ -115,6 +136,7 @@ class LibraryCubit extends Cubit<LibraryState> {
         label: 'Downloaded',
         type: UserMovieListType.downloaded.value,
         emptyLabel: 'No downloads available',
+        hasMore: rows[3].length == pageSize,
         movies: rows[3]
             .map((row) => _movieFromRow(row, 'Downloaded', 1))
             .toList(),
@@ -144,6 +166,59 @@ class LibraryCubit extends Cubit<LibraryState> {
     );
   }
 
+  Future<void> loadNextPage(String typeValue) async {
+    final tabIndex = state.tabs.indexWhere((tab) => tab.type == typeValue);
+    if (tabIndex == -1) return;
+
+    final tab = state.tabs[tabIndex];
+    final type = _typeFromValue(typeValue);
+    if (type == null || tab.isLoadingMore || !tab.hasMore) return;
+
+    final loadingTabs = [...state.tabs];
+    loadingTabs[tabIndex] = tab.copyWith(isLoadingMore: true);
+    emit(LibraryState(status: state.status, tabs: loadingTabs));
+
+    final nextPage = tab.page + 1;
+    final result = await _repository.movieRowsPage(
+      type: type,
+      page: nextPage,
+      pageSize: pageSize,
+    );
+    if (isClosed) return;
+
+    result.fold(
+      (_) {
+        final tabs = [...state.tabs];
+        final currentIndex = tabs.indexWhere((item) => item.type == typeValue);
+        if (currentIndex == -1) return;
+        tabs[currentIndex] = tabs[currentIndex].copyWith(isLoadingMore: false);
+        emit(LibraryState(status: state.status, tabs: tabs));
+      },
+      (rows) {
+        final currentTabs = [...state.tabs];
+        final currentIndex = currentTabs.indexWhere(
+          (item) => item.type == typeValue,
+        );
+        if (currentIndex == -1) return;
+
+        final currentTab = currentTabs[currentIndex];
+        final existingIds = currentTab.movies.map((movie) => movie.movieId).toSet();
+        final newMovies = rows
+            .map((row) => _movieFromRow(row, _statusForType(type), _progressForType(type)))
+            .where((movie) => !existingIds.contains(movie.movieId))
+            .toList();
+
+        currentTabs[currentIndex] = currentTab.copyWith(
+          movies: [...currentTab.movies, ...newMovies],
+          page: nextPage,
+          hasMore: rows.length == pageSize,
+          isLoadingMore: false,
+        );
+        emit(LibraryState(status: state.status, tabs: currentTabs));
+      },
+    );
+  }
+
   Future<bool> removeFromList(LibraryMovieModel movie, String typeValue) async {
     final type = _typeFromValue(typeValue);
     if (type == null || movie.movieId.trim().isEmpty) return false;
@@ -153,12 +228,15 @@ class LibraryCubit extends Cubit<LibraryState> {
         .map(
           (tab) => tab.type == typeValue
               ? LibraryTabModel(
-                  label: tab.label,
-                  type: tab.type,
-                  emptyLabel: tab.emptyLabel,
                   movies: tab.movies
                       .where((item) => item.movieId != movie.movieId)
                       .toList(),
+                  label: tab.label,
+                  type: tab.type,
+                  emptyLabel: tab.emptyLabel,
+                  page: tab.page,
+                  hasMore: tab.hasMore,
+                  isLoadingMore: tab.isLoadingMore,
                 )
               : tab,
         )
@@ -177,6 +255,22 @@ class LibraryCubit extends Cubit<LibraryState> {
       },
       (_) => true,
     );
+  }
+
+  String _statusForType(UserMovieListType type) {
+    return switch (type) {
+      UserMovieListType.watched => 'Continue watching',
+      UserMovieListType.watchlist => 'Saved for later',
+      UserMovieListType.favorite => 'Favorite',
+      UserMovieListType.downloaded => 'Downloaded',
+    };
+  }
+
+  double _progressForType(UserMovieListType type) {
+    return switch (type) {
+      UserMovieListType.watchlist => 0,
+      _ => 1,
+    };
   }
 
   UserMovieListType? _typeFromValue(String value) {

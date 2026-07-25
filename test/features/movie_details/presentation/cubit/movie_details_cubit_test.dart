@@ -147,6 +147,15 @@ class _FakeLibraryRepository implements LibraryRepository {
   }
 
   @override
+  Future<Either<Failure, List<Map<String, dynamic>>>> movieRowsPage({
+    required UserMovieListType type,
+    required int page,
+    required int pageSize,
+  }) async {
+    return const Right([]);
+  }
+
+  @override
   Future<Either<Failure, List<Movie>>> movies(UserMovieListType type) async {
     return const Right([]);
   }

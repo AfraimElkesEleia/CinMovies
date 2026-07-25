@@ -41,7 +41,12 @@ class LibraryScreen extends StatelessWidget {
                               (tab) => LibraryMovieList(
                                 movies: tab.movies,
                                 emptyLabel: tab.emptyLabel,
+                                isLoadingMore: tab.isLoadingMore,
+                                hasMore: tab.hasMore,
                                 showDownloadActions: tab.label == 'Downloaded',
+                                onLoadMore: () => context
+                                    .read<LibraryCubit>()
+                                    .loadNextPage(tab.type),
                                 onMoviePressed: (movie, heroTag) {
                                   context.pushNamed(
                                     Routes.movieDetails,
