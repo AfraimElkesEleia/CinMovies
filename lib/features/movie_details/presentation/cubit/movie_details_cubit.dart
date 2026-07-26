@@ -2,7 +2,6 @@ import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -13,7 +12,6 @@ class MovieDetailsState extends Equatable {
     required this.status,
     required this.movie,
     this.similarMovies = const [],
-    this.activeTab = MovieDetailsTab.overview,
     this.isDetailsLoading = false,
     this.isReviewsLoading = false,
     this.isFavoriteLoading = false,
@@ -21,7 +19,7 @@ class MovieDetailsState extends Equatable {
     this.reviews = const [],
     this.isFavorite = false,
     this.inWatchlist = false,
-    this.showTrailer = false,
+    this.videoKey,
     this.isFavoriteSaving = false,
     this.isWatchlistSaving = false,
     this.isReviewSaving = false,
@@ -41,7 +39,6 @@ class MovieDetailsState extends Equatable {
   final MovieDetailsStatus status;
   final Movie movie;
   final List<Movie> similarMovies;
-  final MovieDetailsTab activeTab;
   final bool isDetailsLoading;
   final bool isReviewsLoading;
   final bool isFavoriteLoading;
@@ -49,7 +46,7 @@ class MovieDetailsState extends Equatable {
   final List<AppReview> reviews;
   final bool isFavorite;
   final bool inWatchlist;
-  final bool showTrailer;
+  final String? videoKey;
   final bool isFavoriteSaving;
   final bool isWatchlistSaving;
   final bool isReviewSaving;
@@ -59,7 +56,6 @@ class MovieDetailsState extends Equatable {
     MovieDetailsStatus? status,
     Movie? movie,
     List<Movie>? similarMovies,
-    MovieDetailsTab? activeTab,
     bool? isDetailsLoading,
     bool? isReviewsLoading,
     bool? isFavoriteLoading,
@@ -67,7 +63,7 @@ class MovieDetailsState extends Equatable {
     List<AppReview>? reviews,
     bool? isFavorite,
     bool? inWatchlist,
-    bool? showTrailer,
+    String? videoKey,
     bool? isFavoriteSaving,
     bool? isWatchlistSaving,
     bool? isReviewSaving,
@@ -78,7 +74,6 @@ class MovieDetailsState extends Equatable {
       status: status ?? this.status,
       movie: movie ?? this.movie,
       similarMovies: similarMovies ?? this.similarMovies,
-      activeTab: activeTab ?? this.activeTab,
       isDetailsLoading: isDetailsLoading ?? this.isDetailsLoading,
       isReviewsLoading: isReviewsLoading ?? this.isReviewsLoading,
       isFavoriteLoading: isFavoriteLoading ?? this.isFavoriteLoading,
@@ -86,7 +81,7 @@ class MovieDetailsState extends Equatable {
       reviews: reviews ?? this.reviews,
       isFavorite: isFavorite ?? this.isFavorite,
       inWatchlist: inWatchlist ?? this.inWatchlist,
-      showTrailer: showTrailer ?? this.showTrailer,
+      videoKey: videoKey ?? this.videoKey,
       isFavoriteSaving: isFavoriteSaving ?? this.isFavoriteSaving,
       isWatchlistSaving: isWatchlistSaving ?? this.isWatchlistSaving,
       isReviewSaving: isReviewSaving ?? this.isReviewSaving,
@@ -99,7 +94,6 @@ class MovieDetailsState extends Equatable {
     status,
     movie,
     similarMovies,
-    activeTab,
     isDetailsLoading,
     isReviewsLoading,
     isFavoriteLoading,
@@ -107,7 +101,7 @@ class MovieDetailsState extends Equatable {
     reviews,
     isFavorite,
     inWatchlist,
-    showTrailer,
+    videoKey,
     isFavoriteSaving,
     isWatchlistSaving,
     isReviewSaving,
@@ -167,6 +161,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
           status: MovieDetailsStatus.loaded,
           movie: detail.movie,
           similarMovies: detail.similarMovies,
+          videoKey: detail.videoKey,
           isDetailsLoading: false,
           clearFailure: true,
         ),
@@ -185,7 +180,6 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
       case UserMovieListType.watchlist:
         emit(state.copyWith(inWatchlist: isListed, isWatchlistLoading: false));
       case UserMovieListType.watched:
-      case UserMovieListType.downloaded:
         break;
     }
   }
@@ -201,13 +195,6 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
   }
 
-  void selectTab(MovieDetailsTab tab) {
-    emit(state.copyWith(activeTab: tab));
-  }
-
-  void showTrailer() => emit(state.copyWith(showTrailer: true));
-
-  void hideTrailer() => emit(state.copyWith(showTrailer: false));
 
   Future<bool> toggleFavorite() {
     if (state.isFavoriteLoading || state.isFavoriteSaving) {

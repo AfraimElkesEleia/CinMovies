@@ -8,6 +8,10 @@ import 'package:cinmovies_app/features/movie_details/data/model/movie_details_ar
 import 'package:cinmovies_app/features/library/presentation/widgets/library_header.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_movie_list.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_tab_bar.dart';
+import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
+import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
+import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
+import 'package:cinmovies_app/features/library/presentation/widgets/trailer_history_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,7 +21,10 @@ class LibraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => LibraryCubit(sl<LibraryRepository>())..load(),
+      create: (_) => LibraryCubit(
+        sl<LibraryRepository>(),
+        sl<TrailerHistoryRepository>(),
+      )..load(),
       child: BlocBuilder<LibraryCubit, LibraryState>(
         builder: (context, state) {
           final tabs = state.tabs;
@@ -38,28 +45,34 @@ class LibraryScreen extends StatelessWidget {
                       child: TabBarView(
                         children: tabs
                             .map(
-                              (tab) => LibraryMovieList(
-                                movies: tab.movies,
-                                emptyLabel: tab.emptyLabel,
-                                isLoadingMore: tab.isLoadingMore,
-                                hasMore: tab.hasMore,
-                                showDownloadActions: tab.label == 'Downloaded',
-                                onLoadMore: () => context
-                                    .read<LibraryCubit>()
-                                    .loadNextPage(tab.type),
-                                onMoviePressed: (movie, heroTag) {
-                                  context.pushNamed(
-                                    Routes.movieDetails,
-                                    arguments: MovieDetailsArgs(
-                                      movie: movie.movie,
-                                      heroTag: heroTag,
+                              (tab) => tab.type == 'trailer_history'
+                                  ? TrailerHistoryList(
+                                      entries: state.history,
+                                      emptyLabel: tab.emptyLabel,
+                                      onPressed: (entry) =>
+                                          _openTrailer(context, entry),
+                                    )
+                                  : LibraryMovieList(
+                                      movies: tab.movies,
+                                      emptyLabel: tab.emptyLabel,
+                                      isLoadingMore: tab.isLoadingMore,
+                                      hasMore: tab.hasMore,
+                                      onLoadMore: () => context
+                                          .read<LibraryCubit>()
+                                          .loadNextPage(tab.type),
+                                      onMoviePressed: (movie, heroTag) {
+                                        context.pushNamed(
+                                          Routes.movieDetails,
+                                          arguments: MovieDetailsArgs(
+                                            movie: movie.movie,
+                                            heroTag: heroTag,
+                                          ),
+                                        );
+                                      },
+                                      onRemovePressed: (movie) => context
+                                          .read<LibraryCubit>()
+                                          .removeFromList(movie, tab.type),
                                     ),
-                                  );
-                                },
-                                onRemovePressed: (movie) => context
-                                    .read<LibraryCubit>()
-                                    .removeFromList(movie, tab.type),
-                              ),
                             )
                             .toList(),
                       ),
@@ -70,6 +83,18 @@ class LibraryScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _openTrailer(BuildContext context, TrailerHistoryEntry entry) {
+    context.pushNamed(
+      Routes.trailerViewer,
+      arguments: TrailerViewerArgs(
+        videoKey: entry.videoKey,
+        movieId: entry.movieId,
+        title: entry.title,
+        imageAsset: entry.imageAsset,
       ),
     );
   }

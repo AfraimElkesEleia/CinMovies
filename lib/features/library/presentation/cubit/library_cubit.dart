@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_movie_model.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_tab_model.dart';
+import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
+import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,14 +15,16 @@ class LibraryState extends Equatable {
   const LibraryState({
     this.status = LibraryStatus.initial,
     this.tabs = _emptyTabs,
+    this.history = const [],
   });
 
   static const _emptyTabs = [
     LibraryTabModel(
       label: 'History',
-      type: 'watched',
-      emptyLabel: 'No watch history yet',
+      type: 'trailer_history',
+      emptyLabel: 'No trailer history yet',
       movies: [],
+      hasMore: false,
     ),
     LibraryTabModel(
       label: 'Watchlist',
@@ -32,37 +38,36 @@ class LibraryState extends Equatable {
       emptyLabel: 'No favorite movies yet',
       movies: [],
     ),
-    LibraryTabModel(
-      label: 'Downloaded',
-      type: 'downloaded',
-      emptyLabel: 'No downloads available',
-      movies: [],
-    ),
   ];
 
   final LibraryStatus status;
   final List<LibraryTabModel> tabs;
+  final List<TrailerHistoryEntry> history;
 
   @override
-  List<Object> get props => [status, tabs];
+  List<Object> get props => [status, tabs, history];
 }
 
 class LibraryCubit extends Cubit<LibraryState> {
-  LibraryCubit(this._repository) : super(const LibraryState());
+  LibraryCubit(this._repository, this._trailerHistoryRepository)
+    : super(const LibraryState());
 
   static const pageSize = 20;
 
   final LibraryRepositoryContract _repository;
+  final TrailerHistoryRepositoryContract _trailerHistoryRepository;
+  StreamSubscription<List<TrailerHistoryEntry>>? _historySubscription;
 
   Future<void> load() async {
-    emit(const LibraryState(status: LibraryStatus.loading));
+    _watchTrailerHistory();
+    emit(
+      LibraryState(
+        status: LibraryStatus.loading,
+        history: state.history,
+      ),
+    );
     try {
       final results = await Future.wait([
-        _repository.movieRowsPage(
-          type: UserMovieListType.watched,
-          page: 0,
-          pageSize: pageSize,
-        ),
         _repository.movieRowsPage(
           type: UserMovieListType.watchlist,
           page: 0,
@@ -73,17 +78,17 @@ class LibraryCubit extends Cubit<LibraryState> {
           page: 0,
           pageSize: pageSize,
         ),
-        _repository.movieRowsPage(
-          type: UserMovieListType.downloaded,
-          page: 0,
-          pageSize: pageSize,
-        ),
       ]);
 
       // If any tab returned a failure, emit the failure state.
       for (final result in results) {
         if (result.isLeft()) {
-          emit(const LibraryState(status: LibraryStatus.failure));
+          emit(
+            LibraryState(
+              status: LibraryStatus.failure,
+              history: state.history,
+            ),
+          );
           return;
         }
       }
@@ -94,11 +99,33 @@ class LibraryCubit extends Cubit<LibraryState> {
           tabs: _buildTabsFromRows(
             results.map((e) => e.getOrElse(() => [])).toList(),
           ),
+          history: state.history,
         ),
       );
     } catch (_) {
-      emit(const LibraryState(status: LibraryStatus.failure));
+      emit(
+        LibraryState(
+          status: LibraryStatus.failure,
+          history: state.history,
+        ),
+      );
     }
+  }
+
+  void _watchTrailerHistory() {
+    if (_historySubscription != null) return;
+    _historySubscription = _trailerHistoryRepository.watchHistory().listen(
+      (history) {
+        if (isClosed) return;
+        emit(
+          LibraryState(
+            status: state.status,
+            tabs: state.tabs,
+            history: history,
+          ),
+        );
+      },
+    );
   }
 
   List<LibraryTabModel> _buildTabsFromRows(
@@ -107,19 +134,17 @@ class LibraryCubit extends Cubit<LibraryState> {
     return [
       LibraryTabModel(
         label: 'History',
-        type: UserMovieListType.watched.value,
-        emptyLabel: 'No watch history yet',
-        hasMore: rows[0].length == pageSize,
-        movies: rows[0]
-            .map((row) => _movieFromRow(row, 'Continue watching', 1))
-            .toList(),
+        type: 'trailer_history',
+        emptyLabel: 'No trailer history yet',
+        hasMore: false,
+        movies: const [],
       ),
       LibraryTabModel(
         label: 'Watchlist',
         type: UserMovieListType.watchlist.value,
         emptyLabel: 'Your watchlist is empty',
-        hasMore: rows[1].length == pageSize,
-        movies: rows[1]
+        hasMore: rows[0].length == pageSize,
+        movies: rows[0]
             .map((row) => _movieFromRow(row, 'Saved for later', 0))
             .toList(),
       ),
@@ -127,18 +152,9 @@ class LibraryCubit extends Cubit<LibraryState> {
         label: 'Favorites',
         type: UserMovieListType.favorite.value,
         emptyLabel: 'No favorite movies yet',
-        hasMore: rows[2].length == pageSize,
-        movies: rows[2]
+        hasMore: rows[1].length == pageSize,
+        movies: rows[1]
             .map((row) => _movieFromRow(row, 'Favorite', 1))
-            .toList(),
-      ),
-      LibraryTabModel(
-        label: 'Downloaded',
-        type: UserMovieListType.downloaded.value,
-        emptyLabel: 'No downloads available',
-        hasMore: rows[3].length == pageSize,
-        movies: rows[3]
-            .map((row) => _movieFromRow(row, 'Downloaded', 1))
             .toList(),
       ),
     ];
@@ -176,7 +192,13 @@ class LibraryCubit extends Cubit<LibraryState> {
 
     final loadingTabs = [...state.tabs];
     loadingTabs[tabIndex] = tab.copyWith(isLoadingMore: true);
-    emit(LibraryState(status: state.status, tabs: loadingTabs));
+    emit(
+      LibraryState(
+        status: state.status,
+        tabs: loadingTabs,
+        history: state.history,
+      ),
+    );
 
     final nextPage = tab.page + 1;
     final result = await _repository.movieRowsPage(
@@ -192,7 +214,13 @@ class LibraryCubit extends Cubit<LibraryState> {
         final currentIndex = tabs.indexWhere((item) => item.type == typeValue);
         if (currentIndex == -1) return;
         tabs[currentIndex] = tabs[currentIndex].copyWith(isLoadingMore: false);
-        emit(LibraryState(status: state.status, tabs: tabs));
+        emit(
+          LibraryState(
+            status: state.status,
+            tabs: tabs,
+            history: state.history,
+          ),
+        );
       },
       (rows) {
         final currentTabs = [...state.tabs];
@@ -214,7 +242,13 @@ class LibraryCubit extends Cubit<LibraryState> {
           hasMore: rows.length == pageSize,
           isLoadingMore: false,
         );
-        emit(LibraryState(status: state.status, tabs: currentTabs));
+        emit(
+          LibraryState(
+            status: state.status,
+            tabs: currentTabs,
+            history: state.history,
+          ),
+        );
       },
     );
   }
@@ -241,7 +275,13 @@ class LibraryCubit extends Cubit<LibraryState> {
               : tab,
         )
         .toList();
-    emit(LibraryState(status: state.status, tabs: nextTabs));
+    emit(
+      LibraryState(
+        status: state.status,
+        tabs: nextTabs,
+        history: state.history,
+      ),
+    );
 
     final result = await _repository.removeMovieIdFromList(
       movieId: movie.movieId,
@@ -250,7 +290,13 @@ class LibraryCubit extends Cubit<LibraryState> {
 
     return result.fold(
       (_) {
-        emit(LibraryState(status: state.status, tabs: previousTabs));
+        emit(
+          LibraryState(
+            status: state.status,
+            tabs: previousTabs,
+            history: state.history,
+          ),
+        );
         return false;
       },
       (_) => true,
@@ -262,7 +308,6 @@ class LibraryCubit extends Cubit<LibraryState> {
       UserMovieListType.watched => 'Continue watching',
       UserMovieListType.watchlist => 'Saved for later',
       UserMovieListType.favorite => 'Favorite',
-      UserMovieListType.downloaded => 'Downloaded',
     };
   }
 
@@ -292,8 +337,13 @@ class LibraryCubit extends Cubit<LibraryState> {
     return switch (status) {
       'Saved for later' => Icons.bookmark_rounded,
       'Favorite' => Icons.favorite_rounded,
-      'Downloaded' => Icons.download_done_rounded,
       _ => Icons.play_arrow_rounded,
     };
+  }
+
+  @override
+  Future<void> close() async {
+    await _historySubscription?.cancel();
+    return super.close();
   }
 }

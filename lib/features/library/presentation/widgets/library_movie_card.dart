@@ -10,14 +10,12 @@ class LibraryMovieCard extends StatelessWidget {
     required this.heroTag,
     required this.onPressed,
     required this.onRemovePressed,
-    this.showDownloadActions = false,
   });
 
   final LibraryMovieModel movie;
   final String heroTag;
   final VoidCallback onPressed;
   final VoidCallback onRemovePressed;
-  final bool showDownloadActions;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +54,6 @@ class LibraryMovieCard extends StatelessWidget {
                     child: _MovieCardContent(
                       movie: movie,
                       isTight: isTight,
-                      showDownloadActions: showDownloadActions,
                       onRemovePressed: onRemovePressed,
                     ),
                   ),
@@ -98,13 +95,11 @@ class _MovieCardContent extends StatelessWidget {
   const _MovieCardContent({
     required this.movie,
     required this.isTight,
-    required this.showDownloadActions,
     required this.onRemovePressed,
   });
 
   final LibraryMovieModel movie;
   final bool isTight;
-  final bool showDownloadActions;
   final VoidCallback onRemovePressed;
 
   @override
@@ -140,7 +135,6 @@ class _MovieCardContent extends StatelessWidget {
         _MovieCardActions(
           movie: movie,
           isTight: isTight,
-          showDownloadActions: showDownloadActions,
           onRemovePressed: onRemovePressed,
         ),
       ],
@@ -221,25 +215,15 @@ class _MovieCardActions extends StatelessWidget {
   const _MovieCardActions({
     required this.movie,
     required this.isTight,
-    required this.showDownloadActions,
     required this.onRemovePressed,
   });
 
   final LibraryMovieModel movie;
   final bool isTight;
-  final bool showDownloadActions;
   final VoidCallback onRemovePressed;
 
   @override
   Widget build(BuildContext context) {
-    if (showDownloadActions) {
-      return _ActionIcon(
-        icon: Icons.delete_outline_rounded,
-        isTight: isTight,
-        onPressed: onRemovePressed,
-      );
-    }
-
     return _ActionIcon(
       icon: movie.actionIcon,
       isTight: isTight,

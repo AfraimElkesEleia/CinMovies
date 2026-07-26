@@ -9,6 +9,8 @@ class MovieDetailsInfo extends StatelessWidget {
     required this.movie,
     required this.inWatchlist,
     required this.isWatchlistLoading,
+    required this.isTrailerLoading,
+    required this.isTrailerAvailable,
     required this.onTrailerPressed,
     required this.onWatchlistPressed,
   });
@@ -16,11 +18,14 @@ class MovieDetailsInfo extends StatelessWidget {
   final Movie movie;
   final bool inWatchlist;
   final bool isWatchlistLoading;
+  final bool isTrailerLoading;
+  final bool isTrailerAvailable;
   final VoidCallback onTrailerPressed;
   final VoidCallback onWatchlistPressed;
 
   @override
   Widget build(BuildContext context) {
+    final canWatchTrailer = !isTrailerLoading && isTrailerAvailable;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
@@ -64,23 +69,52 @@ class MovieDetailsInfo extends StatelessWidget {
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        AppColors.loginPrimary,
-                        AppColors.loginPrimaryDark,
-                      ],
+                    gradient: LinearGradient(
+                      colors: canWatchTrailer
+                          ? const [
+                              AppColors.loginPrimary,
+                              AppColors.loginPrimaryDark,
+                            ]
+                          : const [
+                              AppColors.surfaceBorder,
+                              AppColors.surface,
+                            ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: onTrailerPressed,
-                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                    label: const Text('Watch Trailer'),
+                    onPressed: canWatchTrailer ? onTrailerPressed : null,
+                    icon: isTrailerLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : Icon(
+                            isTrailerAvailable
+                                ? Icons.play_arrow_rounded
+                                : Icons.videocam_off_outlined,
+                            size: 20,
+                          ),
+                    label: Text(
+                      isTrailerLoading
+                          ? 'Loading Trailer'
+                          : isTrailerAvailable
+                          ? 'Watch Trailer'
+                          : 'Trailer Unavailable',
+                    ),
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
                       shadowColor: AppColors.transparent,
                       backgroundColor: AppColors.transparent,
+                      disabledBackgroundColor: AppColors.black.withValues(
+                        alpha: 0.45,
+                      ),
                       foregroundColor: AppColors.white,
+                      disabledForegroundColor: AppColors.textMuted,
                       minimumSize: const Size.fromHeight(52),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

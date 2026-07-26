@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_shimmer.dart';
 import 'package:flutter/material.dart';
@@ -30,13 +31,6 @@ class _MovieImageState extends State<MovieImage> {
   void didUpdateWidget(covariant MovieImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.path == widget.path) return;
-
-    if (!_activeLoaded) {
-      _nextPath = widget.path;
-      _nextLoaded = false;
-      return;
-    }
-
     _nextPath = widget.path;
     _nextLoaded = false;
   }
@@ -66,33 +60,34 @@ class _MovieImageState extends State<MovieImage> {
   }
 
   Widget _buildImage(String path, VoidCallback onLoaded) {
-    return path.startsWith('http')
-        ? Image.network(
-            path,
-            key: ValueKey(path),
-            fit: widget.fit,
-            errorBuilder: (context, error, stackTrace) {
-              onLoaded();
-              return const _ImageFallback();
-            },
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (frame != null || wasSynchronouslyLoaded) onLoaded();
-              return child;
-            },
-          )
-        : Image.asset(
-            path,
-            key: ValueKey(path),
-            fit: widget.fit,
-            errorBuilder: (context, error, stackTrace) {
-              onLoaded();
-              return const _ImageFallback();
-            },
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (frame != null || wasSynchronouslyLoaded) onLoaded();
-              return child;
-            },
-          );
+    if (!path.startsWith('http')) {
+      return Image.asset(
+        path,
+        key: ValueKey(path),
+        fit: widget.fit,
+        errorBuilder: (_, _, _) {
+          onLoaded();
+          return const _ImageFallback();
+        },
+        frameBuilder: (_, child, frame, wasSynchronouslyLoaded) {
+          if (frame != null || wasSynchronouslyLoaded) onLoaded();
+          return child;
+        },
+      );
+    }
+    return CachedNetworkImage(
+      key: ValueKey(path),
+      imageUrl: path,
+      imageBuilder: (_, imageProvider) {
+        onLoaded();
+        return Image(image: imageProvider, fit: widget.fit);
+      },
+      errorWidget: (_, _, _) {
+        onLoaded();
+        return const _ImageFallback();
+      },
+      placeholder: (_, _) => const SizedBox.shrink(),
+    );
   }
 
   @override

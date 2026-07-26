@@ -13,6 +13,8 @@ import 'package:cinmovies_app/features/profile/presentation/favorite_genres_scre
 import 'package:cinmovies_app/features/profile/presentation/my_reviews_screen.dart';
 import 'package:cinmovies_app/features/search/presentation/search_screen.dart';
 import 'package:cinmovies_app/features/signup/presentation/signup_screen.dart';
+import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
+import 'package:cinmovies_app/features/trailers/presentation/trailer_viewer_screen.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -50,6 +52,14 @@ class AppRouter {
               movie: args,
               heroTag: 'movie-poster-${args.id}',
             ),
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
+      case Routes.trailerViewer:
+        final args = settings.arguments;
+        if (args is TrailerViewerArgs) {
+          return MaterialPageRoute(
+            builder: (_) => TrailerViewerScreen(args: args),
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());

@@ -60,6 +60,22 @@ void main() {
           {'id': 11, 'title': 'Similar Movie'},
         ],
       },
+      'videos': {
+        'results': [
+          {
+            'site': 'YouTube',
+            'type': 'Trailer',
+            'official': false,
+            'key': 'unofficial-key',
+          },
+          {
+            'site': 'YouTube',
+            'type': 'Trailer',
+            'official': true,
+            'key': 'official-key',
+          },
+        ],
+      },
     };
 
     final result = await repository.fetchMovieDetails(_seed());
@@ -76,6 +92,7 @@ void main() {
     expect(details.movie.cast.single.name, 'Actor One');
     expect(details.movie.reviews.single.username, 'critic_user');
     expect(details.similarMovies.single.title, 'Similar Movie');
+    expect(details.videoKey, 'official-key');
     expect(adapter.lastOptions?.path, '/movie/10');
     expect(adapter.lastOptions?.headers['Authorization'], 'Bearer test-token');
     expect(

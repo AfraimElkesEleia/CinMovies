@@ -11,8 +11,7 @@ import 'package:dartz/dartz.dart';
 enum UserMovieListType {
   favorite('favorite'),
   watchlist('watchlist'),
-  watched('watched'),
-  downloaded('downloaded');
+  watched('watched');
 
   const UserMovieListType(this.value);
 

@@ -24,6 +24,7 @@ import 'package:cinmovies_app/features/profile/presentation/cubit/profile_cubit.
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
+import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
 import 'package:cinmovies_app/core/network/dio_client.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_storage_service.dart';
@@ -76,6 +77,9 @@ Future<void> initDependencies({
     () => PreferenceRepository(sl(), sl(), sl()),
   );
   sl.registerLazySingleton<AiHistoryRepository>(() => AiHistoryRepository(sl()));
+  sl.registerLazySingleton<TrailerHistoryRepository>(
+    () => TrailerHistoryRepository(sl(), sl()),
+  );
 
   sl.registerFactory<AuthCubit>(() => AuthCubit(sl(), sl()));
   sl.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
@@ -85,7 +89,7 @@ Future<void> initDependencies({
   );
   sl.registerFactory<BrowseCubit>(() => BrowseCubit(sl()));
   sl.registerFactory<SearchCubit>(() => SearchCubit(sl(), sl()));
-  sl.registerFactory<LibraryCubit>(() => LibraryCubit(sl()));
+  sl.registerFactory<LibraryCubit>(() => LibraryCubit(sl(), sl()));
   sl.registerFactory<OnboardingCubit>(() => OnboardingCubit(sl()));
   sl.registerFactory<PreferenceCubit>(() => PreferenceCubit(sl()));
   sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl(), sl()));

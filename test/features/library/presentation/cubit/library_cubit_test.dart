@@ -2,6 +2,8 @@ import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
+import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,7 +15,7 @@ void main() {
         _row('older', 'Older Movie'),
       ],
     });
-    final cubit = LibraryCubit(repository);
+    final cubit = LibraryCubit(repository, _FakeTrailerHistoryRepository());
     addTearDown(cubit.close);
 
     await cubit.load();
@@ -26,6 +28,11 @@ void main() {
       'Older Movie',
     ]);
     expect(repository.requests, contains('watchlist:0:20'));
+    expect(repository.requests, contains('favorite:0:20'));
+    expect(
+      repository.requests.any((request) => request.startsWith('watched:')),
+      isFalse,
+    );
   });
 
   test('loadNextPage appends older page and stops when page is short', () async {
@@ -37,7 +44,7 @@ void main() {
       'favorite:0': firstPage,
       'favorite:1': [_row('older', 'Older Movie')],
     });
-    final cubit = LibraryCubit(repository);
+    final cubit = LibraryCubit(repository, _FakeTrailerHistoryRepository());
     addTearDown(cubit.close);
 
     await cubit.load();
@@ -54,6 +61,33 @@ void main() {
       'favorite:1:20',
     ]);
   });
+}
+
+class _FakeTrailerHistoryRepository
+    implements TrailerHistoryRepositoryContract {
+  @override
+  Future<Either<Failure, TrailerHistoryEntry?>> findByVideoKey(
+    String videoKey,
+  ) async {
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, List<TrailerHistoryEntry>>> history() async {
+    return const Right([]);
+  }
+
+  @override
+  Future<Either<Failure, void>> saveProgress(
+    TrailerHistoryEntry entry,
+  ) async {
+    return const Right(null);
+  }
+
+  @override
+  Stream<List<TrailerHistoryEntry>> watchHistory() {
+    return Stream.value(const []);
+  }
 }
 
 class _FakeLibraryRepository implements LibraryRepositoryContract {

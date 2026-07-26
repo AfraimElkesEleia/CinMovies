@@ -5,18 +5,21 @@ class HiveCacheService {
     this._searchBox,
     this._movieBox,
     this._userSnapshotBox,
-    this._favoriteGenresBox,
-  );
+    this._favoriteGenresBox, {
+    this._trailerHistoryBox,
+  });
 
   static const searchBoxName = 'search_cache';
   static const movieBoxName = 'movie_cache';
   static const userSnapshotBoxName = 'user_snapshot_cache';
   static const favoriteGenresBoxName = 'favorite_genres_cache';
+  static const trailerHistoryBoxName = 'trailer_history';
 
   final Box<dynamic> _searchBox;
   final Box<dynamic> _movieBox;
   final Box<dynamic> _userSnapshotBox;
   final Box<dynamic> _favoriteGenresBox;
+  final Box<dynamic>? _trailerHistoryBox;
 
   static Future<HiveCacheService> initialize() async {
     await Hive.initFlutter();
@@ -24,12 +27,16 @@ class HiveCacheService {
     final movieBox = await Hive.openBox<dynamic>(movieBoxName);
     final userSnapshotBox = await Hive.openBox<dynamic>(userSnapshotBoxName);
     final favoriteGenresBox = await Hive.openBox<dynamic>(favoriteGenresBoxName);
+    final trailerHistoryBox = await Hive.openBox<dynamic>(
+      trailerHistoryBoxName,
+    );
 
     return HiveCacheService(
       searchBox,
       movieBox,
       userSnapshotBox,
       favoriteGenresBox,
+      trailerHistoryBox: trailerHistoryBox,
     );
   }
 
@@ -85,6 +92,61 @@ class HiveCacheService {
 
   Future<void> cacheFavoriteGenres(Set<String> genres) async {
     await _favoriteGenresBox.put('genres', genres.toList()..sort());
+  }
+
+  List<Map<String, dynamic>> getTrailerHistory(String scopeId) {
+    final prefix = _trailerKeyPrefix(scopeId);
+    return _requiredTrailerHistoryBox()
+        .toMap()
+        .entries
+        .where((entry) => entry.key is String && (entry.key as String).startsWith(prefix))
+        .map((entry) => _map(entry.value))
+        .whereType<Map<String, dynamic>>()
+        .toList();
+  }
+
+  Map<String, dynamic>? getTrailerHistoryEntry(
+    String scopeId,
+    String videoKey,
+  ) {
+    return _map(
+      _requiredTrailerHistoryBox().get(_trailerKey(scopeId, videoKey)),
+    );
+  }
+
+  Future<void> cacheTrailerHistoryEntry(
+    String scopeId,
+    String videoKey,
+    Map<String, dynamic> value,
+  ) async {
+    await _requiredTrailerHistoryBox().put(
+      _trailerKey(scopeId, videoKey),
+      value,
+    );
+  }
+
+  Stream<void> watchTrailerHistory(String scopeId) async* {
+    final prefix = _trailerKeyPrefix(scopeId);
+    await for (final event in _requiredTrailerHistoryBox().watch()) {
+      final key = event.key;
+      if (key is String && key.startsWith(prefix)) {
+        yield null;
+      }
+    }
+  }
+
+  Box<dynamic> _requiredTrailerHistoryBox() {
+    final box = _trailerHistoryBox;
+    if (box == null) {
+      throw StateError('Trailer history box is not configured.');
+    }
+    return box;
+  }
+
+  String _trailerKeyPrefix(String scopeId) => '$scopeId::';
+
+  String _trailerKey(String scopeId, String videoKey) {
+    return '${_trailerKeyPrefix(scopeId)}$videoKey';
   }
 
   List<String> _stringList(dynamic value) {

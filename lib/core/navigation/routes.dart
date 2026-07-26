@@ -5,6 +5,7 @@ abstract class Routes {
   static const String search = '/search';
   static const String movieSection = '/movieSection';
   static const String movieDetails = '/movieDetails';
+  static const String trailerViewer = '/trailerViewer';
   static const String login = '/login';
   static const String register = '/register';
   static const String preferenceOnboarding = '/preferenceOnboarding';

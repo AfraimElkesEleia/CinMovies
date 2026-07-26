@@ -13,7 +13,6 @@ class LibraryMovieList extends StatelessWidget {
     required this.onLoadMore,
     required this.isLoadingMore,
     required this.hasMore,
-    this.showDownloadActions = false,
   });
 
   final List<LibraryMovieModel> movies;
@@ -23,7 +22,6 @@ class LibraryMovieList extends StatelessWidget {
   final VoidCallback onLoadMore;
   final bool isLoadingMore;
   final bool hasMore;
-  final bool showDownloadActions;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +69,6 @@ class LibraryMovieList extends StatelessWidget {
           return LibraryMovieCard(
             movie: movie,
             heroTag: heroTag,
-            showDownloadActions: showDownloadActions,
             onPressed: () => onMoviePressed(movie, heroTag),
             onRemovePressed: () => onRemovePressed(movie),
           );

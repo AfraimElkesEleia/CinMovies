@@ -43,7 +43,11 @@ class MovieDetailsRepository {
 }
 
 class MovieDetailsResult {
-  const MovieDetailsResult({required this.movie, required this.similarMovies});
+  const MovieDetailsResult({
+    required this.movie,
+    required this.similarMovies,
+    this.videoKey,
+  });
 
   factory MovieDetailsResult.fromJson(
     Map<String, dynamic>? json,
@@ -56,11 +60,50 @@ class MovieDetailsResult {
     return MovieDetailsResult(
       movie: _movieFromJson(json, seed),
       similarMovies: TmdbMovieMapper.listFromResponse(json['similar']),
+      videoKey: _videoKey(json['videos']),
     );
   }
 
   final Movie movie;
   final List<Movie> similarMovies;
+  final String? videoKey;
+
+  static String? _videoKey(Object? videos) {
+    if (videos is! Map<String, dynamic>) return null;
+    final results = videos['results'];
+    if (results is! List) return null;
+
+    final youtubeVideos = results
+        .whereType<Map<String, dynamic>>()
+        .where((video) {
+          final key = (video['key'] as String?)?.trim() ?? '';
+          return key.isNotEmpty &&
+              (video['site'] as String?)?.toLowerCase() == 'youtube';
+        })
+        .toList();
+
+    Map<String, dynamic>? firstWhere(
+      bool Function(Map<String, dynamic>) test,
+    ) {
+      for (final video in youtubeVideos) {
+        if (test(video)) return video;
+      }
+      return null;
+    }
+
+    bool isType(Map<String, dynamic> video, String type) {
+      return (video['type'] as String?)?.toLowerCase() == type.toLowerCase();
+    }
+
+    bool isOfficial(Map<String, dynamic> video) => video['official'] == true;
+
+    final selected =
+        firstWhere((video) => isType(video, 'Trailer') && isOfficial(video)) ??
+        firstWhere((video) => isType(video, 'Trailer')) ??
+        firstWhere((video) => isType(video, 'Teaser') && isOfficial(video)) ??
+        (youtubeVideos.isEmpty ? null : youtubeVideos.first);
+    return (selected?['key'] as String?)?.trim();
+  }
 
   static Movie _movieFromJson(
     Map<String, dynamic> json,
