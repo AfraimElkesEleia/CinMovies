@@ -105,6 +105,42 @@ void main() {
     ]);
     expect(repository.movieRequests, ['All:1', 'All:2']);
   });
+
+  test('refresh reloads page one for the active genre', () async {
+    const action = BrowseGenre(id: 28, name: 'Action');
+    final repository = _FakeBrowseRepository(
+      pages: {
+        'All:1': BrowseMoviesPage(
+          movies: [_movie('1', 'All Movie')],
+          page: 1,
+          totalPages: 1,
+        ),
+        'Action:1': BrowseMoviesPage(
+          movies: [_movie('2', 'Action Movie')],
+          page: 1,
+          totalPages: 2,
+        ),
+      },
+    );
+    final cubit = BrowseCubit(repository);
+    addTearDown(cubit.close);
+
+    await cubit.loadInitial();
+    await cubit.setGenre(action);
+    repository.pages['Action:1'] = BrowseMoviesPage(
+      movies: [_movie('3', 'Refreshed Action Movie')],
+      page: 1,
+      totalPages: 3,
+    );
+
+    await cubit.refresh();
+
+    expect(cubit.state.activeGenre, action);
+    expect(cubit.state.movies.single.title, 'Refreshed Action Movie');
+    expect(cubit.state.currentPage, 1);
+    expect(cubit.state.totalPages, 3);
+    expect(repository.movieRequests, ['All:1', 'Action:1', 'Action:1']);
+  });
 }
 
 class _FakeBrowseRepository extends BrowseRepository {

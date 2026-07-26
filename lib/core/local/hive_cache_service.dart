@@ -125,6 +125,15 @@ class HiveCacheService {
     );
   }
 
+  Future<void> deleteTrailerHistoryEntry(
+    String scopeId,
+    String videoKey,
+  ) async {
+    await _requiredTrailerHistoryBox().delete(
+      _trailerKey(scopeId, videoKey),
+    );
+  }
+
   Stream<void> watchTrailerHistory(String scopeId) async* {
     final prefix = _trailerKeyPrefix(scopeId);
     await for (final event in _requiredTrailerHistoryBox().watch()) {

@@ -165,6 +165,40 @@ class BrowseCubit extends Cubit<BrowseState> {
     );
   }
 
+  Future<void> refresh() async {
+    final activeGenre = state.activeGenre;
+    final genresResult = await _repository.fetchGenres();
+    final genres = genresResult.getOrElse(() => state.genres);
+    final moviesResult = await _repository.fetchMovies(
+      page: 1,
+      genre: activeGenre,
+    );
+
+    moviesResult.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: state.movies.isEmpty
+              ? BrowseStatus.failure
+              : BrowseStatus.loaded,
+          genres: genres,
+          isLoadingMore: false,
+          failure: failure,
+        ),
+      ),
+      (page) => emit(
+        state.copyWith(
+          status: BrowseStatus.loaded,
+          genres: genres,
+          movies: page.movies,
+          currentPage: page.page,
+          totalPages: page.totalPages,
+          isLoadingMore: false,
+          failure: null,
+        ),
+      ),
+    );
+  }
+
   Future<void> loadNextPage() async {
     if (state.status != BrowseStatus.loaded ||
         state.isLoadingMore ||
@@ -194,5 +228,4 @@ class BrowseCubit extends Cubit<BrowseState> {
       ),
     );
   }
-
 }

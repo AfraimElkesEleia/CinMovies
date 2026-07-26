@@ -11,6 +11,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     var tapped = false;
+    var removed = false;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -18,6 +19,7 @@ void main() {
             entries: [_entry()],
             emptyLabel: 'Empty',
             onPressed: (_) => tapped = true,
+            onRemovePressed: (_) => removed = true,
           ),
         ),
       ),
@@ -39,6 +41,9 @@ void main() {
 
     await tester.tap(find.text('Movie Trailer'));
     expect(tapped, isTrue);
+
+    await tester.tap(find.byTooltip('Remove from history'));
+    expect(removed, isTrue);
   });
 }
 

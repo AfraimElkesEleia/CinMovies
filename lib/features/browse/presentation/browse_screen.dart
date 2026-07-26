@@ -58,43 +58,51 @@ class _BrowseViewState extends State<_BrowseView> {
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
           body: SafeArea(
-            child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        BrowseHeader(
-                          genres: state.genres,
-                          activeGenre: state.activeGenre,
-                          movieCount: state.movies.length,
-                          onGenreSelected: context.read<BrowseCubit>().setGenre,
-                        ),
-                      ],
+            child: RefreshIndicator(
+              color: AppColors.loginPrimary,
+              backgroundColor: AppColors.surface,
+              onRefresh: context.read<BrowseCubit>().refresh,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          BrowseHeader(
+                            genres: state.genres,
+                            activeGenre: state.activeGenre,
+                            movieCount: state.movies.length,
+                            onGenreSelected: context
+                                .read<BrowseCubit>()
+                                .setGenre,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 18)),
-                if (state.status == BrowseStatus.loading)
-                  const BrowseLoadingShimmer()
-                else if (state.movies.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: BrowseEmptyState(),
-                  )
-                else
-                  BrowseMovieGrid(movies: state.movies),
-                if (state.isLoadingMore)
-                  const SliverToBoxAdapter(child: BottomLoader()),
-                if (state.failure != null)
-                  SliverToBoxAdapter(
-                    child: BrowseErrorBanner(message: state.failure!.message),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 28)),
-              ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 18)),
+                  if (state.status == BrowseStatus.loading)
+                    const BrowseLoadingShimmer()
+                  else if (state.movies.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: BrowseEmptyState(),
+                    )
+                  else
+                    BrowseMovieGrid(movies: state.movies),
+                  if (state.isLoadingMore)
+                    const SliverToBoxAdapter(child: BottomLoader()),
+                  if (state.failure != null)
+                    SliverToBoxAdapter(
+                      child: BrowseErrorBanner(message: state.failure!.message),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                ],
+              ),
             ),
           ),
         );

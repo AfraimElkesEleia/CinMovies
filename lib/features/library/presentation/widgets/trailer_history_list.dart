@@ -9,11 +9,13 @@ class TrailerHistoryList extends StatelessWidget {
     required this.entries,
     required this.emptyLabel,
     required this.onPressed,
+    required this.onRemovePressed,
   });
 
   final List<TrailerHistoryEntry> entries;
   final String emptyLabel;
   final ValueChanged<TrailerHistoryEntry> onPressed;
+  final ValueChanged<TrailerHistoryEntry> onRemovePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class TrailerHistoryList extends StatelessWidget {
         return _TrailerHistoryCard(
           entry: entry,
           onPressed: () => onPressed(entry),
+          onRemovePressed: () => onRemovePressed(entry),
         );
       },
     );
@@ -58,10 +61,12 @@ class _TrailerHistoryCard extends StatelessWidget {
   const _TrailerHistoryCard({
     required this.entry,
     required this.onPressed,
+    required this.onRemovePressed,
   });
 
   final TrailerHistoryEntry entry;
   final VoidCallback onPressed;
+  final VoidCallback onRemovePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -160,10 +165,26 @@ class _TrailerHistoryCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: isCompact ? 4 : 8),
-                  const Icon(
-                    Icons.play_circle_fill_rounded,
-                    color: AppColors.loginPrimary,
-                    size: 30,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.play_circle_fill_rounded,
+                        color: AppColors.loginPrimary,
+                        size: 30,
+                      ),
+                      const SizedBox(height: 6),
+                      IconButton(
+                        tooltip: 'Remove from history',
+                        onPressed: onRemovePressed,
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.textMuted,
+                          size: 21,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -306,6 +306,13 @@ class LibraryCubit extends Cubit<LibraryState> {
     );
   }
 
+  Future<bool> removeFromHistory(TrailerHistoryEntry entry) async {
+    if (entry.videoKey.trim().isEmpty) return false;
+
+    final result = await _trailerHistoryRepository.remove(entry.videoKey);
+    return result.isRight();
+  }
+
   String _statusForType(UserMovieListType type) {
     return switch (type) {
       UserMovieListType.watched => 'Continue watching',

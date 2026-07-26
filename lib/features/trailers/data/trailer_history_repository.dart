@@ -13,6 +13,8 @@ abstract class TrailerHistoryRepositoryContract {
 
   Future<Either<Failure, void>> saveProgress(TrailerHistoryEntry entry);
 
+  Future<Either<Failure, void>> remove(String videoKey);
+
   Stream<List<TrailerHistoryEntry>> watchHistory();
 }
 
@@ -83,6 +85,18 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
         normalized.videoKey,
         normalized.toMap(),
       );
+      return const Right(null);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> remove(String videoKey) async {
+    try {
+      final key = videoKey.trim();
+      if (key.isEmpty) return const Right(null);
+      await _cache.deleteTrailerHistoryEntry(_scopeId, key);
       return const Right(null);
     } catch (error) {
       return Left(_errorMapper.map(error));

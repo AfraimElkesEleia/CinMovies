@@ -2,6 +2,7 @@ import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
@@ -55,6 +56,8 @@ class LibraryScreen extends StatelessWidget {
                                         emptyLabel: tab.emptyLabel,
                                         onPressed: (entry) =>
                                             _openTrailer(context, entry),
+                                        onRemovePressed: (entry) =>
+                                            _removeHistoryEntry(context, entry),
                                       )
                                     : LibraryMovieList(
                                         movies: tab.movies,
@@ -102,5 +105,21 @@ class LibraryScreen extends StatelessWidget {
         imageAsset: entry.imageAsset,
       ),
     );
+  }
+
+  Future<void> _removeHistoryEntry(
+    BuildContext context,
+    TrailerHistoryEntry entry,
+  ) async {
+    final removed = await context
+        .read<LibraryCubit>()
+        .removeFromHistory(entry);
+    if (!context.mounted) return;
+
+    if (removed) {
+      AppSnackBar.showSuccess(context, 'Removed from history.');
+    } else {
+      AppSnackBar.showError(context, 'Could not remove from history.');
+    }
   }
 }

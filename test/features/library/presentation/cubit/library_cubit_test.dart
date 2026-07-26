@@ -85,6 +85,11 @@ class _FakeTrailerHistoryRepository
   }
 
   @override
+  Future<Either<Failure, void>> remove(String videoKey) async {
+    return const Right(null);
+  }
+
+  @override
   Stream<List<TrailerHistoryEntry>> watchHistory() {
     return Stream.value(const []);
   }

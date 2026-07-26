@@ -69,6 +69,22 @@ void main() {
     expect(entries.single.watchedSeconds, 100);
     expect(entries.single.percentage, 100);
   });
+
+  test('remove deletes only the current account history entry', () async {
+    await repository.saveProgress(_entry(watched: 25, updatedAtSeconds: 1));
+
+    scopeId = 'user-b';
+    await repository.saveProgress(_entry(watched: 40, updatedAtSeconds: 2));
+
+    scopeId = 'user-a';
+    final result = await repository.remove('video-key');
+
+    expect(result.isRight(), isTrue);
+    expect((await repository.history()).getOrElse(() => []), isEmpty);
+
+    scopeId = 'user-b';
+    expect((await repository.history()).getOrElse(() => []), hasLength(1));
+  });
 }
 
 TrailerHistoryEntry _entry({
