@@ -18,19 +18,28 @@ class TrailerHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return Center(
-        child: Text(
-          emptyLabel,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                emptyLabel,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       );
     }
 
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
       itemCount: entries.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),

@@ -26,15 +26,23 @@ class LibraryMovieList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (movies.isEmpty) {
-      return Center(
-        child: Text(
-          emptyLabel,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                emptyLabel,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       );
     }
 
@@ -49,6 +57,7 @@ class LibraryMovieList extends StatelessWidget {
         return false;
       },
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
         itemCount: movies.length + (isLoadingMore ? 1 : 0),
         separatorBuilder: (context, index) => const SizedBox(height: 12),

@@ -45,34 +45,39 @@ class LibraryScreen extends StatelessWidget {
                       child: TabBarView(
                         children: tabs
                             .map(
-                              (tab) => tab.type == 'trailer_history'
-                                  ? TrailerHistoryList(
-                                      entries: state.history,
-                                      emptyLabel: tab.emptyLabel,
-                                      onPressed: (entry) =>
-                                          _openTrailer(context, entry),
-                                    )
-                                  : LibraryMovieList(
-                                      movies: tab.movies,
-                                      emptyLabel: tab.emptyLabel,
-                                      isLoadingMore: tab.isLoadingMore,
-                                      hasMore: tab.hasMore,
-                                      onLoadMore: () => context
-                                          .read<LibraryCubit>()
-                                          .loadNextPage(tab.type),
-                                      onMoviePressed: (movie, heroTag) {
-                                        context.pushNamed(
-                                          Routes.movieDetails,
-                                          arguments: MovieDetailsArgs(
-                                            movie: movie.movie,
-                                            heroTag: heroTag,
-                                          ),
-                                        );
-                                      },
-                                      onRemovePressed: (movie) => context
-                                          .read<LibraryCubit>()
-                                          .removeFromList(movie, tab.type),
-                                    ),
+                              (tab) => RefreshIndicator(
+                                color: AppColors.loginPrimary,
+                                backgroundColor: AppColors.surface,
+                                onRefresh: context.read<LibraryCubit>().load,
+                                child: tab.type == 'trailer_history'
+                                    ? TrailerHistoryList(
+                                        entries: state.history,
+                                        emptyLabel: tab.emptyLabel,
+                                        onPressed: (entry) =>
+                                            _openTrailer(context, entry),
+                                      )
+                                    : LibraryMovieList(
+                                        movies: tab.movies,
+                                        emptyLabel: tab.emptyLabel,
+                                        isLoadingMore: tab.isLoadingMore,
+                                        hasMore: tab.hasMore,
+                                        onLoadMore: () => context
+                                            .read<LibraryCubit>()
+                                            .loadNextPage(tab.type),
+                                        onMoviePressed: (movie, heroTag) {
+                                          context.pushNamed(
+                                            Routes.movieDetails,
+                                            arguments: MovieDetailsArgs(
+                                              movie: movie.movie,
+                                              heroTag: heroTag,
+                                            ),
+                                          );
+                                        },
+                                        onRemovePressed: (movie) => context
+                                            .read<LibraryCubit>()
+                                            .removeFromList(movie, tab.type),
+                                      ),
+                              ),
                             )
                             .toList(),
                       ),

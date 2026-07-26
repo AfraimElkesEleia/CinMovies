@@ -63,6 +63,7 @@ class LibraryCubit extends Cubit<LibraryState> {
     emit(
       LibraryState(
         status: LibraryStatus.loading,
+        tabs: state.tabs,
         history: state.history,
       ),
     );
@@ -86,6 +87,7 @@ class LibraryCubit extends Cubit<LibraryState> {
           emit(
             LibraryState(
               status: LibraryStatus.failure,
+              tabs: state.tabs,
               history: state.history,
             ),
           );
@@ -106,6 +108,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       emit(
         LibraryState(
           status: LibraryStatus.failure,
+          tabs: state.tabs,
           history: state.history,
         ),
       );
