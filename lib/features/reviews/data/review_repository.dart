@@ -2,7 +2,7 @@ import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:dartz/dartz.dart';
@@ -52,7 +52,7 @@ class ReviewRepository {
     }
   }
 
-  Future<Either<Failure, List<AppReview>>> reviewsForMovie(
+  Future<Either<Failure, List<CommunityReview>>> reviewsForMovie(
     Movie movie,
   ) async {
     try {
@@ -74,7 +74,7 @@ class ReviewRepository {
                 .map<Map<String, dynamic>>(Map<String, dynamic>.from)
                 .map(
                   (row) =>
-                      AppReview.fromRow(row, currentUserId: _database.currentUser?.id),
+                      CommunityReview.fromRow(row, currentUserId: _database.currentUser?.id),
                 )
                 .toList(),
           );
@@ -85,7 +85,7 @@ class ReviewRepository {
     }
   }
 
-  Future<Either<Failure, List<AppReview>>> reviewsForCurrentUser() async {
+  Future<Either<Failure, List<CommunityReview>>> reviewsForCurrentUser() async {
     try {
       final rows = await _database
           .from('user_reviews')
@@ -100,7 +100,7 @@ class ReviewRepository {
         rows
             .map<Map<String, dynamic>>(Map<String, dynamic>.from)
             .map(
-              (row) => AppReview.fromRow(
+              (row) => CommunityReview.fromRow(
                 row,
                 currentUserId: _database.currentUser?.id,
               ),

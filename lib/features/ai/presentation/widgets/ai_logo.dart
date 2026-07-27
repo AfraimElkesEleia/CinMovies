@@ -28,8 +28,8 @@ class AiLogo extends StatelessWidget {
   }
 }
 
-class OnlineDot extends StatelessWidget {
-  const OnlineDot({super.key});
+class AiOnlineStatusIndicator extends StatelessWidget {
+  const AiOnlineStatusIndicator({super.key});
 
   @override
   Widget build(BuildContext context) {

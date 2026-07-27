@@ -5,7 +5,7 @@ import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/core/widgets/auth_screen_layout.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:cinmovies_app/features/signup/presentation/widgets/signup_form.dart';
 import 'package:cinmovies_app/features/signup/presentation/widgets/signup_widgets.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class SignupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          AuthCubit(sl<AuthRepository>(), sl<PreferenceRepository>()),
+          AuthCubit(serviceLocator<AuthRepository>(), serviceLocator<GenrePreferencesRepository>()),
       child: const _SignupView(),
     );
   }
@@ -62,7 +62,7 @@ class _SignupViewState extends State<_SignupView> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == AuthSubmissionStatus.success) {
-          context.pushNamedAndRemoveUntil(Routes.preferenceOnboarding);
+          context.pushNamedAndRemoveUntil(AppRoutes.preferenceOnboarding);
         }
 
         if (state.status == AuthSubmissionStatus.failure &&
@@ -91,11 +91,11 @@ class _SignupViewState extends State<_SignupView> {
                 confirmPasswordValidator: _confirmPassword,
               ),
               const SizedBox(height: 16),
-              const SignupSocialActions(),
+              const SignupSocialLoginSection(),
               const SizedBox(height: 32),
               LoginPrompt(
                 onLoginPressed: () =>
-                    context.pushNamedAndRemoveUntil(Routes.login),
+                    context.pushNamedAndRemoveUntil(AppRoutes.login),
               ),
             ],
           );

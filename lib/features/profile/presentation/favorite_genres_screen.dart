@@ -1,8 +1,8 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
-import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
+import 'package:cinmovies_app/features/preferences/domain/movie_genre_option.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/favorite_genres_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +13,7 @@ class FavoriteGenresScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => FavoriteGenresCubit(sl<PreferenceRepository>())..load(),
+      create: (_) => FavoriteGenresCubit(serviceLocator<GenrePreferencesRepository>())..load(),
       child: const _FavoriteGenresView(),
     );
   }
@@ -81,7 +81,7 @@ class _FavoriteGenresView extends StatelessWidget {
                               child: Wrap(
                                 spacing: 12,
                                 runSpacing: 12,
-                                children: movieGenres.map((genre) {
+                                children: movieGenreOptions.map((genre) {
                                   final isSelected = state.selectedGenres
                                       .contains(genre.genre);
 

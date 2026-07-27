@@ -1,4 +1,4 @@
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,12 +40,12 @@ class FavoriteGenresState extends Equatable {
 class FavoriteGenresCubit extends Cubit<FavoriteGenresState> {
   FavoriteGenresCubit(this._repository) : super(const FavoriteGenresState());
 
-  final PreferenceRepository _repository;
+  final GenrePreferencesRepository _repository;
 
   Future<void> load() async {
     emit(state.copyWith(status: FavoriteGenresStatus.loading, clearError: true));
     try {
-      final genres = await _repository.favoriteGenres();
+      final genres = await _repository.loadFavoriteGenres();
       emit(
         state.copyWith(
           status: FavoriteGenresStatus.loaded,
@@ -74,7 +74,7 @@ class FavoriteGenresCubit extends Cubit<FavoriteGenresState> {
 
     emit(state.copyWith(status: FavoriteGenresStatus.saving, clearError: true));
     try {
-      await _repository.saveSelectedGenres(state.selectedGenres);
+      await _repository.saveFavoriteGenres(state.selectedGenres);
       emit(state.copyWith(status: FavoriteGenresStatus.saved));
     } catch (_) {
       emit(

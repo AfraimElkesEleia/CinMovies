@@ -1,5 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:flutter/material.dart';
 
 class MovieDetailsReviewsTab extends StatelessWidget {
@@ -13,13 +14,13 @@ class MovieDetailsReviewsTab extends StatelessWidget {
     required this.onDeletePressed,
   });
 
-  final List<AppReview> reviews;
+  final List<CommunityReview> reviews;
   final bool isLoading;
   final bool isReviewSaving;
   final VoidCallback onWriteReviewPressed;
-  final Future<bool> Function(AppReview review, ReviewReaction reaction)
+  final Future<bool> Function(CommunityReview review, ReviewReaction reaction)
   onReactionPressed;
-  final Future<bool> Function(AppReview review) onDeletePressed;
+  final Future<bool> Function(CommunityReview review) onDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -435,12 +436,12 @@ class ReviewCard extends StatelessWidget {
     this.onDeletePressed,
   });
 
-  final AppReview review;
+  final CommunityReview review;
   final bool showMovie;
   final VoidCallback? onMoviePressed;
-  final Future<bool> Function(AppReview review, ReviewReaction reaction)?
+  final Future<bool> Function(CommunityReview review, ReviewReaction reaction)?
   onReactionPressed;
-  final Future<bool> Function(AppReview review)? onDeletePressed;
+  final Future<bool> Function(CommunityReview review)? onDeletePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -503,7 +504,7 @@ class ReviewCard extends StatelessWidget {
 class _ReviewMovieHeader extends StatelessWidget {
   const _ReviewMovieHeader({required this.review, this.onPressed});
 
-  final AppReview review;
+  final CommunityReview review;
   final VoidCallback? onPressed;
 
   @override
@@ -573,12 +574,12 @@ class _PosterImage extends StatelessWidget {
       );
     }
 
-    return Image.network(
-      path,
+    return CachedNetworkImage(
+      imageUrl: path,
       width: size.width,
       height: size.height,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => const ColoredBox(
+      errorWidget: (context, url, error) => const ColoredBox(
         color: AppColors.surfaceBorder,
         child: SizedBox(
           width: 42,
@@ -597,19 +598,19 @@ class _PosterImage extends StatelessWidget {
 class _ReviewHeader extends StatelessWidget {
   const _ReviewHeader({required this.review});
 
-  final AppReview review;
+  final CommunityReview review;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         ClipOval(
-          child: Image.network(
-            review.authorAvatarUrl,
+          child: CachedNetworkImage(
+            imageUrl: review.authorAvatarUrl,
             width: 40,
             height: 40,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
+            errorWidget: (context, url, error) {
               return const ColoredBox(
                 color: AppColors.surfaceBorder,
                 child: SizedBox(
@@ -693,10 +694,10 @@ class _ReviewActions extends StatelessWidget {
     required this.onDeletePressed,
   });
 
-  final AppReview review;
-  final Future<bool> Function(AppReview review, ReviewReaction reaction)?
+  final CommunityReview review;
+  final Future<bool> Function(CommunityReview review, ReviewReaction reaction)?
   onReactionPressed;
-  final Future<bool> Function(AppReview review)? onDeletePressed;
+  final Future<bool> Function(CommunityReview review)? onDeletePressed;
 
   @override
   Widget build(BuildContext context) {

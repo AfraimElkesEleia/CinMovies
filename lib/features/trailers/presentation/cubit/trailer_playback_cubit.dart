@@ -36,7 +36,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
   int _latestSeconds = 0;
   int _totalSeconds = 0;
   int _lastSavedSeconds = -1;
-  bool _dirty = false;
+  bool _hasUnsavedProgress = false;
   Future<bool>? _activeSave;
 
   Future<void> initialize() async {
@@ -75,7 +75,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     final watchedSeconds = position.inSeconds.clamp(0, totalSeconds);
     _totalSeconds = totalSeconds;
     _latestSeconds = watchedSeconds;
-    _dirty = watchedSeconds != _lastSavedSeconds;
+    _hasUnsavedProgress = watchedSeconds != _lastSavedSeconds;
     _saveTimer ??= Timer.periodic(saveInterval, (_) {
       unawaited(flushProgress());
     });
@@ -85,7 +85,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     if (total.inSeconds <= 0) return;
     _totalSeconds = total.inSeconds;
     _latestSeconds = _totalSeconds;
-    _dirty = true;
+    _hasUnsavedProgress = true;
     await flushProgress();
   }
 
@@ -93,19 +93,19 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     final activeSave = _activeSave;
     if (activeSave != null) {
       final succeeded = await activeSave;
-      if (succeeded && _dirty) await flushProgress();
+      if (succeeded && _hasUnsavedProgress) await flushProgress();
       return;
     }
-    if (!_dirty || _totalSeconds <= 0) return;
+    if (!_hasUnsavedProgress || _totalSeconds <= 0) return;
 
     final watchedSeconds = _latestSeconds.clamp(0, _totalSeconds);
     final totalSeconds = _totalSeconds;
-    _dirty = false;
+    _hasUnsavedProgress = false;
     final save = _saveSnapshot(watchedSeconds, totalSeconds);
     _activeSave = save;
     final succeeded = await save;
     if (identical(_activeSave, save)) _activeSave = null;
-    if (succeeded && _dirty) await flushProgress();
+    if (succeeded && _hasUnsavedProgress) await flushProgress();
   }
 
   Future<bool> _saveSnapshot(int watchedSeconds, int totalSeconds) async {
@@ -123,7 +123,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
 
     return result.fold(
       (_) {
-        _dirty = true;
+        _hasUnsavedProgress = true;
         return false;
       },
       (_) {

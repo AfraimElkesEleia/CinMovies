@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:dartz/dartz.dart';
@@ -52,17 +53,17 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 30));
 
     expect(repository.requests, ['avatar:1']);
-    expect(cubit.state.status, SearchStatus.loaded);
+    expect(cubit.state.status, MovieListStatus.loaded);
     expect(cubit.state.results.single.title, 'Avatar');
   });
 
-  test('submit stores only the last six recent searches', () async {
+  test('submitQuery stores only the last six recent searches', () async {
     final repository = _FakeSearchRepository(const {});
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
     addTearDown(cubit.close);
 
     for (final query in ['one', 'two', 'three', 'four', 'five', 'six', 'seven']) {
-      await cubit.submit(query);
+      await cubit.submitQuery(query);
     }
 
     expect(cubit.state.recentSearches, [
@@ -80,8 +81,8 @@ void main() {
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
     addTearDown(cubit.close);
 
-    await cubit.submit('avatar');
-    await cubit.submit('batman');
+    await cubit.submitQuery('avatar');
+    await cubit.submitQuery('batman');
     await cubit.deleteRecentSearch('avatar');
 
     expect(cubit.state.recentSearches, ['batman']);
@@ -103,7 +104,7 @@ void main() {
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
     addTearDown(cubit.close);
 
-    await cubit.submit('batman');
+    await cubit.submitQuery('batman');
     await cubit.loadNextPage();
     await cubit.loadNextPage();
 
@@ -114,7 +115,7 @@ void main() {
     expect(repository.requests, ['batman:1', 'batman:2']);
   });
 
-  test('setSortMode sorts loaded search results', () async {
+  test('selectSortOption sorts loaded search results', () async {
     final repository = _FakeSearchRepository({
       'movie:1': SearchMoviesPage(
         movies: [
@@ -129,7 +130,7 @@ void main() {
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
     addTearDown(cubit.close);
 
-    await cubit.submit('movie');
+    await cubit.submitQuery('movie');
 
     expect(cubit.state.results.map((movie) => movie.title), [
       'Alpha',
@@ -137,14 +138,14 @@ void main() {
       'Zulu',
     ]);
 
-    cubit.setSortMode(SearchSortMode.title);
+    cubit.selectSortOption(MovieSortOption.title);
     expect(cubit.state.results.map((movie) => movie.title), [
       'Alpha',
       'Middle',
       'Zulu',
     ]);
 
-    cubit.setSortMode(SearchSortMode.time);
+    cubit.selectSortOption(MovieSortOption.newest);
     expect(cubit.state.results.map((movie) => movie.title), [
       'Middle',
       'Zulu',
@@ -157,9 +158,9 @@ void main() {
     final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
     addTearDown(cubit.close);
 
-    await cubit.submit('bad');
+    await cubit.submitQuery('bad');
 
-    expect(cubit.state.status, SearchStatus.failure);
+    expect(cubit.state.status, MovieListStatus.failure);
     expect(cubit.state.failure?.message, 'No connection');
   });
 }

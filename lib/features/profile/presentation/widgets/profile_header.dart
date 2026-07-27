@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -65,7 +66,14 @@ class ProfileHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(27),
               child: avatarUrl == null
                   ? Image.asset('assets/images/app_logo.png', fit: BoxFit.cover)
-                  : Image.network(avatarUrl!, fit: BoxFit.cover),
+                  : CachedNetworkImage(
+                      imageUrl: avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorWidget: (context, url, error) => Image.asset(
+                        'assets/images/app_logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 14),

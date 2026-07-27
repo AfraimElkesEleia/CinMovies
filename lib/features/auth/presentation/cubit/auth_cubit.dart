@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -51,7 +51,7 @@ class AuthCubit extends Cubit<AuthState> {
       : super(const AuthState());
 
   final AuthRepository _authRepository;
-  final PreferenceRepository _preferenceRepository;
+  final GenrePreferencesRepository _preferenceRepository;
 
   void setRememberMe(bool value) {
     emit(state.copyWith(rememberMe: value));

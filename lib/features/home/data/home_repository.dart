@@ -14,7 +14,7 @@ class HomeRepository {
   final Dio _dio;
   final ErrorMapperRegistry _errorMapper;
 
-  Future<Either<Failure, HomeMoviesResult>> fetchHomeMovies() async {
+  Future<Either<Failure, HomeFeedData>> fetchHomeMovies() async {
     try {
       final responses = await Future.wait([
         _dio.get<Map<String, dynamic>>(
@@ -30,7 +30,7 @@ class HomeRepository {
       ]);
 
       return Right(
-        HomeMoviesResult(
+        HomeFeedData(
           popularMovies: TmdbMovieMapper.listFromResponse(responses[0].data),
           upcomingMovies: TmdbMovieMapper.listFromResponse(responses[1].data),
         ),
@@ -78,8 +78,8 @@ enum HomeMovieSection {
   final String path;
 }
 
-class HomeMoviesResult {
-  const HomeMoviesResult({
+class HomeFeedData {
+  const HomeFeedData({
     required this.popularMovies,
     required this.upcomingMovies,
   });

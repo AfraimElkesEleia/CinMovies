@@ -27,7 +27,7 @@ class Movie {
   final String director;
   final String votes;
   final List<MovieCastMember> cast;
-  final List<MovieReview> reviews;
+  final List<TmdbReview> reviews;
 }
 
 class MovieCastMember {
@@ -42,8 +42,8 @@ class MovieCastMember {
   final String photoUrl;
 }
 
-class MovieReview {
-  const MovieReview({
+class TmdbReview {
+  const TmdbReview({
     required this.username,
     required this.avatarUrl,
     required this.rating,

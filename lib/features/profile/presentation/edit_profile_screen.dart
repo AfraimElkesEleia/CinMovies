@@ -4,7 +4,7 @@ import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_styles.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
-import 'package:cinmovies_app/features/profile/presentation/cubit/profile_edit_cubit.dart';
+import 'package:cinmovies_app/features/profile/presentation/cubit/edit_profile_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/edit_profile_forms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,9 +17,9 @@ class EditProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ProfileEditCubit(
-        sl<ProfileRepository>(),
-        sl<AuthRepository>(),
+      create: (_) => EditProfileCubit(
+        serviceLocator<ProfileRepository>(),
+        serviceLocator<AuthRepository>(),
       )..load(),
       child: const _EditProfileView(),
     );
@@ -63,16 +63,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ProfileEditCubit, ProfileEditState>(
+    return BlocConsumer<EditProfileCubit, EditProfileState>(
       listener: (context, state) {
-        if (state.status == ProfileEditStatus.loaded && !_hydrated) {
+        if (state.status == EditProfileStatus.loaded && !_hydrated) {
           _fullNameController.text = state.fullName;
           _usernameController.text = state.username ?? '';
           _bioController.text = state.bio ?? '';
           _hydrated = true;
         }
 
-        if (state.status == ProfileEditStatus.failure &&
+        if (state.status == EditProfileStatus.failure &&
             state.errorMessage != null) {
           AppSnackBar.showError(context, state.errorMessage!);
         }
@@ -87,7 +87,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
             title: const Text('Edit Profile'),
           ),
           body: SafeArea(
-            child: state.status == ProfileEditStatus.loading
+            child: state.status == EditProfileStatus.loading
                 ? const Center(
                     child: CircularProgressIndicator(
                       color: LoginStyles.primaryColor,
@@ -165,7 +165,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
   Future<void> _saveProfile() async {
     if (!_profileFormKey.currentState!.validate()) return;
 
-    await context.read<ProfileEditCubit>().saveProfile(
+    await context.read<EditProfileCubit>().saveProfile(
           fullName: _fullNameController.text,
           username: _usernameController.text,
           bio: _bioController.text,
@@ -175,8 +175,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
         );
 
     if (!mounted) return;
-    final state = context.read<ProfileEditCubit>().state;
-    if (state.status == ProfileEditStatus.success) {
+    final state = context.read<EditProfileCubit>().state;
+    if (state.status == EditProfileStatus.success) {
       AppSnackBar.showSuccess(context, 'Profile updated.');
       Navigator.pop(context, true);
     }
@@ -185,13 +185,13 @@ class _EditProfileViewState extends State<_EditProfileView> {
   Future<void> _changePassword() async {
     if (!_passwordFormKey.currentState!.validate()) return;
 
-    await context.read<ProfileEditCubit>().changePassword(
+    await context.read<EditProfileCubit>().changePassword(
           _passwordController.text,
         );
 
     if (!mounted) return;
-    final state = context.read<ProfileEditCubit>().state;
-    if (state.status == ProfileEditStatus.success) {
+    final state = context.read<EditProfileCubit>().state;
+    if (state.status == EditProfileStatus.success) {
       _passwordController.clear();
       _confirmPasswordController.clear();
       AppSnackBar.showSuccess(context, 'Password updated.');

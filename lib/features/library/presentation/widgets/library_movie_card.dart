@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_artwork.dart';
 import 'package:cinmovies_app/features/library/presentation/model/library_movie_model.dart';
 import 'package:flutter/material.dart';
 
@@ -85,7 +85,7 @@ class _MoviePoster extends StatelessWidget {
       child: SizedBox(
         width: width,
         height: height,
-        child: MovieImage(path: imageAsset),
+        child: MovieArtwork(source: imageAsset),
       ),
     );
   }

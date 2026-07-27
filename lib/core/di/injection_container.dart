@@ -8,7 +8,7 @@ import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
@@ -16,16 +16,16 @@ import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.
 import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
-import 'package:cinmovies_app/features/onboarding_screen/presentation/cubit/onboarding_cubit.dart';
-import 'package:cinmovies_app/features/onboarding_screen/presentation/cubit/preference_cubit.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
+import 'package:cinmovies_app/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:cinmovies_app/features/onboarding/presentation/cubit/onboarding_genre_preferences_cubit.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:cinmovies_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
-import 'package:cinmovies_app/core/network/dio_client.dart';
+import 'package:cinmovies_app/core/network/dio_client_factory.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_storage_service.dart';
 import 'package:dio/dio.dart';
@@ -33,64 +33,66 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final sl = GetIt.instance;
+final serviceLocator = GetIt.instance;
 
 Future<void> initDependencies({
   required HiveCacheService hiveCacheService,
   required SharedPreferences sharedPreferences,
 }) async {
-  sl.registerLazySingleton<Dio>(DioClient.create);
-  sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
-  sl.registerLazySingleton<SupabaseDatabaseService>(
-    () => SupabaseDatabaseService(sl()),
+  serviceLocator.registerLazySingleton<Dio>(DioClientFactory.create);
+  serviceLocator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  serviceLocator.registerLazySingleton<SupabaseDatabaseService>(
+    () => SupabaseDatabaseService(serviceLocator()),
   );
-  sl.registerLazySingleton<SupabaseStorageService>(
-    () => SupabaseStorageService(sl()),
+  serviceLocator.registerLazySingleton<SupabaseStorageService>(
+    () => SupabaseStorageService(serviceLocator()),
   );
-  sl.registerLazySingleton<HiveCacheService>(() => hiveCacheService);
-  sl.registerLazySingleton<LocalPreferencesService>(
+  serviceLocator.registerLazySingleton<HiveCacheService>(() => hiveCacheService);
+  serviceLocator.registerLazySingleton<LocalPreferencesService>(
     () => LocalPreferencesService(sharedPreferences),
   );
-  sl.registerLazySingleton<ErrorMapperRegistry>(() => defaultErrorMapper);
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepository(sl(), sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<ErrorMapperRegistry>(() => defaultErrorMapper);
+  serviceLocator.registerLazySingleton<AuthRepository>(
+    () => AuthRepository(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepository(sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<HomeRepository>(() => HomeRepository(sl(), sl()));
-  sl.registerLazySingleton<BrowseRepository>(() => BrowseRepository(sl(), sl()));
-  sl.registerLazySingleton<SearchRepository>(() => SearchRepository(sl(), sl()));
-  sl.registerLazySingleton<MovieDetailsRepository>(
-    () => MovieDetailsRepository(sl(), sl()),
+  serviceLocator.registerLazySingleton<HomeRepository>(() => HomeRepository(serviceLocator(), serviceLocator()));
+  serviceLocator.registerLazySingleton<BrowseRepository>(() => BrowseRepository(serviceLocator(), serviceLocator()));
+  serviceLocator.registerLazySingleton<SearchRepository>(() => SearchRepository(serviceLocator(), serviceLocator()));
+  serviceLocator.registerLazySingleton<MovieDetailsRepository>(
+    () => MovieDetailsRepository(serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<MovieRepository>(
-    () => MovieRepository(sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<MovieRepository>(
+    () => MovieRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<LibraryRepository>(
-    () => LibraryRepository(sl(), sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<LibraryRepository>(
+    () => LibraryRepository(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<ReviewRepository>(
-    () => ReviewRepository(sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<PreferenceRepository>(
-    () => PreferenceRepository(sl(), sl(), sl()),
+  serviceLocator.registerLazySingleton<GenrePreferencesRepository>(
+    () => GenrePreferencesRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  sl.registerLazySingleton<AiHistoryRepository>(() => AiHistoryRepository(sl()));
-  sl.registerLazySingleton<TrailerHistoryRepository>(
-    () => TrailerHistoryRepository(sl(), sl()),
+  serviceLocator.registerLazySingleton<AiHistoryRepository>(() => AiHistoryRepository(serviceLocator()));
+  serviceLocator.registerLazySingleton<TrailerHistoryRepository>(
+    () => TrailerHistoryRepository(serviceLocator(), serviceLocator()),
   );
 
-  sl.registerFactory<AuthCubit>(() => AuthCubit(sl(), sl()));
-  sl.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
-  sl.registerFactory<HomeCubit>(() => HomeCubit(sl()));
-  sl.registerFactoryParam<MovieSectionCubit, MovieSectionArgs, void>(
-    (args, _) => MovieSectionCubit(sl(), args, sl()),
+  serviceLocator.registerFactory<AuthCubit>(() => AuthCubit(serviceLocator(), serviceLocator()));
+  serviceLocator.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
+  serviceLocator.registerFactory<HomeCubit>(() => HomeCubit(serviceLocator()));
+  serviceLocator.registerFactoryParam<MovieSectionCubit, MovieSectionArgs, void>(
+    (args, _) => MovieSectionCubit(serviceLocator(), args, serviceLocator()),
   );
-  sl.registerFactory<BrowseCubit>(() => BrowseCubit(sl()));
-  sl.registerFactory<SearchCubit>(() => SearchCubit(sl(), sl()));
-  sl.registerFactory<LibraryCubit>(() => LibraryCubit(sl(), sl()));
-  sl.registerFactory<OnboardingCubit>(() => OnboardingCubit(sl()));
-  sl.registerFactory<PreferenceCubit>(() => PreferenceCubit(sl()));
-  sl.registerFactory<ProfileCubit>(() => ProfileCubit(sl(), sl(), sl(), sl()));
+  serviceLocator.registerFactory<BrowseCubit>(() => BrowseCubit(serviceLocator()));
+  serviceLocator.registerFactory<SearchCubit>(() => SearchCubit(serviceLocator(), serviceLocator()));
+  serviceLocator.registerFactory<LibraryCubit>(() => LibraryCubit(serviceLocator(), serviceLocator()));
+  serviceLocator.registerFactory<OnboardingCubit>(() => OnboardingCubit(serviceLocator()));
+  serviceLocator.registerFactory<OnboardingGenrePreferencesCubit>(
+    () => OnboardingGenrePreferencesCubit(serviceLocator()),
+  );
+  serviceLocator.registerFactory<ProfileCubit>(() => ProfileCubit(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()));
 }

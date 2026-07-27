@@ -8,10 +8,10 @@ import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/auth_divider.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_header.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_primary_button.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/login_with_button.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/remember_me_and_forgot_password.dart';
+import 'package:cinmovies_app/features/login/presentation/widgets/social_login_button.dart';
+import 'package:cinmovies_app/features/login/presentation/widgets/login_options_row.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/signup_prompt.dart';
-import 'package:cinmovies_app/features/onboarding_screen/data/preference_repository.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,8 +24,8 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => AuthCubit(
-        sl<AuthRepository>(),
-        sl<PreferenceRepository>(),
+        serviceLocator<AuthRepository>(),
+        serviceLocator<GenrePreferencesRepository>(),
       ),
       child: const _LoginView(),
     );
@@ -57,7 +57,7 @@ class _LoginViewState extends State<_LoginView> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == AuthSubmissionStatus.success) {
-          context.pushNamedAndRemoveUntil(Routes.home);
+          context.pushNamedAndRemoveUntil(AppRoutes.home);
         }
 
         if (state.status == AuthSubmissionStatus.failure &&
@@ -95,7 +95,7 @@ class _LoginViewState extends State<_LoginView> {
                       validator: _requiredPassword,
                       onSubmitted: (_) => _login(context),
                     ),
-                    RememberMeAndForgotPassword(
+                    LoginOptionsRow(
                       rememberMe: state.rememberMe,
                       onRememberMeChanged:
                           context.read<AuthCubit>().setRememberMe,
@@ -114,22 +114,22 @@ class _LoginViewState extends State<_LoginView> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  LoginWithButton(
-                    buttonText: 'Google',
-                    buttonIcon: 'assets/images/google_icon.png',
+                  SocialLoginButton(
+                    label: 'Google',
+                    iconAssetPath: 'assets/images/google_icon.png',
                     onPressed: () {},
                   ),
                   const SizedBox(width: 8),
-                  LoginWithButton(
-                    buttonText: 'Facebook',
-                    buttonIcon: 'assets/images/facebook_icon.png',
+                  SocialLoginButton(
+                    label: 'Facebook',
+                    iconAssetPath: 'assets/images/facebook_icon.png',
                     onPressed: () {},
                   ),
                 ],
               ),
               const SizedBox(height: 32),
               SignupPrompt(
-                onSignUpPressed: () => context.pushNamed(Routes.register),
+                onSignUpPressed: () => context.pushNamed(AppRoutes.register),
               ),
             ],
           );

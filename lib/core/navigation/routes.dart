@@ -1,6 +1,6 @@
-abstract class Routes {
+abstract class AppRoutes {
   static const String splash = '/splash';
-  static const String onBoarding = '/onBoarding';
+  static const String onboarding = '/onBoarding';
   static const String home = '/home';
   static const String search = '/search';
   static const String movieSection = '/movieSection';

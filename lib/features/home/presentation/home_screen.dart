@@ -3,13 +3,13 @@ import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_movie_carousel.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_loading_shimmer.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_section_header.dart';
 import 'package:cinmovies_app/features/home/presentation/widgets/home_screen_sections.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<HomeCubit>()..loadMovies(),
+      create: (_) => serviceLocator<HomeCubit>()..loadMovies(),
       child: const _HomeView(),
     );
   }
@@ -33,7 +33,7 @@ class _HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     void openDetails(Movie movie, String heroTag) {
       context.pushNamed(
-        Routes.movieDetails,
+        AppRoutes.movieDetails,
         arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
       );
     }
@@ -59,7 +59,11 @@ class _HomeView extends StatelessWidget {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  const SliverToBoxAdapter(child: HomeTopBar()),
+                  SliverToBoxAdapter(
+                    child: HomeTopBar(
+                      onSearchPressed: () => context.pushNamed(AppRoutes.search),
+                    ),
+                  ),
                   const SliverToBoxAdapter(child: SizedBox(height: 14)),
                   if (state.carouselMovies.isEmpty)
                     const SliverToBoxAdapter(child: HomeEmptyState())
@@ -125,7 +129,7 @@ class _HomeView extends StatelessWidget {
 
   void _openSection(BuildContext context, HomeMovieSection section) {
     context.pushNamed(
-      Routes.movieSection,
+      AppRoutes.movieSection,
       arguments: MovieSectionArgs(section: section),
     );
   }

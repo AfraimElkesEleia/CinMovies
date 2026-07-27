@@ -18,7 +18,7 @@ class TrailerViewerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          TrailerPlaybackCubit(sl<TrailerHistoryRepository>(), args)
+          TrailerPlaybackCubit(serviceLocator<TrailerHistoryRepository>(), args)
             ..initialize(),
       child: _TrailerViewerView(args: args),
     );

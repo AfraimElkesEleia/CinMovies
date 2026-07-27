@@ -4,8 +4,8 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_shimmer.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/presentation/widgets/browse_search_bar.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_poster_card.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
 
@@ -13,13 +13,13 @@ class BrowseHeader extends StatelessWidget {
   const BrowseHeader({
     super.key,
     required this.genres,
-    required this.activeGenre,
+    required this.selectedGenre,
     required this.movieCount,
     required this.onGenreSelected,
   });
 
   final List<BrowseGenre> genres;
-  final BrowseGenre activeGenre;
+  final BrowseGenre selectedGenre;
   final int movieCount;
   final ValueChanged<BrowseGenre> onGenreSelected;
 
@@ -37,7 +37,7 @@ class BrowseHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        BrowseSearchBar(onTap: () => context.pushNamed(Routes.search)),
+        BrowseSearchBar(onTap: () => context.pushNamed(AppRoutes.search)),
         const SizedBox(height: 16),
         SizedBox(
           height: 38,
@@ -49,7 +49,7 @@ class BrowseHeader extends StatelessWidget {
               final genre = genres[index];
               return _GenreChip(
                 genre: genre,
-                isActive: genre == activeGenre,
+                isActive: genre == selectedGenre,
                 onSelected: () => onGenreSelected(genre),
               );
             },
@@ -108,12 +108,12 @@ class BrowseMovieGrid extends StatelessWidget {
         itemBuilder: (context, index) {
           final movie = movies[index];
           final heroTag = 'browse-card-$index-${movie.id}';
-          return MovieCard(
+          return MoviePosterCard(
             movie: movie,
             heroTag: heroTag,
             onTap: () {
               context.pushNamed(
-                Routes.movieDetails,
+                AppRoutes.movieDetails,
                 arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
               );
             },
@@ -124,8 +124,8 @@ class BrowseMovieGrid extends StatelessWidget {
   }
 }
 
-class BottomLoader extends StatelessWidget {
-  const BottomLoader({super.key});
+class BrowsePaginationLoader extends StatelessWidget {
+  const BrowsePaginationLoader({super.key});
 
   @override
   Widget build(BuildContext context) {

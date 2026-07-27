@@ -32,19 +32,24 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
   final String Function()? _scopeIdResolver;
 
   String get _scopeId {
-    return _scopeIdResolver?.call() ?? _supabase.auth.currentUser?.id ?? 'guest';
+    return _scopeIdResolver?.call() ??
+        _supabase.auth.currentUser?.id ??
+        'guest';
   }
 
   @override
   Future<Either<Failure, List<TrailerHistoryEntry>>> history() async {
     try {
-      final entries = _cache
-          .getTrailerHistory(_scopeId)
-          .map(_tryParse)
-          .whereType<TrailerHistoryEntry>()
-          .where((entry) => entry.videoKey.isNotEmpty && entry.totalSeconds > 0)
-          .toList()
-        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      final entries =
+          _cache
+              .getTrailerHistory(_scopeId)
+              .map(_tryParse)
+              .whereType<TrailerHistoryEntry>()
+              .where(
+                (entry) => entry.videoKey.isNotEmpty && entry.totalSeconds > 0,
+              )
+              .toList()
+            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       return Right(entries);
     } catch (error) {
       return Left(_errorMapper.map(error));
@@ -72,9 +77,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
   }
 
   @override
-  Future<Either<Failure, void>> saveProgress(
-    TrailerHistoryEntry entry,
-  ) async {
+  Future<Either<Failure, void>> saveProgress(TrailerHistoryEntry entry) async {
     try {
       final normalized = entry.normalized();
       if (normalized.videoKey.isEmpty || normalized.totalSeconds <= 0) {
@@ -114,13 +117,16 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
 
   Future<List<TrailerHistoryEntry>> _historyForScope(String scopeId) async {
     try {
-      final entries = _cache
-          .getTrailerHistory(scopeId)
-          .map(_tryParse)
-          .whereType<TrailerHistoryEntry>()
-          .where((entry) => entry.videoKey.isNotEmpty && entry.totalSeconds > 0)
-          .toList()
-        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      final entries =
+          _cache
+              .getTrailerHistory(scopeId)
+              .map(_tryParse)
+              .whereType<TrailerHistoryEntry>()
+              .where(
+                (entry) => entry.videoKey.isNotEmpty && entry.totalSeconds > 0,
+              )
+              .toList()
+            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       return entries;
     } catch (_) {
       return const [];

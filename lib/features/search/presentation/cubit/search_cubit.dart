@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,24 +11,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class SearchState extends Equatable {
   const SearchState({
     this.query = '',
-    this.status = SearchStatus.initial,
+    this.status = MovieListStatus.initial,
     this.results = const [],
     this.currentPage = 0,
     this.totalPages = 1,
     this.isLoadingMore = false,
     this.recentSearches = const [],
-    this.sortMode = SearchSortMode.rating,
+    this.sortOption = MovieSortOption.rating,
     this.failure,
   });
 
   final String query;
-  final SearchStatus status;
+  final MovieListStatus status;
   final List<Movie> results;
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
   final List<String> recentSearches;
-  final SearchSortMode sortMode;
+  final MovieSortOption sortOption;
   final Failure? failure;
 
   bool get hasQuery => query.trim().isNotEmpty;
@@ -36,13 +37,13 @@ class SearchState extends Equatable {
 
   SearchState copyWith({
     String? query,
-    SearchStatus? status,
+    MovieListStatus? status,
     List<Movie>? results,
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
     List<String>? recentSearches,
-    SearchSortMode? sortMode,
+    MovieSortOption? sortOption,
     Failure? failure,
   }) {
     return SearchState(
@@ -53,7 +54,7 @@ class SearchState extends Equatable {
       totalPages: totalPages ?? this.totalPages,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       recentSearches: recentSearches ?? this.recentSearches,
-      sortMode: sortMode ?? this.sortMode,
+      sortOption: sortOption ?? this.sortOption,
       failure: failure,
     );
   }
@@ -67,21 +68,9 @@ class SearchState extends Equatable {
     totalPages,
     isLoadingMore,
     recentSearches,
-    sortMode,
+    sortOption,
     failure,
   ];
-}
-
-enum SearchStatus { initial, loading, loaded, failure }
-
-enum SearchSortMode {
-  rating('Rating'),
-  title('A-Z'),
-  time('Time');
-
-  const SearchSortMode(this.label);
-
-  final String label;
 }
 
 class SearchCubit extends Cubit<SearchState> {
@@ -107,7 +96,7 @@ class SearchCubit extends Cubit<SearchState> {
       emit(
         state.copyWith(
           query: '',
-          status: SearchStatus.initial,
+          status: MovieListStatus.initial,
           results: const [],
           currentPage: 0,
           totalPages: 1,
@@ -121,7 +110,7 @@ class SearchCubit extends Cubit<SearchState> {
     emit(
       state.copyWith(
         query: query,
-        status: SearchStatus.loading,
+        status: MovieListStatus.loading,
         results: const [],
         currentPage: 0,
         totalPages: 1,
@@ -135,9 +124,9 @@ class SearchCubit extends Cubit<SearchState> {
     });
   }
 
-  void clear() => setQuery('');
+  void clearQuery() => setQuery('');
 
-  Future<void> submit(String value) async {
+  Future<void> submitQuery(String value) async {
     final query = value.trim();
     if (query.isEmpty) return;
 
@@ -147,7 +136,7 @@ class SearchCubit extends Cubit<SearchState> {
     emit(
       state.copyWith(
         query: query,
-        status: SearchStatus.loading,
+        status: MovieListStatus.loading,
         results: const [],
         currentPage: 0,
         totalPages: 1,
@@ -167,18 +156,18 @@ class SearchCubit extends Cubit<SearchState> {
     emit(state.copyWith(recentSearches: _cache.getRecentSearches()));
   }
 
-  void setSortMode(SearchSortMode mode) {
-    if (mode == state.sortMode) return;
+  void selectSortOption(MovieSortOption mode) {
+    if (mode == state.sortOption) return;
     emit(
       state.copyWith(
-        sortMode: mode,
+        sortOption: mode,
         results: _sortedMovies(state.results, mode),
       ),
     );
   }
 
   Future<void> loadNextPage() async {
-    if (state.status != SearchStatus.loaded ||
+    if (state.status != MovieListStatus.loaded ||
         state.isLoadingMore ||
         !state.canLoadMore ||
         !state.hasQuery) {
@@ -202,10 +191,10 @@ class SearchCubit extends Cubit<SearchState> {
       ),
       (page) => emit(
         state.copyWith(
-          status: SearchStatus.loaded,
+          status: MovieListStatus.loaded,
           results: _sortedMovies(
             [...state.results, ...page.movies],
-            state.sortMode,
+            state.sortOption,
           ),
           currentPage: page.page,
           totalPages: page.totalPages,
@@ -223,7 +212,7 @@ class SearchCubit extends Cubit<SearchState> {
     result.fold(
       (failure) => emit(
         state.copyWith(
-          status: SearchStatus.failure,
+          status: MovieListStatus.failure,
           results: const [],
           currentPage: 0,
           totalPages: 1,
@@ -233,8 +222,8 @@ class SearchCubit extends Cubit<SearchState> {
       ),
       (page) => emit(
         state.copyWith(
-          status: SearchStatus.loaded,
-          results: _sortedMovies(page.movies, state.sortMode),
+          status: MovieListStatus.loaded,
+          results: _sortedMovies(page.movies, state.sortOption),
           currentPage: page.page,
           totalPages: page.totalPages,
           isLoadingMore: false,
@@ -253,17 +242,17 @@ class SearchCubit extends Cubit<SearchState> {
 
   List<Movie> _sortedMovies(
     List<Movie> movies,
-    SearchSortMode mode,
+    MovieSortOption mode,
   ) {
     final sorted = [...movies];
     switch (mode) {
-      case SearchSortMode.rating:
+      case MovieSortOption.rating:
         sorted.sort((a, b) => b.rating.compareTo(a.rating));
-      case SearchSortMode.title:
+      case MovieSortOption.title:
         sorted.sort(
           (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         );
-      case SearchSortMode.time:
+      case MovieSortOption.newest:
         sorted.sort((a, b) => _yearValue(b.year).compareTo(_yearValue(a.year)));
     }
     return sorted;

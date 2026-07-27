@@ -47,7 +47,7 @@ class AiHeader extends StatelessWidget {
                     SizedBox(height: 3),
                     Row(
                       children: [
-                        OnlineDot(),
+                        AiOnlineStatusIndicator(),
                         SizedBox(width: 6),
                         Text(
                           'Online',

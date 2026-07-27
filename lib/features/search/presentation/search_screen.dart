@@ -1,10 +1,15 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_results_list.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_results_loading_shimmer.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_search_field.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_header.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_input_field.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_loading_shimmer.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_results_view.dart';
 import 'package:cinmovies_app/features/search/presentation/widgets/search_suggestions_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +20,7 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<SearchCubit>(),
+      create: (_) => serviceLocator<SearchCubit>(),
       child: const _SearchView(),
     );
   }
@@ -69,16 +74,16 @@ class _SearchViewState extends State<_SearchView> {
             return Column(
               children: [
                 SearchHeader(onBackPressed: () => Navigator.pop(context)),
-                SearchInputField(
+                MovieSearchField(
                   controller: _controller,
                   hasQuery: state.hasQuery,
                   onChanged: _setQuery,
                   onSubmitted: (value) {
-                    context.read<SearchCubit>().submit(value);
+                    context.read<SearchCubit>().submitQuery(value);
                   },
                   onClearPressed: () {
                     _controller.clear();
-                    context.read<SearchCubit>().clear();
+                    context.read<SearchCubit>().clearQuery();
                   },
                 ),
                 const SizedBox(height: 20),
@@ -93,24 +98,25 @@ class _SearchViewState extends State<_SearchView> {
                           },
                           onSelected: (value) async {
                             _setQuery(value);
-                            await context.read<SearchCubit>().submit(value);
+                            await context.read<SearchCubit>().submitQuery(value);
                           },
                         )
-                      : state.status == SearchStatus.loading
-                      ? const SearchLoadingShimmer()
-                      : SearchResultsView(
+                      : state.status == MovieListStatus.loading
+                      ? const MovieResultsLoadingShimmer()
+                      : MovieResultsList(
                           controller: _scrollController,
                           query: state.query,
                           movies: state.results,
                           status: state.status,
-                          sortMode: state.sortMode,
-                          onSortModeChanged: context
+                          sortOption: state.sortOption,
+                          onSortOptionChanged: context
                               .read<SearchCubit>()
-                              .setSortMode,
+                              .selectSortOption,
                           isLoadingMore: state.isLoadingMore,
                           failureMessage: state.failure?.message,
-                          onMoviePressed: (_) {
+                          onMoviePressed: (movie, heroTag) {
                             context.read<SearchCubit>().saveCurrentQuery();
+                            _openMovie(movie, heroTag);
                           },
                         ),
                 ),
@@ -119,6 +125,13 @@ class _SearchViewState extends State<_SearchView> {
           },
         ),
       ),
+    );
+  }
+
+  void _openMovie(Movie movie, String heroTag) {
+    context.pushNamed(
+      AppRoutes.movieDetails,
+      arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
     );
   }
 }

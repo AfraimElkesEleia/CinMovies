@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_styles.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +51,14 @@ class EditableAvatar extends StatelessWidget {
                 child: hasSelectedImage
                     ? Image.memory(imageBytes!, fit: BoxFit.cover)
                     : hasRemoteImage
-                    ? Image.network(avatarUrl!, fit: BoxFit.cover)
+                    ? CachedNetworkImage(
+                        imageUrl: avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Image.asset(
+                          'assets/images/app_logo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      )
                     : Image.asset(
                         'assets/images/app_logo.png',
                         fit: BoxFit.cover,

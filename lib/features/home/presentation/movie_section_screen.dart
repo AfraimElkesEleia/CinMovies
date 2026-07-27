@@ -1,11 +1,15 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/extensions/context_extension.dart';
+import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
-import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_input_field.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_loading_shimmer.dart';
-import 'package:cinmovies_app/features/search/presentation/widgets/search_results_view.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_results_list.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_results_loading_shimmer.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,7 +21,7 @@ class MovieSectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<MovieSectionCubit>(param1: args)..loadInitial(),
+      create: (_) => serviceLocator<MovieSectionCubit>(param1: args)..loadInitial(),
       child: const _MovieSectionView(),
     );
   }
@@ -70,7 +74,7 @@ class _MovieSectionViewState extends State<_MovieSectionView> {
                   title: state.title,
                   onBackPressed: () => Navigator.pop(context),
                 ),
-                SearchInputField(
+                MovieSearchField(
                   controller: _controller,
                   hasQuery: state.hasQuery,
                   onChanged: cubit.setQuery,
@@ -81,17 +85,22 @@ class _MovieSectionViewState extends State<_MovieSectionView> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: state.status == SearchStatus.loading
-                      ? const SearchLoadingShimmer()
-                      : SearchResultsView(
+                  child: state.status == MovieListStatus.loading
+                      ? const MovieResultsLoadingShimmer()
+                      : MovieResultsList(
                           controller: _scrollController,
                           query: state.hasQuery
                               ? state.query
                               : state.title,
                           movies: state.visibleMovies,
                           status: state.status,
-                          sortMode: state.sortMode,
-                          onSortModeChanged: cubit.setSortMode,
+                          sortOption: state.sortOption,
+                        onSortOptionChanged: cubit.selectSortOption,
+                          onMoviePressed: (movie, heroTag) => _openMovie(
+                            context,
+                            movie,
+                            heroTag,
+                          ),
                           isLoadingMore: state.isLoadingMore,
                           failureMessage: state.failure?.message,
                           heroTagPrefix: state.heroTagPrefix,
@@ -102,6 +111,13 @@ class _MovieSectionViewState extends State<_MovieSectionView> {
           },
         ),
       ),
+    );
+  }
+
+  void _openMovie(BuildContext context, Movie movie, String heroTag) {
+    context.pushNamed(
+      AppRoutes.movieDetails,
+      arguments: MovieDetailsArgs(movie: movie, heroTag: heroTag),
     );
   }
 }

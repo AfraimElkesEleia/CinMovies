@@ -1,6 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_poster_card.dart';
 import 'package:flutter/material.dart';
 
 class ProfileMovieSection extends StatelessWidget {
@@ -63,7 +63,7 @@ class ProfileMovieSection extends StatelessWidget {
               final movie = movies[index];
               final heroTag = 'profile-$title-$index-${movie.id}';
 
-              return MovieCard(
+              return MoviePosterCard(
                 movie: movie,
                 heroTag: heroTag,
                 onTap: () => onMoviePressed(movie, heroTag),

@@ -1,9 +1,9 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,7 +25,7 @@ void main() {
 
     await cubit.loadInitial();
 
-    expect(cubit.state.status, SearchStatus.loaded);
+    expect(cubit.state.status, MovieListStatus.loaded);
     expect(cubit.state.movies.single.title, 'Alpha');
     expect(cubit.state.currentPage, 1);
     expect(cubit.state.totalPages, 2);
@@ -110,14 +110,14 @@ void main() {
       'Zulu',
     ]);
 
-    cubit.setSortMode(SearchSortMode.title);
+    cubit.selectSortOption(MovieSortOption.title);
     expect(cubit.state.visibleMovies.map((movie) => movie.title), [
       'Alpha',
       'Middle',
       'Zulu',
     ]);
 
-    cubit.setSortMode(SearchSortMode.time);
+    cubit.selectSortOption(MovieSortOption.newest);
     expect(cubit.state.visibleMovies.map((movie) => movie.title), [
       'Middle',
       'Zulu',
@@ -135,7 +135,7 @@ void main() {
 
     await cubit.loadInitial();
 
-    expect(cubit.state.status, SearchStatus.failure);
+    expect(cubit.state.status, MovieListStatus.failure);
     expect(cubit.state.movies, isEmpty);
     expect(cubit.state.failure?.message, 'No connection');
   });

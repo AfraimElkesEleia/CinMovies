@@ -22,10 +22,10 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfileCubit(
-        sl<ProfileRepository>(),
-        sl<LibraryRepository>(),
-        sl<AuthRepository>(),
-        sl<ReviewRepository>(),
+        serviceLocator<ProfileRepository>(),
+        serviceLocator<LibraryRepository>(),
+        serviceLocator<AuthRepository>(),
+        serviceLocator<ReviewRepository>(),
       )..load(),
       child: const _ProfileView(),
     );
@@ -72,7 +72,7 @@ class _ProfileView extends StatelessWidget {
                         SliverToBoxAdapter(
                           child: ProfileAccountSection(
                             onMyReviewsPressed: () =>
-                                context.pushNamed(Routes.myReviews),
+                                context.pushNamed(AppRoutes.myReviews),
                             onFavoriteGenresPressed: () =>
                                 _openFavoriteGenres(context),
                             onSupportHelpPressed: () =>
@@ -99,17 +99,17 @@ class _ProfileView extends StatelessWidget {
 
     await context.read<ProfileCubit>().logout();
     if (!context.mounted) return;
-    context.pushNamedAndRemoveUntil(Routes.login);
+    context.pushNamedAndRemoveUntil(AppRoutes.login);
   }
 
   Future<void> _openEditProfile(BuildContext context) async {
-    final updated = await context.pushNamed(Routes.editProfile);
+    final updated = await context.pushNamed(AppRoutes.editProfile);
     if (!context.mounted || updated != true) return;
     await context.read<ProfileCubit>().load();
   }
 
   Future<void> _openFavoriteGenres(BuildContext context) async {
-    final updated = await context.pushNamed(Routes.favoriteGenres);
+    final updated = await context.pushNamed(AppRoutes.favoriteGenres);
     if (!context.mounted || updated != true) return;
     await context.read<ProfileCubit>().load();
   }

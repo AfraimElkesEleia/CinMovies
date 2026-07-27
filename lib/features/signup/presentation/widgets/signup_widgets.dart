@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/auth_divider.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_styles.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/login_with_button.dart';
+import 'package:cinmovies_app/features/login/presentation/widgets/social_login_button.dart';
 import 'package:flutter/material.dart';
 
 class SignupHeader extends StatelessWidget {
@@ -32,8 +32,8 @@ class SignupHeader extends StatelessWidget {
   }
 }
 
-class SignupSocialActions extends StatelessWidget {
-  const SignupSocialActions({super.key});
+class SignupSocialLoginSection extends StatelessWidget {
+  const SignupSocialLoginSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +43,15 @@ class SignupSocialActions extends StatelessWidget {
         SizedBox(height: 16),
         Row(
           children: [
-            LoginWithButton(
-              buttonText: 'Google',
-              buttonIcon: 'assets/images/google_icon.png',
+            SocialLoginButton(
+              label: 'Google',
+              iconAssetPath: 'assets/images/google_icon.png',
               onPressed: _noop,
             ),
             SizedBox(width: 8),
-            LoginWithButton(
-              buttonText: 'Facebook',
-              buttonIcon: 'assets/images/facebook_icon.png',
+            SocialLoginButton(
+              label: 'Facebook',
+              iconAssetPath: 'assets/images/facebook_icon.png',
               onPressed: _noop,
             ),
           ],

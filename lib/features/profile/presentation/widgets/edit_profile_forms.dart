@@ -4,7 +4,7 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_text_field.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_primary_button.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_styles.dart';
-import 'package:cinmovies_app/features/profile/presentation/cubit/profile_edit_cubit.dart';
+import 'package:cinmovies_app/features/profile/presentation/cubit/edit_profile_cubit.dart';
 import 'package:cinmovies_app/features/profile/presentation/widgets/edit_profile_avatar.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +29,7 @@ class EditProfileForms extends StatelessWidget {
     required this.confirmPasswordValidator,
   });
 
-  final ProfileEditState state;
+  final EditProfileState state;
   final GlobalKey<FormState> profileFormKey;
   final GlobalKey<FormState> passwordFormKey;
   final TextEditingController fullNameController;

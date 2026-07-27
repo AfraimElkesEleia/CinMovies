@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_artwork.dart';
 import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
 import 'package:flutter/material.dart';
 
@@ -95,7 +95,7 @@ class _TrailerHistoryCard extends StatelessWidget {
                     child: SizedBox(
                       width: posterWidth,
                       height: posterHeight,
-                      child: MovieImage(path: entry.imageAsset),
+                      child: MovieArtwork(source: entry.imageAsset),
                     ),
                   ),
                   SizedBox(width: isCompact ? 10 : 14),

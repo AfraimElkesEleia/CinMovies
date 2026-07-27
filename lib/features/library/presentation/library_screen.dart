@@ -5,7 +5,7 @@ import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_header.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_movie_list.dart';
 import 'package:cinmovies_app/features/library/presentation/widgets/library_tab_bar.dart';
@@ -23,8 +23,8 @@ class LibraryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => LibraryCubit(
-        sl<LibraryRepository>(),
-        sl<TrailerHistoryRepository>(),
+        serviceLocator<LibraryRepository>(),
+        serviceLocator<TrailerHistoryRepository>(),
       )..load(),
       child: BlocBuilder<LibraryCubit, LibraryState>(
         builder: (context, state) {
@@ -69,7 +69,7 @@ class LibraryScreen extends StatelessWidget {
                                             .loadNextPage(tab.type),
                                         onMoviePressed: (movie, heroTag) {
                                           context.pushNamed(
-                                            Routes.movieDetails,
+                                            AppRoutes.movieDetails,
                                             arguments: MovieDetailsArgs(
                                               movie: movie.movie,
                                               heroTag: heroTag,
@@ -97,7 +97,7 @@ class LibraryScreen extends StatelessWidget {
 
   void _openTrailer(BuildContext context, TrailerHistoryEntry entry) {
     context.pushNamed(
-      Routes.trailerViewer,
+      AppRoutes.trailerViewer,
       arguments: TrailerViewerArgs(
         videoKey: entry.videoKey,
         movieId: entry.movieId,

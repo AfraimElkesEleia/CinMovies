@@ -2,7 +2,7 @@ import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,7 +43,7 @@ class MovieDetailsState extends Equatable {
   final bool isReviewsLoading;
   final bool isFavoriteLoading;
   final bool isWatchlistLoading;
-  final List<AppReview> reviews;
+  final List<CommunityReview> reviews;
   final bool isFavorite;
   final bool inWatchlist;
   final String? videoKey;
@@ -60,7 +60,7 @@ class MovieDetailsState extends Equatable {
     bool? isReviewsLoading,
     bool? isFavoriteLoading,
     bool? isWatchlistLoading,
-    List<AppReview>? reviews,
+    List<CommunityReview>? reviews,
     bool? isFavorite,
     bool? inWatchlist,
     String? videoKey,
@@ -225,7 +225,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   }
 
   Future<bool> toggleReviewReaction(
-    AppReview review,
+    CommunityReview review,
     ReviewReaction reaction,
   ) async {
     if (review.isOwnReview) return false;
@@ -254,7 +254,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     }, (_) => true);
   }
 
-  Future<bool> deleteReview(AppReview review) async {
+  Future<bool> deleteReview(CommunityReview review) async {
     if (!review.isOwnReview) return false;
 
     final previousReviews = state.reviews;
@@ -304,8 +304,8 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
   }
 
-  AppReview _reviewWithToggledReaction(
-    AppReview review,
+  CommunityReview _reviewWithToggledReaction(
+    CommunityReview review,
     ReviewReaction nextReaction,
   ) {
     final previousReaction = review.currentUserReaction;

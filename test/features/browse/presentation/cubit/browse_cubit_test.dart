@@ -49,7 +49,7 @@ void main() {
     expect(cubit.state.failure?.message, 'No connection');
   });
 
-  test('setGenre resets movies and loads page one for selected genre', () async {
+  test('selectGenre resets movies and loads page one for selected genre', () async {
     const action = BrowseGenre(id: 28, name: 'Action');
     final repository = _FakeBrowseRepository(
       pages: {
@@ -69,9 +69,9 @@ void main() {
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
-    await cubit.setGenre(action);
+    await cubit.selectGenre(action);
 
-    expect(cubit.state.activeGenre, action);
+    expect(cubit.state.selectedGenre, action);
     expect(cubit.state.movies.single.title, 'Action Movie');
     expect(cubit.state.currentPage, 1);
     expect(cubit.state.totalPages, 3);
@@ -126,7 +126,7 @@ void main() {
     addTearDown(cubit.close);
 
     await cubit.loadInitial();
-    await cubit.setGenre(action);
+    await cubit.selectGenre(action);
     repository.pages['Action:1'] = BrowseMoviesPage(
       movies: [_movie('3', 'Refreshed Action Movie')],
       page: 1,
@@ -135,7 +135,7 @@ void main() {
 
     await cubit.refresh();
 
-    expect(cubit.state.activeGenre, action);
+    expect(cubit.state.selectedGenre, action);
     expect(cubit.state.movies.single.title, 'Refreshed Action Movie');
     expect(cubit.state.currentPage, 1);
     expect(cubit.state.totalPages, 3);

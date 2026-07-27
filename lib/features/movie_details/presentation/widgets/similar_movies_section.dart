@@ -1,6 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_artwork.dart';
 import 'package:flutter/material.dart';
 
 class SimilarMoviesSection extends StatelessWidget {
@@ -95,7 +95,7 @@ class _SimilarMoviePoster extends StatelessWidget {
               tag: heroTag,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: MovieImage(path: movie.imageAsset),
+                child: MovieArtwork(source: movie.imageAsset),
               ),
             ),
             DecoratedBox(

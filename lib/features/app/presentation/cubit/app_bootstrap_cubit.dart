@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AppBootstrapState extends Equatable {
-  const AppBootstrapState({this.initialRoute = Routes.onBoarding});
+  const AppBootstrapState({this.initialRoute = AppRoutes.onboarding});
 
   final String initialRoute;
 
@@ -22,10 +22,10 @@ class AppBootstrapCubit extends Cubit<AppBootstrapState> {
 
   Future<String> resolveInitialRoute() async {
     final route = !_preferences.hasPassedOnboarding
-        ? Routes.onBoarding
+        ? AppRoutes.onboarding
         : _authRepository.currentUser == null
-            ? Routes.login
-            : Routes.home;
+            ? AppRoutes.login
+            : AppRoutes.home;
     emit(AppBootstrapState(initialRoute: route));
     return route;
   }

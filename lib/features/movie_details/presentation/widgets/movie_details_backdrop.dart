@@ -1,6 +1,6 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_artwork.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_primitives.dart';
 import 'package:flutter/material.dart';
 
@@ -22,7 +22,7 @@ class MovieDetailsBackdrop extends StatelessWidget {
   final bool isFavoriteLoading;
   final VoidCallback onBackPressed;
   final VoidCallback onFavoritePressed;
-  final VoidCallback onSharePressed;
+  final ValueChanged<Rect?> onSharePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class MovieDetailsBackdrop extends StatelessWidget {
             tag: heroTag,
             child: ClipRRect(
               borderRadius: BorderRadius.zero,
-              child: MovieImage(path: movie.imageAsset),
+              child: MovieArtwork(source: movie.imageAsset),
             ),
           ),
           DecoratedBox(
@@ -63,10 +63,14 @@ class MovieDetailsBackdrop extends StatelessWidget {
                   onPressed: onBackPressed,
                 ),
                 const Spacer(),
-                DetailsGlassIconButton(
-                  icon: Icons.ios_share_rounded,
-                  onPressed: onSharePressed,
-                  size: 18,
+                Builder(
+                  builder: (shareButtonContext) => DetailsGlassIconButton(
+                    icon: Icons.ios_share_rounded,
+                    onPressed: () => onSharePressed(
+                      _buttonOrigin(shareButtonContext),
+                    ),
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 DetailsGlassIconButton(
@@ -84,5 +88,16 @@ class MovieDetailsBackdrop extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Rect? _buttonOrigin(BuildContext context) {
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox ||
+        !renderObject.hasSize ||
+        !renderObject.attached) {
+      return null;
+    }
+
+    return renderObject.localToGlobal(Offset.zero) & renderObject.size;
   }
 }

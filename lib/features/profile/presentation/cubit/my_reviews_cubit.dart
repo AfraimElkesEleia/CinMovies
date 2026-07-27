@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/error/failures.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,12 +14,12 @@ class MyReviewsState extends Equatable {
   });
 
   final MyReviewsStatus status;
-  final List<AppReview> reviews;
+  final List<CommunityReview> reviews;
   final Failure? failure;
 
   MyReviewsState copyWith({
     MyReviewsStatus? status,
-    List<AppReview>? reviews,
+    List<CommunityReview>? reviews,
     Failure? failure,
     bool clearFailure = false,
   }) {
@@ -61,7 +61,7 @@ class MyReviewsCubit extends Cubit<MyReviewsState> {
     );
   }
 
-  Future<bool> deleteReview(AppReview review) async {
+  Future<bool> deleteReview(CommunityReview review) async {
     final previousReviews = state.reviews;
     emit(
       state.copyWith(

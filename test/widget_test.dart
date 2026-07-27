@@ -15,13 +15,13 @@ import 'package:cinmovies_app/main.dart';
 
 void main() {
   setUp(() async {
-    await sl.reset();
+    await serviceLocator.reset();
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
-    sl.registerSingleton<LocalPreferencesService>(
+    serviceLocator.registerSingleton<LocalPreferencesService>(
       LocalPreferencesService(preferences),
     );
-    sl.registerSingleton<AuthRepository>(_FakeAuthRepository());
+    serviceLocator.registerSingleton<AuthRepository>(_FakeAuthRepository());
   });
 
   testWidgets('App starts on onboarding route', (WidgetTester tester) async {
@@ -30,7 +30,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MyApp(initialRoute: Routes.onBoarding));
+    await tester.pumpWidget(const CinMoviesApp(initialRoute: AppRoutes.onboarding));
 
     await tester.pump();
 
@@ -46,7 +46,7 @@ class _FakeAuthRepository implements AuthRepository {
   Stream<AuthState> get authStateChanges => const Stream.empty();
 
   @override
-  Future<String> resolveInitialRoute() async => Routes.onBoarding;
+  Future<String> resolveInitialRoute() async => AppRoutes.onboarding;
 
   @override
   Future<Either<Failure, AuthResponse>> signIn({

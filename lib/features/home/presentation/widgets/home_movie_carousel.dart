@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_carousel_cubit.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_image.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_rating.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_artwork.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_rating_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -70,7 +70,7 @@ class _HomeMovieCarouselState extends State<HomeMovieCarousel> {
               child: PageView.builder(
                 controller: _controller,
                 itemCount: widget.movies.length,
-                onPageChanged: _cubit.setIndex,
+                onPageChanged: _cubit.selectPage,
                 itemBuilder: (context, index) {
                   final movie = widget.movies[index];
                   final heroTag = widget.heroTagFor(movie, index);
@@ -135,7 +135,7 @@ class _HeroMovieCard extends StatelessWidget {
             tag: heroTag,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: MovieImage(path: movie.imageAsset),
+              child: MovieArtwork(source: movie.imageAsset),
             ),
           ),
           DecoratedBox(
@@ -174,7 +174,7 @@ class _HeroMovieCard extends StatelessWidget {
                         color: AppColors.ratingAmber.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: MovieRating(rating: movie.rating),
+                      child: MovieRatingBadge(rating: movie.rating),
                     ),
                   ],
                 ),

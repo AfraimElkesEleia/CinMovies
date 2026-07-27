@@ -2,12 +2,12 @@ import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/features/login/presentation/login_screen.dart';
 import 'package:cinmovies_app/features/main/presentation/main_navigation_screen.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_args.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_args.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/movie_details_screen.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/movie_section_screen.dart';
-import 'package:cinmovies_app/features/onboarding_screen/onboarding_pageview.dart';
-import 'package:cinmovies_app/features/onboarding_screen/preference_onboarding_screen.dart';
+import 'package:cinmovies_app/features/onboarding/onboarding_screen.dart';
+import 'package:cinmovies_app/features/onboarding/onboarding_genre_preferences_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/edit_profile_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/favorite_genres_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/my_reviews_screen.dart';
@@ -22,13 +22,13 @@ class AppRouter {
 
   Route? generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case Routes.onBoarding:
-        return MaterialPageRoute(builder: (_) => const OnBoardingPageview());
-      case Routes.home:
+      case AppRoutes.onboarding:
+        return MaterialPageRoute(builder: (_) => const OnboardingScreen());
+      case AppRoutes.home:
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
-      case Routes.search:
+      case AppRoutes.search:
         return MaterialPageRoute(builder: (_) => const SearchScreen());
-      case Routes.movieSection:
+      case AppRoutes.movieSection:
         final args = settings.arguments;
         if (args is MovieSectionArgs) {
           return MaterialPageRoute(
@@ -36,7 +36,7 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
-      case Routes.movieDetails:
+      case AppRoutes.movieDetails:
         final args = settings.arguments;
         if (args is MovieDetailsArgs) {
           return MaterialPageRoute(
@@ -55,7 +55,7 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
-      case Routes.trailerViewer:
+      case AppRoutes.trailerViewer:
         final args = settings.arguments;
         if (args is TrailerViewerArgs) {
           return MaterialPageRoute(
@@ -63,19 +63,19 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
-      case Routes.login:
+      case AppRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
-      case Routes.register:
+      case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const SignupScreen());
-      case Routes.preferenceOnboarding:
+      case AppRoutes.preferenceOnboarding:
         return MaterialPageRoute(
-          builder: (_) => const PreferenceOnboardingScreen(),
+          builder: (_) => const OnboardingGenrePreferencesScreen(),
         );
-      case Routes.editProfile:
+      case AppRoutes.editProfile:
         return MaterialPageRoute(builder: (_) => const EditProfileScreen());
-      case Routes.favoriteGenres:
+      case AppRoutes.favoriteGenres:
         return MaterialPageRoute(builder: (_) => const FavoriteGenresScreen());
-      case Routes.myReviews:
+      case AppRoutes.myReviews:
         return MaterialPageRoute(builder: (_) => const MyReviewsScreen());
     }
 

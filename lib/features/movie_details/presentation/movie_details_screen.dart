@@ -4,8 +4,9 @@ import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_share_content.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_backdrop.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_cast_tab.dart';
@@ -14,11 +15,12 @@ import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_reviews_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/similar_movies_section.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MovieDetailsScreen extends StatelessWidget {
   const MovieDetailsScreen({
@@ -34,9 +36,9 @@ class MovieDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MovieDetailsCubit(
-        sl<MovieDetailsRepository>(),
-        sl<LibraryRepository>(),
-        sl<ReviewRepository>(),
+        serviceLocator<MovieDetailsRepository>(),
+        serviceLocator<LibraryRepository>(),
+        serviceLocator<ReviewRepository>(),
         movie,
       )..load(),
       child: _MovieDetailsView(heroTag: heroTag),
@@ -88,7 +90,8 @@ class _MovieDetailsView extends StatelessWidget {
                 state.isFavoriteLoading || state.isFavoriteSaving,
             onBackPressed: Navigator.of(context).pop,
             onFavoritePressed: () => _toggleFavorite(context),
-            onSharePressed: _shareMovie,
+            onSharePressed: (shareOrigin) =>
+                _shareMovie(context, state.movie, shareOrigin),
           ),
         ),
       ),
@@ -147,7 +150,7 @@ class _MovieDetailsView extends StatelessWidget {
     if (videoKey == null || videoKey.trim().isEmpty) return;
     final movie = state.movie;
     context.pushNamed(
-      Routes.trailerViewer,
+      AppRoutes.trailerViewer,
       arguments: TrailerViewerArgs(
         videoKey: videoKey,
         movieId: movie.id,
@@ -157,7 +160,28 @@ class _MovieDetailsView extends StatelessWidget {
     );
   }
 
-  void _shareMovie() {}
+  Future<void> _shareMovie(
+    BuildContext context,
+    Movie movie,
+    Rect? shareOrigin,
+  ) async {
+    final content = MovieShareContent.fromMovie(movie);
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          title: content.title,
+          subject: content.subject,
+          text: content.text,
+          sharePositionOrigin: shareOrigin,
+        ),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackBar.showError(context, 'Could not open sharing options.');
+      }
+    }
+  }
 }
 
 // ─── Tab Bodies ───────────────────────────────────────────────────────────────
@@ -291,7 +315,7 @@ class _ReviewsTabBody extends StatelessWidget {
     }
   }
 
-  Future<bool> _deleteReview(BuildContext context, AppReview review) async {
+  Future<bool> _deleteReview(BuildContext context, CommunityReview review) async {
     final success = await context.read<MovieDetailsCubit>().deleteReview(
       review,
     );

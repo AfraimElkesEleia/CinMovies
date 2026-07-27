@@ -12,7 +12,7 @@ class BrowseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<BrowseCubit>()..loadInitial(),
+      create: (_) => serviceLocator<BrowseCubit>()..loadInitial(),
       child: const _BrowseView(),
     );
   }
@@ -74,11 +74,11 @@ class _BrowseViewState extends State<_BrowseView> {
                         children: [
                           BrowseHeader(
                             genres: state.genres,
-                            activeGenre: state.activeGenre,
+                            selectedGenre: state.selectedGenre,
                             movieCount: state.movies.length,
                             onGenreSelected: context
                                 .read<BrowseCubit>()
-                                .setGenre,
+                                .selectGenre,
                           ),
                         ],
                       ),
@@ -95,7 +95,7 @@ class _BrowseViewState extends State<_BrowseView> {
                   else
                     BrowseMovieGrid(movies: state.movies),
                   if (state.isLoadingMore)
-                    const SliverToBoxAdapter(child: BottomLoader()),
+                    const SliverToBoxAdapter(child: BrowsePaginationLoader()),
                   if (state.failure != null)
                     SliverToBoxAdapter(
                       child: BrowseErrorBanner(message: state.failure!.message),

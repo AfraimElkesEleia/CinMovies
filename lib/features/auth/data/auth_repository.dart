@@ -30,8 +30,8 @@ class AuthRepository {
   Stream<AuthState> get authStateChanges => _database.authStateChanges;
 
   Future<String> resolveInitialRoute() async {
-    if (!_preferences.hasPassedOnboarding) return Routes.onBoarding;
-    return currentUser == null ? Routes.login : Routes.home;
+    if (!_preferences.hasPassedOnboarding) return AppRoutes.onboarding;
+    return currentUser == null ? AppRoutes.login : AppRoutes.home;
   }
 
   Future<Either<Failure, AuthResponse>> signIn({

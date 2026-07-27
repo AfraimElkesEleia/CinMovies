@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
@@ -44,10 +45,10 @@ class _CastMemberAvatar extends StatelessWidget {
               border: Border.all(color: AppColors.surfaceBorder, width: 2),
             ),
             child: ClipOval(
-              child: Image.network(
-                actor.photoUrl,
+              child: CachedNetworkImage(
+                imageUrl: actor.photoUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
+                errorWidget: (context, url, error) {
                   return const ColoredBox(
                     color: AppColors.surface,
                     child: Icon(

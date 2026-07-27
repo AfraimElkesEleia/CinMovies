@@ -9,7 +9,7 @@ class BrowseState extends Equatable {
   const BrowseState({
     required this.status,
     required this.genres,
-    required this.activeGenre,
+    required this.selectedGenre,
     required this.movies,
     required this.currentPage,
     required this.totalPages,
@@ -20,7 +20,7 @@ class BrowseState extends Equatable {
   const BrowseState.initial()
     : status = BrowseStatus.initial,
       genres = fallbackGenres,
-      activeGenre = BrowseGenre.all,
+      selectedGenre = BrowseGenre.all,
       movies = const [],
       currentPage = 0,
       totalPages = 1,
@@ -38,7 +38,7 @@ class BrowseState extends Equatable {
 
   final BrowseStatus status;
   final List<BrowseGenre> genres;
-  final BrowseGenre activeGenre;
+  final BrowseGenre selectedGenre;
   final List<Movie> movies;
   final int currentPage;
   final int totalPages;
@@ -50,7 +50,7 @@ class BrowseState extends Equatable {
   BrowseState copyWith({
     BrowseStatus? status,
     List<BrowseGenre>? genres,
-    BrowseGenre? activeGenre,
+    BrowseGenre? selectedGenre,
     List<Movie>? movies,
     int? currentPage,
     int? totalPages,
@@ -60,7 +60,7 @@ class BrowseState extends Equatable {
     return BrowseState(
       status: status ?? this.status,
       genres: genres ?? this.genres,
-      activeGenre: activeGenre ?? this.activeGenre,
+      selectedGenre: selectedGenre ?? this.selectedGenre,
       movies: movies ?? this.movies,
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,
@@ -73,7 +73,7 @@ class BrowseState extends Equatable {
   List<Object?> get props => [
     status,
     genres,
-    activeGenre,
+    selectedGenre,
     movies,
     currentPage,
     totalPages,
@@ -105,7 +105,7 @@ class BrowseCubit extends Cubit<BrowseState> {
         BrowseState(
           status: BrowseStatus.failure,
           genres: genres,
-          activeGenre: BrowseGenre.all,
+          selectedGenre: BrowseGenre.all,
           movies: const [],
           currentPage: 1,
           totalPages: 1,
@@ -116,7 +116,7 @@ class BrowseCubit extends Cubit<BrowseState> {
         BrowseState(
           status: BrowseStatus.loaded,
           genres: genres,
-          activeGenre: BrowseGenre.all,
+          selectedGenre: BrowseGenre.all,
           movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
@@ -125,15 +125,15 @@ class BrowseCubit extends Cubit<BrowseState> {
     );
   }
 
-  Future<void> setGenre(BrowseGenre genre) async {
-    if (genre == state.activeGenre && state.status == BrowseStatus.loaded) {
+  Future<void> selectGenre(BrowseGenre genre) async {
+    if (genre == state.selectedGenre && state.status == BrowseStatus.loaded) {
       return;
     }
 
     emit(
       state.copyWith(
         status: BrowseStatus.loading,
-        activeGenre: genre,
+        selectedGenre: genre,
         movies: const [],
         currentPage: 0,
         totalPages: 1,
@@ -166,12 +166,12 @@ class BrowseCubit extends Cubit<BrowseState> {
   }
 
   Future<void> refresh() async {
-    final activeGenre = state.activeGenre;
+    final selectedGenre = state.selectedGenre;
     final genresResult = await _repository.fetchGenres();
     final genres = genresResult.getOrElse(() => state.genres);
     final moviesResult = await _repository.fetchMovies(
       page: 1,
-      genre: activeGenre,
+      genre: selectedGenre,
     );
 
     moviesResult.fold(
@@ -210,7 +210,7 @@ class BrowseCubit extends Cubit<BrowseState> {
 
     final result = await _repository.fetchMovies(
       page: state.currentPage + 1,
-      genre: state.activeGenre,
+      genre: state.selectedGenre,
     );
 
     result.fold(

@@ -19,14 +19,14 @@ Future<void> main() async {
     hiveCacheService: hiveCacheService,
     sharedPreferences: sharedPreferences,
   );
-  final bootstrapCubit = AppBootstrapCubit(sl(), sl());
+  final bootstrapCubit = AppBootstrapCubit(serviceLocator(), serviceLocator());
   final initialRoute = await bootstrapCubit.resolveInitialRoute();
   await bootstrapCubit.close();
-  runApp(MyApp(initialRoute: initialRoute));
+  runApp(CinMoviesApp(initialRoute: initialRoute));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.initialRoute});
+class CinMoviesApp extends StatelessWidget {
+  const CinMoviesApp({super.key, required this.initialRoute});
 
   static const _appRouter = AppRouter();
   final String initialRoute;
@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => AppBootstrapCubit(sl(), sl())),
+        BlocProvider(create: (_) => AppBootstrapCubit(serviceLocator(), serviceLocator())),
       ],
       child: MaterialApp(
         theme: ThemeData(

@@ -1,9 +1,9 @@
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/movie_details/data/model/movie_details_tab.dart';
+import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_cast_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_overview_tab.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_details_reviews_tab.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:flutter/material.dart';
 
 class MovieDetailsTabContent extends StatelessWidget {
@@ -21,13 +21,13 @@ class MovieDetailsTabContent extends StatelessWidget {
 
   final MovieDetailsTab activeTab;
   final Movie movie;
-  final List<AppReview> reviews;
+  final List<CommunityReview> reviews;
   final bool isReviewsLoading;
   final bool isReviewSaving;
   final VoidCallback onWriteReviewPressed;
-  final Future<bool> Function(AppReview review, ReviewReaction reaction)
+  final Future<bool> Function(CommunityReview review, ReviewReaction reaction)
   onReviewReactionPressed;
-  final Future<bool> Function(AppReview review) onReviewDeletePressed;
+  final Future<bool> Function(CommunityReview review) onReviewDeletePressed;
 
   @override
   Widget build(BuildContext context) {

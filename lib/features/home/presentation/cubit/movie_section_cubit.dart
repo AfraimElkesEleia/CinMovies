@@ -1,19 +1,19 @@
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
-import 'package:cinmovies_app/features/home/data/model/movie_section_args.dart';
+import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
+import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MovieSectionState extends Equatable {
   const MovieSectionState({
     required this.args,
-    this.status = SearchStatus.initial,
+    this.status = MovieListStatus.initial,
     this.movies = const [],
     this.query = '',
-    this.sortMode = SearchSortMode.rating,
+    this.sortOption = MovieSortOption.rating,
     this.currentPage = 0,
     this.totalPages = 1,
     this.isLoadingMore = false,
@@ -21,10 +21,10 @@ class MovieSectionState extends Equatable {
   });
 
   final MovieSectionArgs args;
-  final SearchStatus status;
+  final MovieListStatus status;
   final List<Movie> movies;
   final String query;
-  final SearchSortMode sortMode;
+  final MovieSortOption sortOption;
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
@@ -50,14 +50,14 @@ class MovieSectionState extends Equatable {
             return movie.title.toLowerCase().contains(normalizedQuery);
           }).toList();
 
-    return _sortedMovies(filtered, sortMode);
+    return _sortedMovies(filtered, sortOption);
   }
 
   MovieSectionState copyWith({
-    SearchStatus? status,
+    MovieListStatus? status,
     List<Movie>? movies,
     String? query,
-    SearchSortMode? sortMode,
+    MovieSortOption? sortOption,
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
@@ -68,7 +68,7 @@ class MovieSectionState extends Equatable {
       status: status ?? this.status,
       movies: movies ?? this.movies,
       query: query ?? this.query,
-      sortMode: sortMode ?? this.sortMode,
+      sortOption: sortOption ?? this.sortOption,
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
@@ -78,17 +78,17 @@ class MovieSectionState extends Equatable {
 
   static List<Movie> _sortedMovies(
     Iterable<Movie> movies,
-    SearchSortMode mode,
+    MovieSortOption mode,
   ) {
     final sorted = [...movies];
     switch (mode) {
-      case SearchSortMode.rating:
+      case MovieSortOption.rating:
         sorted.sort((a, b) => b.rating.compareTo(a.rating));
-      case SearchSortMode.title:
+      case MovieSortOption.title:
         sorted.sort(
           (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         );
-      case SearchSortMode.time:
+      case MovieSortOption.newest:
         sorted.sort((a, b) => _yearValue(b.year).compareTo(_yearValue(a.year)));
     }
     return sorted;
@@ -102,7 +102,7 @@ class MovieSectionState extends Equatable {
     status,
     movies,
     query,
-    sortMode,
+    sortOption,
     currentPage,
     totalPages,
     isLoadingMore,
@@ -124,7 +124,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
   Future<void> loadInitial() async {
     emit(
       state.copyWith(
-        status: SearchStatus.loading,
+        status: MovieListStatus.loading,
         movies: const [],
         currentPage: 0,
         totalPages: 1,
@@ -147,7 +147,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     result.fold(
       (failure) => emit(
         state.copyWith(
-          status: SearchStatus.failure,
+          status: MovieListStatus.failure,
           currentPage: 0,
           totalPages: 1,
           failure: failure,
@@ -155,7 +155,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       ),
       (page) => emit(
         state.copyWith(
-          status: SearchStatus.loaded,
+          status: MovieListStatus.loaded,
           movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
@@ -173,13 +173,13 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     emit(state.copyWith(query: '', failure: null));
   }
 
-  void setSortMode(SearchSortMode mode) {
-    if (mode == state.sortMode) return;
-    emit(state.copyWith(sortMode: mode, failure: null));
+  void selectSortOption(MovieSortOption mode) {
+    if (mode == state.sortOption) return;
+    emit(state.copyWith(sortOption: mode, failure: null));
   }
 
   Future<void> loadNextPage() async {
-    if (state.status != SearchStatus.loaded ||
+    if (state.status != MovieListStatus.loaded ||
         state.isLoadingMore ||
         !state.canLoadMore) {
       return;
@@ -219,7 +219,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     if (repository == null) {
       emit(
         state.copyWith(
-          status: SearchStatus.failure,
+          status: MovieListStatus.failure,
           failure: const CacheFailure(message: 'Library is unavailable.'),
         ),
       );
@@ -230,7 +230,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     result.fold(
       (failure) => emit(
         state.copyWith(
-          status: SearchStatus.failure,
+          status: MovieListStatus.failure,
           currentPage: 0,
           totalPages: 1,
           failure: failure,
@@ -238,7 +238,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       ),
       (movies) => emit(
         state.copyWith(
-          status: SearchStatus.loaded,
+          status: MovieListStatus.loaded,
           movies: movies,
           currentPage: 1,
           totalPages: 1,

@@ -3,7 +3,7 @@ import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
-import 'package:cinmovies_app/features/reviews/data/model/app_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
@@ -16,7 +16,7 @@ void main() {
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
         Right(
-          MovieDetailsResult(
+          MovieDetailsData(
             movie: full,
             similarMovies: [_movie('2', 'Similar')],
           ),
@@ -79,12 +79,12 @@ class _FakeReviewRepository implements ReviewRepository {
   }
 
   @override
-  Future<Either<Failure, List<AppReview>>> reviewsForCurrentUser() async {
+  Future<Either<Failure, List<CommunityReview>>> reviewsForCurrentUser() async {
     return const Right([]);
   }
 
   @override
-  Future<Either<Failure, List<AppReview>>> reviewsForMovie(Movie movie) async {
+  Future<Either<Failure, List<CommunityReview>>> reviewsForMovie(Movie movie) async {
     return const Right([]);
   }
 
@@ -111,10 +111,10 @@ class _FakeReviewRepository implements ReviewRepository {
 class _FakeDetailsRepository extends MovieDetailsRepository {
   _FakeDetailsRepository(this.result) : super(Dio());
 
-  final Either<Failure, MovieDetailsResult> result;
+  final Either<Failure, MovieDetailsData> result;
 
   @override
-  Future<Either<Failure, MovieDetailsResult>> fetchMovieDetails(
+  Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(
     Movie seed,
   ) async {
     return result;

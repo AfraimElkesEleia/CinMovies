@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/home/presentation/widgets/movie_card.dart';
+import 'package:cinmovies_app/features/movies/presentation/widgets/movie_poster_card.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
 
@@ -34,7 +34,7 @@ class HomeMovieRow extends StatelessWidget {
         itemBuilder: (context, index) {
           final movie = movies[index];
           final heroTag = '$heroTagPrefix-$index-${movie.id}';
-          return MovieCard(
+          return MoviePosterCard(
             movie: movie,
             heroTag: heroTag,
             onTap: () => onMoviePressed(movie, heroTag),
@@ -93,7 +93,9 @@ class HomeErrorBanner extends StatelessWidget {
 }
 
 class HomeTopBar extends StatelessWidget {
-  const HomeTopBar({super.key});
+  const HomeTopBar({super.key, required this.onSearchPressed});
+
+  final VoidCallback onSearchPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -126,8 +128,9 @@ class HomeTopBar extends StatelessWidget {
             ),
           ),
           _TopIconButton(
-            icon: Icons.notifications_none_rounded,
-            onPressed: () {},
+            icon: Icons.search_rounded,
+            tooltip: 'Search movies',
+            onPressed: onSearchPressed,
           ),
           const SizedBox(width: 12),
           ClipRRect(
@@ -163,41 +166,30 @@ class HomeEmptyState extends StatelessWidget {
 }
 
 class _TopIconButton extends StatelessWidget {
-  const _TopIconButton({required this.icon, required this.onPressed});
+  const _TopIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   final IconData icon;
+  final String tooltip;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(
-          onPressed: onPressed,
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textMuted,
-            fixedSize: const Size(40, 40),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          icon: Icon(icon, size: 21),
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textMuted,
+        fixedSize: const Size(40, 40),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.loginPrimary,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
+      ),
+      icon: Icon(icon, size: 21),
     );
   }
 }

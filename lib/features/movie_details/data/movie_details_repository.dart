@@ -13,9 +13,9 @@ class MovieDetailsRepository {
 
   final Dio _dio;
   final ErrorMapperRegistry _errorMapper;
-  final Map<String, MovieDetailsResult> _detailsCache = {};
+  final Map<String, MovieDetailsData> _detailsCache = {};
 
-  Future<Either<Failure, MovieDetailsResult>> fetchMovieDetails(
+  Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(
     Movie seed,
   ) async {
     final cached = _detailsCache[seed.id];
@@ -33,7 +33,7 @@ class MovieDetailsRepository {
         ),
       );
 
-      final result = MovieDetailsResult.fromJson(response.data, seed);
+      final result = MovieDetailsData.fromJson(response.data, seed);
       _detailsCache[seed.id] = result;
       return Right(result);
     } catch (error) {
@@ -42,22 +42,22 @@ class MovieDetailsRepository {
   }
 }
 
-class MovieDetailsResult {
-  const MovieDetailsResult({
+class MovieDetailsData {
+  const MovieDetailsData({
     required this.movie,
     required this.similarMovies,
     this.videoKey,
   });
 
-  factory MovieDetailsResult.fromJson(
+  factory MovieDetailsData.fromJson(
     Map<String, dynamic>? json,
     Movie seed,
   ) {
     if (json == null) {
-      return MovieDetailsResult(movie: seed, similarMovies: const []);
+      return MovieDetailsData(movie: seed, similarMovies: const []);
     }
 
-    return MovieDetailsResult(
+    return MovieDetailsData(
       movie: _movieFromJson(json, seed),
       similarMovies: TmdbMovieMapper.listFromResponse(json['similar']),
       videoKey: _videoKey(json['videos']),
@@ -187,9 +187,9 @@ class MovieDetailsResult {
     return mapped.isEmpty ? fallback : mapped;
   }
 
-  static List<MovieReview> _reviews(
+  static List<TmdbReview> _reviews(
     Object? reviews,
-    List<MovieReview> fallback,
+    List<TmdbReview> fallback,
   ) {
     if (reviews is! Map<String, dynamic>) return fallback;
     final results = reviews['results'];
@@ -203,7 +203,7 @@ class MovieDetailsResult {
           ? authorDetails
           : const <String, dynamic>{};
 
-      return MovieReview(
+      return TmdbReview(
         username:
             details['username'] as String? ??
             review['author'] as String? ??
