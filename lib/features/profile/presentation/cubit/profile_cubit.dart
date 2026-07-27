@@ -15,7 +15,7 @@ class ProfileState extends Equatable {
     this.email,
     this.bio,
     this.avatarUrl,
-    this.watchedCount = 0,
+    this.favoriteCount = 0,
     this.watchlistCount = 0,
     this.reviewCount = 0,
   });
@@ -26,7 +26,7 @@ class ProfileState extends Equatable {
   final String? email;
   final String? bio;
   final String? avatarUrl;
-  final int watchedCount;
+  final int favoriteCount;
   final int watchlistCount;
   final int reviewCount;
 
@@ -38,7 +38,7 @@ class ProfileState extends Equatable {
         email,
         bio,
         avatarUrl,
-        watchedCount,
+        favoriteCount,
         watchlistCount,
         reviewCount,
       ];
@@ -63,7 +63,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       final profileResult = await _profileRepository.currentProfile();
       final countResults = await Future.wait([
-        _libraryRepository.count(UserMovieListType.watched),
+        _libraryRepository.count(UserMovieListType.favorite),
         _libraryRepository.count(UserMovieListType.watchlist),
         _reviewRepository.countForCurrentUser(),
       ]);
@@ -92,7 +92,7 @@ class ProfileCubit extends Cubit<ProfileState> {
           email: _authRepository.currentUser?.email,
           bio: profile?['bio'] as String?,
           avatarUrl: profile?['avatar_url'] as String?,
-          watchedCount: countResults[0].getOrElse(() => 0),
+          favoriteCount: countResults[0].getOrElse(() => 0),
           watchlistCount: countResults[1].getOrElse(() => 0),
           reviewCount: countResults[2].getOrElse(() => 0),
         ),

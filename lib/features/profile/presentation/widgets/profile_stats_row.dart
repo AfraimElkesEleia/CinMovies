@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 class ProfileStatsRow extends StatelessWidget {
   const ProfileStatsRow({
     super.key,
-    this.watchedCount = 0,
+    this.favoriteCount = 0,
     this.watchlistCount = 0,
     this.reviewCount = 0,
   });
 
-  final int watchedCount;
+  final int favoriteCount;
   final int watchlistCount;
   final int reviewCount;
 
@@ -21,9 +21,9 @@ class ProfileStatsRow extends StatelessWidget {
         children: [
           Expanded(
             child: _ProfileStatCard(
-              value: watchedCount.toString(),
-              label: 'Watched',
-              icon: Icons.visibility_outlined,
+              value: favoriteCount.toString(),
+              label: 'Favorites',
+              icon: Icons.favorite_border_rounded,
             ),
           ),
           const SizedBox(width: 12),

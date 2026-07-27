@@ -63,7 +63,7 @@ class _ProfileView extends StatelessWidget {
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
                         SliverToBoxAdapter(
                           child: ProfileStatsRow(
-                            watchedCount: state.watchedCount,
+                            favoriteCount: state.favoriteCount,
                             watchlistCount: state.watchlistCount,
                             reviewCount: state.reviewCount,
                           ),

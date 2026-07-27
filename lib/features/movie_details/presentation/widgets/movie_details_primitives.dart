@@ -32,10 +32,7 @@ class DetailsGlassIconButton extends StatelessWidget {
           ? SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: color,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
             )
           : Icon(icon, size: size),
     );
