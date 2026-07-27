@@ -18,22 +18,29 @@ class MainNavigationScreen extends StatelessWidget {
       create: (_) => MainNavigationCubit(),
       child: BlocBuilder<MainNavigationCubit, AppNavTab>(
         builder: (context, currentTab) {
-          return Scaffold(
-            body: IndexedStack(
-              index: AppNavTab.values.indexOf(currentTab),
-              children: AppNavTab.values.map((tab) {
-                return switch (tab) {
-                  AppNavTab.home => const HomeScreen(),
-                  AppNavTab.browse => const BrowseScreen(),
-                  AppNavTab.library => const LibraryScreen(),
-                  AppNavTab.ai => const AiChatScreen(),
-                  AppNavTab.profile => const ProfileScreen(),
-                };
-              }).toList(),
-            ),
-            bottomNavigationBar: AppBottomNavigationBar(
-              currentTab: currentTab,
-              onTabSelected: context.read<MainNavigationCubit>().selectTab,
+          return PopScope(
+            canPop: currentTab == AppNavTab.home,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop || currentTab == AppNavTab.home) return;
+              context.read<MainNavigationCubit>().handleBlockedBackNavigation();
+            },
+            child: Scaffold(
+              body: IndexedStack(
+                index: AppNavTab.values.indexOf(currentTab),
+                children: AppNavTab.values.map((tab) {
+                  return switch (tab) {
+                    AppNavTab.home => const HomeScreen(),
+                    AppNavTab.browse => const BrowseScreen(),
+                    AppNavTab.library => const LibraryScreen(),
+                    AppNavTab.ai => const AiChatScreen(),
+                    AppNavTab.profile => const ProfileScreen(),
+                  };
+                }).toList(),
+              ),
+              bottomNavigationBar: AppBottomNavigationBar(
+                currentTab: currentTab,
+                onTabSelected: context.read<MainNavigationCubit>().selectTab,
+              ),
             ),
           );
         },

@@ -5,4 +5,10 @@ class MainNavigationCubit extends Cubit<AppNavTab> {
   MainNavigationCubit() : super(AppNavTab.home);
 
   void selectTab(AppNavTab tab) => emit(tab);
+
+  void handleBlockedBackNavigation() {
+    if (state != AppNavTab.home) {
+      emit(AppNavTab.home);
+    }
+  }
 }
