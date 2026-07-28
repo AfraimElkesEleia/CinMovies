@@ -220,7 +220,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       emit(
         state.copyWith(
           status: MovieListStatus.failure,
-          failure: const CacheFailure(message: 'Library is unavailable.'),
+          failure: const Failure(message: 'Library is unavailable.'),
         ),
       );
       return;

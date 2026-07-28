@@ -56,7 +56,7 @@ void main() {
     final repository = _FakeMovieChatRepository(
       sendHandler: (call, conversationId, optimisticMessage) async {
         if (call == 1) {
-          return const Left(NetworkFailure(message: 'No connection'));
+          return const Left(Failure(message: 'No connection'));
         }
         return Right(_response(conversationId, optimisticMessage));
       },

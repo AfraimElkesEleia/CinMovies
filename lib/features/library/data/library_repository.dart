@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/constants/api_constants.dart';
@@ -51,14 +50,12 @@ class LibraryRepository implements LibraryRepositoryContract {
   const LibraryRepository(
     this._database,
     this._movieRepository,
-    this._cache, [
-    this._errorMapper = defaultErrorMapper,
-  ]);
+    this._cache,
+  );
 
   final SupabaseDatabaseService _database;
   final MovieRepository _movieRepository;
   final HiveCacheService _cache;
-  final ErrorMapperRegistry _errorMapper;
 
   String get _userId {
     final id = _database.currentUser?.id;
@@ -84,7 +81,7 @@ class LibraryRepository implements LibraryRepositoryContract {
         return Right(row != null);
       });
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -114,7 +111,7 @@ class LibraryRepository implements LibraryRepositoryContract {
         return const Right(null);
       });
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -150,7 +147,7 @@ class LibraryRepository implements LibraryRepositoryContract {
       await _cache.cacheUserSnapshot('library_${type.value}', movieRows);
       return Right(movieRows);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -168,7 +165,7 @@ class LibraryRepository implements LibraryRepositoryContract {
           .eq('list_type', type.value);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -193,7 +190,7 @@ class LibraryRepository implements LibraryRepositoryContract {
           .eq('list_type', type.value);
       return Right(rows.length);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

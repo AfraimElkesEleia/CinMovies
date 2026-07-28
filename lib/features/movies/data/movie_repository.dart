@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
@@ -9,13 +8,11 @@ import 'package:dartz/dartz.dart';
 class MovieRepository {
   const MovieRepository(
     this._database,
-    this._cache, [
-    this._errorMapper = defaultErrorMapper,
-  ]);
+    this._cache,
+  );
 
   final SupabaseDatabaseService _database;
   final HiveCacheService _cache;
-  final ErrorMapperRegistry _errorMapper;
 
   Future<Either<Failure, String>> cacheMovie(Movie movie) async {
     try {
@@ -49,7 +46,7 @@ class MovieRepository {
       });
       return Right(movieId);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

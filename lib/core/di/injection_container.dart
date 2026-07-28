@@ -1,5 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
-import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
@@ -63,9 +61,6 @@ Future<void> initDependencies({
   serviceLocator.registerLazySingleton<LocalPreferencesService>(
     () => LocalPreferencesService(sharedPreferences),
   );
-  serviceLocator.registerLazySingleton<ErrorMapperRegistry>(
-    () => defaultErrorMapper,
-  );
   serviceLocator.registerLazySingleton<MovieArtworkCache>(
     DiskMovieArtworkCache.new,
   );
@@ -74,49 +69,43 @@ Future<void> initDependencies({
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
-      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<ProfileRepository>(
-    () =>
-        ProfileRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () => ProfileRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<HomeRepository>(
     () => HomeRepository(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
-      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<BrowseRepository>(
-    () => BrowseRepository(serviceLocator(), serviceLocator()),
+    () => BrowseRepository(serviceLocator()),
   );
   serviceLocator.registerLazySingleton<SearchRepository>(
-    () => SearchRepository(serviceLocator(), serviceLocator()),
+    () => SearchRepository(serviceLocator()),
   );
   serviceLocator.registerLazySingleton<MovieDetailsRepository>(
     () => MovieDetailsRepository(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
-      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<MovieRepository>(
-    () => MovieRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () => MovieRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<LibraryRepository>(
     () => LibraryRepository(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
-      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<ReviewRepository>(
-    () =>
-        ReviewRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () => ReviewRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<GenrePreferencesRepository>(
     () => GenrePreferencesRepository(
@@ -139,7 +128,6 @@ Future<void> initDependencies({
   );
   serviceLocator.registerLazySingleton<MovieChatRepository>(
     () => MovieChatRepositoryImpl(
-      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),

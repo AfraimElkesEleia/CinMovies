@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
@@ -14,16 +13,14 @@ class AuthRepository {
   const AuthRepository(
     this._database,
     this._storage,
-    this._preferences, [
-    this._errorMapper = defaultErrorMapper,
-  ]);
+    this._preferences,
+  );
 
   static const avatarBucket = 'avatars';
 
   final SupabaseDatabaseService _database;
   final SupabaseStorageService _storage;
   final LocalPreferencesService _preferences;
-  final ErrorMapperRegistry _errorMapper;
 
   User? get currentUser => _database.currentUser;
 
@@ -47,7 +44,7 @@ class AuthRepository {
       );
       return Right(response);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -55,7 +52,7 @@ class AuthRepository {
     try {
       return Right(await _database.signInAnonymously());
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -93,7 +90,7 @@ class AuthRepository {
       }
       return Right(response);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -104,7 +101,7 @@ class AuthRepository {
       await _database.updateUser(UserAttributes(password: password));
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
@@ -22,13 +21,11 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
   TrailerHistoryRepository(
     this._cache,
     this._supabase, {
-    this._errorMapper = defaultErrorMapper,
     this._scopeIdResolver,
   });
 
   final HiveCacheService _cache;
   final SupabaseClient _supabase;
-  final ErrorMapperRegistry _errorMapper;
   final String Function()? _scopeIdResolver;
 
   String get _scopeId {
@@ -52,7 +49,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
             ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       return Right(entries);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -72,7 +69,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
             : null,
       );
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -90,7 +87,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
       );
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -102,7 +99,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
       await _cache.deleteTrailerHistoryEntry(_scopeId, key);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

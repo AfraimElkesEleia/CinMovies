@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
@@ -10,15 +9,13 @@ import 'package:dartz/dartz.dart';
 class ProfileRepository {
   const ProfileRepository(
     this._database,
-    this._storage, [
-    this._errorMapper = defaultErrorMapper,
-  ]);
+    this._storage,
+  );
 
   static const avatarBucket = 'avatars';
 
   final SupabaseDatabaseService _database;
   final SupabaseStorageService _storage;
-  final ErrorMapperRegistry _errorMapper;
 
   String get _userId {
     final id = _database.currentUser?.id;
@@ -35,7 +32,7 @@ class ProfileRepository {
           .maybeSingle();
       return Right(profile);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -64,7 +61,7 @@ class ProfileRepository {
       await _database.from('profiles').update(values).eq('id', _userId);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -89,7 +86,7 @@ class ProfileRepository {
       await updateProfile(avatarUrl: url);
       return Right(url);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

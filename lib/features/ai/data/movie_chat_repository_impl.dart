@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
@@ -14,14 +13,12 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
     this._ai,
     this._remote,
     this._local, [
-    this._errorMapper = defaultErrorMapper,
     Uuid? uuid,
   ]) : _uuid = uuid ?? const Uuid();
 
   final MovieChatAiDataSource _ai;
   final MovieChatRemoteDataSource _remote;
   final MovieChatLocalDataSource _local;
-  final ErrorMapperRegistry _errorMapper;
   final Uuid _uuid;
 
   @override
@@ -40,7 +37,7 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
       final cached = _local.loadSessions(scopeId);
       return cached.isNotEmpty
           ? Right(cached)
-          : Left(_errorMapper.map(error));
+          : Left(mapError(error));
     }
   }
 
@@ -63,7 +60,7 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
       final cached = _local.loadMessages(scopeId, sessionId);
       return cached.isNotEmpty
           ? Right(cached)
-          : Left(_errorMapper.map(error));
+          : Left(mapError(error));
     }
   }
 
@@ -136,7 +133,7 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
       }
       return Right(response);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -148,7 +145,7 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
       await _local.deleteSession(scopeId, sessionId);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 }

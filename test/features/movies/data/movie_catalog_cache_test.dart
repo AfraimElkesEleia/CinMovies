@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
@@ -92,7 +91,6 @@ void main() {
       final artworkCache = _BlockingArtworkCache();
       final repository = HomeRepository(
         dio,
-        defaultErrorMapper,
         cache,
         artworkCache,
       );
@@ -111,7 +109,6 @@ void main() {
 
       final restoredRepository = HomeRepository(
         Dio(),
-        defaultErrorMapper,
         cache,
       );
       expect(
@@ -133,7 +130,7 @@ void main() {
         'upcoming': const [],
       });
 
-      final repository = HomeRepository(dio, defaultErrorMapper, cache);
+      final repository = HomeRepository(dio, cache);
 
       expect(repository.readCachedHomeMovies(), isNull);
     });
@@ -141,7 +138,6 @@ void main() {
     test('details persist and evict the least recently stored record', () async {
       final repository = MovieDetailsRepository(
         dio,
-        defaultErrorMapper,
         cache,
       );
 

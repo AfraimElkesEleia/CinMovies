@@ -52,7 +52,7 @@ void main() {
         ),
         cachedAt: DateTime.utc(2026, 7, 20),
       ),
-      remote: const Left(NetworkFailure(message: 'No connection')),
+      remote: const Left(Failure(message: 'No connection')),
     );
     final cubit = HomeCubit(repository);
     addTearDown(cubit.close);
@@ -69,7 +69,7 @@ void main() {
   test('uses failure state when neither cache nor network is available', () async {
     final cubit = HomeCubit(
       _FakeHomeRepository(
-        remote: const Left(NetworkFailure(message: 'No connection')),
+        remote: const Left(Failure(message: 'No connection')),
       ),
     );
     addTearDown(cubit.close);

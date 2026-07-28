@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
@@ -10,13 +9,11 @@ import 'package:dartz/dartz.dart';
 class ReviewRepository {
   const ReviewRepository(
     this._database,
-    this._movieRepository, [
-    this._errorMapper = defaultErrorMapper,
-  ]);
+    this._movieRepository,
+  );
 
   final SupabaseDatabaseService _database;
   final MovieRepository _movieRepository;
-  final ErrorMapperRegistry _errorMapper;
 
   String get _userId {
     final id = _database.currentUser?.id;
@@ -48,7 +45,7 @@ class ReviewRepository {
         },
       );
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -81,7 +78,7 @@ class ReviewRepository {
         },
       );
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -108,7 +105,7 @@ class ReviewRepository {
             .toList(),
       );
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -120,7 +117,7 @@ class ReviewRepository {
           .eq('user_id', _userId);
       return Right(rows.length);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -137,7 +134,7 @@ class ReviewRepository {
       }, onConflict: 'review_id,user_id');
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -150,7 +147,7 @@ class ReviewRepository {
           .eq('user_id', _userId);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -163,7 +160,7 @@ class ReviewRepository {
           .eq('user_id', _userId);
       return const Right(null);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 }

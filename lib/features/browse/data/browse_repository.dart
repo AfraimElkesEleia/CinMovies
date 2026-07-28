@@ -1,5 +1,4 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
@@ -9,10 +8,9 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 class BrowseRepository {
-  const BrowseRepository(this._dio, [this._errorMapper = defaultErrorMapper]);
+  const BrowseRepository(this._dio);
 
   final Dio _dio;
-  final ErrorMapperRegistry _errorMapper;
 
   Future<Either<Failure, List<BrowseGenre>>> fetchGenres() async {
     try {
@@ -24,7 +22,7 @@ class BrowseRepository {
       final genres = _genresFromResponse(response.data);
       return Right([BrowseGenre.all, ...genres]);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 
@@ -50,7 +48,7 @@ class BrowseRepository {
 
       return Right(BrowseMoviesPage.fromJson(response.data));
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

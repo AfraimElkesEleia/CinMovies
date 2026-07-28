@@ -148,9 +148,8 @@ class AiChatCubit extends Cubit<AiChatState> {
       emit(
         state.copyWith(
           status: AiChatStatus.sendFailure,
-          failure: const ServerFailure(
+          failure: const Failure(
             message: 'Enter a movie question first.',
-            statusCode: 400,
           ),
           clearPendingSend: true,
         ),
@@ -161,9 +160,8 @@ class AiChatCubit extends Cubit<AiChatState> {
       emit(
         state.copyWith(
           status: AiChatStatus.sendFailure,
-          failure: const ServerFailure(
+          failure: const Failure(
             message: 'Keep your message under 1,000 characters.',
-            statusCode: 400,
           ),
           clearPendingSend: true,
         ),

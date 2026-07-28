@@ -156,7 +156,7 @@ class _FakeHomeRepository extends HomeRepository {
     final key = '${section.name}:$page';
     requests.add(key);
     if (failures.contains(key)) {
-      return const Left(NetworkFailure(message: 'No connection'));
+      return const Left(Failure(message: 'No connection'));
     }
     return Right(
       pages[key] ??

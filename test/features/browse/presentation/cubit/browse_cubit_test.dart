@@ -36,7 +36,7 @@ void main() {
 
   test('loadInitial emits failure with no fake movies when first page fails', () async {
     final repository = _FakeBrowseRepository(
-      genresResult: const Left(NetworkFailure(message: 'No connection')),
+      genresResult: const Left(Failure(message: 'No connection')),
       failureKeys: {'All:1'},
     );
     final cubit = BrowseCubit(repository);
@@ -168,7 +168,7 @@ class _FakeBrowseRepository extends BrowseRepository {
     final key = '${genre.name}:$page';
     movieRequests.add(key);
     if (failureKeys.contains(key)) {
-      return const Left(NetworkFailure(message: 'No connection'));
+      return const Left(Failure(message: 'No connection'));
     }
     return Right(
       pages[key] ?? BrowseMoviesPage(movies: [_movie('$page', key)], page: page, totalPages: page),

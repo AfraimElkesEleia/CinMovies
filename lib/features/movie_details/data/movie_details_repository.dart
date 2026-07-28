@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cinmovies_app/core/constants/api_constants.dart';
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
@@ -15,7 +14,6 @@ import 'package:dio/dio.dart';
 class MovieDetailsRepository {
   MovieDetailsRepository(
     this._dio, [
-    this._errorMapper = defaultErrorMapper,
     this._cache,
     this._artworkCache,
   ]);
@@ -25,7 +23,6 @@ class MovieDetailsRepository {
   static const _detailsCacheLimit = 20;
 
   final Dio _dio;
-  final ErrorMapperRegistry _errorMapper;
   final HiveCacheService? _cache;
   final MovieArtworkCache? _artworkCache;
 
@@ -88,7 +85,7 @@ class MovieDetailsRepository {
       unawaited(_warmArtwork(result));
       return Right(result);
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 

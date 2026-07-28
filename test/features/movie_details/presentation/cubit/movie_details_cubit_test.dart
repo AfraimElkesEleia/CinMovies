@@ -46,7 +46,7 @@ void main() {
     final seed = _movie('1', 'Seed');
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        const Left(NetworkFailure(message: 'No connection')),
+        const Left(Failure(message: 'No connection')),
       ),
       _FakeLibraryRepository(),
       _FakeReviewRepository(),
@@ -67,7 +67,7 @@ void main() {
     final cachedAt = DateTime.utc(2026, 7, 20);
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        const Left(NetworkFailure(message: 'No connection')),
+        const Left(Failure(message: 'No connection')),
         cached: CachedMovieDetails(
           data: MovieDetailsData(
             movie: cachedMovie,

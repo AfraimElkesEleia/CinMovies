@@ -28,7 +28,6 @@ class MovieChatAiDataSource {
     if (normalizedMessage.isEmpty || normalizedMessage.length > 1000) {
       throw const ServerException(
         message: 'Enter a movie question under 1,000 characters.',
-        statusCode: 400,
       );
     }
 
@@ -208,7 +207,6 @@ class MovieChatAiDataSource {
     if (ids.isNotEmpty && resolved.isEmpty) {
       throw const ServerException(
         message: 'Movie information is temporarily unavailable. Try again.',
-        statusCode: 503,
       );
     }
     if (plan.intent != _MovieIntent.recommendation &&
@@ -278,7 +276,6 @@ class MovieChatAiDataSource {
     if (content == null) {
       throw const ServerException(
         message: 'The movie assistant returned an invalid answer. Try again.',
-        statusCode: 502,
       );
     }
 
@@ -356,12 +353,10 @@ class MovieChatAiDataSource {
         message: error.response?.statusCode == 429
             ? 'The movie assistant is busy. Try again shortly.'
             : 'The movie assistant is temporarily unavailable. Try again.',
-        statusCode: error.response?.statusCode,
       );
     } on Object {
       throw const ServerException(
         message: 'The movie assistant returned an invalid response. Try again.',
-        statusCode: 502,
       );
     }
   }
@@ -456,7 +451,6 @@ class _MoviePlan {
     if (intent == null || operation == null) {
       throw const ServerException(
         message: 'The movie assistant could not understand that request.',
-        statusCode: 502,
       );
     }
     return _MoviePlan(

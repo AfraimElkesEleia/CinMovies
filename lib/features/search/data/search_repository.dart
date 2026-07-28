@@ -1,5 +1,4 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
-import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
@@ -8,10 +7,9 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 class SearchRepository {
-  const SearchRepository(this._dio, [this._errorMapper = defaultErrorMapper]);
+  const SearchRepository(this._dio);
 
   final Dio _dio;
-  final ErrorMapperRegistry _errorMapper;
 
   Future<Either<Failure, SearchMoviesPage>> searchMovies({
     required String query,
@@ -30,7 +28,7 @@ class SearchRepository {
 
       return Right(SearchMoviesPage.fromJson(response.data));
     } catch (error) {
-      return Left(_errorMapper.map(error));
+      return Left(mapError(error));
     }
   }
 }
