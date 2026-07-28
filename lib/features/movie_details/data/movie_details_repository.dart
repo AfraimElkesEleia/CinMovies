@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/config/env_config.dart';
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
@@ -28,9 +27,6 @@ class MovieDetailsRepository {
           'language': 'en-US',
           'append_to_response': 'credits,reviews,similar,videos',
         },
-        options: Options(
-          headers: {'Authorization': 'Bearer ${EnvConfig.tmdbAccessToken}'},
-        ),
       );
 
       final result = MovieDetailsData.fromJson(response.data, seed);
@@ -49,10 +45,7 @@ class MovieDetailsData {
     this.videoKey,
   });
 
-  factory MovieDetailsData.fromJson(
-    Map<String, dynamic>? json,
-    Movie seed,
-  ) {
+  factory MovieDetailsData.fromJson(Map<String, dynamic>? json, Movie seed) {
     if (json == null) {
       return MovieDetailsData(movie: seed, similarMovies: const []);
     }
@@ -73,18 +66,15 @@ class MovieDetailsData {
     final results = videos['results'];
     if (results is! List) return null;
 
-    final youtubeVideos = results
-        .whereType<Map<String, dynamic>>()
-        .where((video) {
-          final key = (video['key'] as String?)?.trim() ?? '';
-          return key.isNotEmpty &&
-              (video['site'] as String?)?.toLowerCase() == 'youtube';
-        })
-        .toList();
-
-    Map<String, dynamic>? firstWhere(
-      bool Function(Map<String, dynamic>) test,
+    final youtubeVideos = results.whereType<Map<String, dynamic>>().where((
+      video,
     ) {
+      final key = (video['key'] as String?)?.trim() ?? '';
+      return key.isNotEmpty &&
+          (video['site'] as String?)?.toLowerCase() == 'youtube';
+    }).toList();
+
+    Map<String, dynamic>? firstWhere(bool Function(Map<String, dynamic>) test) {
       for (final video in youtubeVideos) {
         if (test(video)) return video;
       }
@@ -105,10 +95,7 @@ class MovieDetailsData {
     return (selected?['key'] as String?)?.trim();
   }
 
-  static Movie _movieFromJson(
-    Map<String, dynamic> json,
-    Movie seed,
-  ) {
+  static Movie _movieFromJson(Map<String, dynamic> json, Movie seed) {
     final voteCount = (json['vote_count'] as num?)?.toInt();
     final runtime = (json['runtime'] as num?)?.toInt();
 
@@ -187,10 +174,7 @@ class MovieDetailsData {
     return mapped.isEmpty ? fallback : mapped;
   }
 
-  static List<TmdbReview> _reviews(
-    Object? reviews,
-    List<TmdbReview> fallback,
-  ) {
+  static List<TmdbReview> _reviews(Object? reviews, List<TmdbReview> fallback) {
     if (reviews is! Map<String, dynamic>) return fallback;
     final results = reviews['results'];
     if (results is! List) return fallback;

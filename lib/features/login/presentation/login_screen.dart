@@ -97,8 +97,9 @@ class _LoginViewState extends State<_LoginView> {
                     ),
                     LoginOptionsRow(
                       rememberMe: state.rememberMe,
-                      onRememberMeChanged:
-                          context.read<AuthCubit>().setRememberMe,
+                      onRememberMeChanged: context
+                          .read<AuthCubit>()
+                          .setRememberMe,
                       onForgotPasswordPressed: () {},
                     ),
                     const SizedBox(height: 16),
@@ -127,6 +128,17 @@ class _LoginViewState extends State<_LoginView> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: state.isLoading
+                      ? null
+                      : context.read<AuthCubit>().continueAsGuest,
+                  icon: const Icon(Icons.movie_filter_outlined),
+                  label: const Text('Continue as Guest'),
+                ),
+              ),
               const SizedBox(height: 32),
               SignupPrompt(
                 onSignUpPressed: () => context.pushNamed(AppRoutes.register),
@@ -154,8 +166,8 @@ class _LoginViewState extends State<_LoginView> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<AuthCubit>().login(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
   }
 }

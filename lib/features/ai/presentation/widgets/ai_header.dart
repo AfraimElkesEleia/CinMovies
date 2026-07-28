@@ -47,12 +47,16 @@ class AiHeader extends StatelessWidget {
                     SizedBox(height: 3),
                     Row(
                       children: [
-                        AiOnlineStatusIndicator(),
-                        SizedBox(width: 6),
+                        Icon(
+                          Icons.verified_outlined,
+                          color: AppColors.iconMuted,
+                          size: 13,
+                        ),
+                        SizedBox(width: 5),
                         Text(
-                          'Online',
+                          'Grounded by TMDB',
                           style: TextStyle(
-                            color: Color(0xFF10B981),
+                            color: AppColors.iconMuted,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),

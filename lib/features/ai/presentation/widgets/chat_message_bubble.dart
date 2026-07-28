@@ -1,21 +1,33 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/ai/presentation/data/ai_mock_data.dart';
+import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/ai_logo.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/movie_recommendation_card.dart';
+import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:flutter/material.dart';
 
 class ChatMessageBubble extends StatelessWidget {
-  const ChatMessageBubble({super.key, required this.message});
+  const ChatMessageBubble({
+    super.key,
+    required this.message,
+    required this.onMoviePressed,
+    required this.onSuggestedReply,
+  });
 
-  final AiChatMessage message;
+  final MovieChatMessage message;
+  final void Function(Movie movie, String heroTag) onMoviePressed;
+  final ValueChanged<String> onSuggestedReply;
 
   @override
   Widget build(BuildContext context) {
-    final alignment =
-        message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final rowAlignment =
-        message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start;
-    final time = formatMessageTime(TimeOfDay.fromDateTime(message.timestamp));
+    final alignment = message.isUser
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start;
+    final rowAlignment = message.isUser
+        ? MainAxisAlignment.end
+        : MainAxisAlignment.start;
+    final time = _formatMessageTime(
+      TimeOfDay.fromDateTime(message.createdAt.toLocal()),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -58,7 +70,7 @@ class ChatMessageBubble extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    message.text,
+                    message.content,
                     style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 14,
@@ -70,18 +82,47 @@ class ChatMessageBubble extends StatelessWidget {
               ),
             ],
           ),
-          if (message.movies.isNotEmpty) ...[
+          if (message.recommendations.isNotEmpty) ...[
             const SizedBox(height: 10),
             SizedBox(
-              height: 122,
+              height: 136,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: message.movies.length,
+                itemCount: message.recommendations.length,
                 separatorBuilder: (context, index) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
-                  return MovieRecommendationCard(movie: message.movies[index]);
+                  final recommendation = message.recommendations[index];
+                  final heroTag =
+                      'ai-recommendation-${message.id}-$index-'
+                      '${recommendation.movie.id}';
+                  return MovieRecommendationCard(
+                    recommendation: recommendation,
+                    heroTag: heroTag,
+                    onPressed: () =>
+                        onMoviePressed(recommendation.movie, heroTag),
+                  );
                 },
               ),
+            ),
+          ],
+          if (message.suggestedReplies.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: message.suggestedReplies.map((reply) {
+                return ActionChip(
+                  label: Text(reply),
+                  onPressed: () => onSuggestedReply(reply),
+                  backgroundColor: AppColors.surface,
+                  side: const BorderSide(color: AppColors.surfaceBorder),
+                  labelStyle: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }).toList(),
             ),
           ],
           Padding(
@@ -99,4 +140,11 @@ class ChatMessageBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatMessageTime(TimeOfDay time) {
+  final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+  final minute = time.minute.toString().padLeft(2, '0');
+  final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+  return '$hour:$minute $period';
 }

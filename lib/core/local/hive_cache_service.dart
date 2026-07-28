@@ -7,6 +7,7 @@ class HiveCacheService {
     this._userSnapshotBox,
     this._favoriteGenresBox, {
     this._trailerHistoryBox,
+    this._movieChatBox,
   });
 
   static const searchBoxName = 'search_cache';
@@ -14,22 +15,27 @@ class HiveCacheService {
   static const userSnapshotBoxName = 'user_snapshot_cache';
   static const favoriteGenresBoxName = 'favorite_genres_cache';
   static const trailerHistoryBoxName = 'trailer_history';
+  static const movieChatBoxName = 'movie_chat_history';
 
   final Box<dynamic> _searchBox;
   final Box<dynamic> _movieBox;
   final Box<dynamic> _userSnapshotBox;
   final Box<dynamic> _favoriteGenresBox;
   final Box<dynamic>? _trailerHistoryBox;
+  final Box<dynamic>? _movieChatBox;
 
   static Future<HiveCacheService> initialize() async {
     await Hive.initFlutter();
     final searchBox = await Hive.openBox<dynamic>(searchBoxName);
     final movieBox = await Hive.openBox<dynamic>(movieBoxName);
     final userSnapshotBox = await Hive.openBox<dynamic>(userSnapshotBoxName);
-    final favoriteGenresBox = await Hive.openBox<dynamic>(favoriteGenresBoxName);
+    final favoriteGenresBox = await Hive.openBox<dynamic>(
+      favoriteGenresBoxName,
+    );
     final trailerHistoryBox = await Hive.openBox<dynamic>(
       trailerHistoryBoxName,
     );
+    final movieChatBox = await Hive.openBox<dynamic>(movieChatBoxName);
 
     return HiveCacheService(
       searchBox,
@@ -37,6 +43,7 @@ class HiveCacheService {
       userSnapshotBox,
       favoriteGenresBox,
       trailerHistoryBox: trailerHistoryBox,
+      movieChatBox: movieChatBox,
     );
   }
 
@@ -99,7 +106,10 @@ class HiveCacheService {
     return _requiredTrailerHistoryBox()
         .toMap()
         .entries
-        .where((entry) => entry.key is String && (entry.key as String).startsWith(prefix))
+        .where(
+          (entry) =>
+              entry.key is String && (entry.key as String).startsWith(prefix),
+        )
         .map((entry) => _map(entry.value))
         .whereType<Map<String, dynamic>>()
         .toList();
@@ -129,9 +139,7 @@ class HiveCacheService {
     String scopeId,
     String videoKey,
   ) async {
-    await _requiredTrailerHistoryBox().delete(
-      _trailerKey(scopeId, videoKey),
-    );
+    await _requiredTrailerHistoryBox().delete(_trailerKey(scopeId, videoKey));
   }
 
   Stream<void> watchTrailerHistory(String scopeId) async* {
@@ -144,10 +152,31 @@ class HiveCacheService {
     }
   }
 
+  List<Map<String, dynamic>> getMovieChatSessions(String scopeId) {
+    final value = _requiredMovieChatBox().get('$scopeId::sessions');
+    if (value is! Iterable) return const [];
+    return value.map(_map).whereType<Map<String, dynamic>>().toList();
+  }
+
+  Future<void> cacheMovieChatSessions(
+    String scopeId,
+    List<Map<String, dynamic>> sessions,
+  ) {
+    return _requiredMovieChatBox().put('$scopeId::sessions', sessions);
+  }
+
   Box<dynamic> _requiredTrailerHistoryBox() {
     final box = _trailerHistoryBox;
     if (box == null) {
       throw StateError('Trailer history box is not configured.');
+    }
+    return box;
+  }
+
+  Box<dynamic> _requiredMovieChatBox() {
+    final box = _movieChatBox;
+    if (box == null) {
+      throw StateError('Movie chat history box is not configured.');
     }
     return box;
   }

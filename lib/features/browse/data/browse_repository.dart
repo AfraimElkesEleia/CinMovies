@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/config/env_config.dart';
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
@@ -20,7 +19,6 @@ class BrowseRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiConstants.movieGenres,
         queryParameters: const {'language': 'en-US'},
-        options: _authOptions(),
       );
 
       final genres = _genresFromResponse(response.data);
@@ -48,7 +46,6 @@ class BrowseRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiConstants.discoverMovies,
         queryParameters: queryParameters,
-        options: _authOptions(),
       );
 
       return Right(BrowseMoviesPage.fromJson(response.data));
@@ -62,18 +59,16 @@ class BrowseRepository {
     final genres = data['genres'];
     if (genres is! List) return const [];
 
-    return genres.whereType<Map<String, dynamic>>().map((json) {
-      return BrowseGenre(
-        id: (json['id'] as num?)?.toInt(),
-        name: (json['name'] as String?) ?? 'Unknown',
-      );
-    }).where((genre) => genre.id != null).toList();
-  }
-
-  Options _authOptions() {
-    return Options(
-      headers: {'Authorization': 'Bearer ${EnvConfig.tmdbAccessToken}'},
-    );
+    return genres
+        .whereType<Map<String, dynamic>>()
+        .map((json) {
+          return BrowseGenre(
+            id: (json['id'] as num?)?.toInt(),
+            name: (json['name'] as String?) ?? 'Unknown',
+          );
+        })
+        .where((genre) => genre.id != null)
+        .toList();
   }
 }
 

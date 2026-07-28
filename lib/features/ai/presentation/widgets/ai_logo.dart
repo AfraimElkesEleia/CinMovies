@@ -27,19 +27,3 @@ class AiLogo extends StatelessWidget {
     );
   }
 }
-
-class AiOnlineStatusIndicator extends StatelessWidget {
-  const AiOnlineStatusIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: const BoxDecoration(
-        color: Color(0xFF10B981),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-}

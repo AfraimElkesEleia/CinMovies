@@ -1,5 +1,4 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/ai/presentation/data/ai_mock_data.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/ai_logo.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +6,13 @@ class EmptyChat extends StatelessWidget {
   const EmptyChat({super.key, required this.onPromptSelected});
 
   final ValueChanged<String> onPromptSelected;
+
+  static const suggestedPrompts = [
+    'Recommend a short sci-fi movie with no horror',
+    'Something like Interstellar but less serious',
+    'Compare Inception and Shutter Island without spoilers',
+    'Highly rated Korean thrillers from the last ten years',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +47,7 @@ class EmptyChat extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.center,
-            children: AiMockData.suggestedPrompts.map((prompt) {
+            children: suggestedPrompts.map((prompt) {
               return ActionChip(
                 label: Text(prompt),
                 onPressed: () => onPromptSelected(prompt),

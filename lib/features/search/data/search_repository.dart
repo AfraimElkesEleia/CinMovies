@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/config/env_config.dart';
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
@@ -27,19 +26,12 @@ class SearchRepository {
           'language': 'en-US',
           'include_adult': false,
         },
-        options: _authOptions(),
       );
 
       return Right(SearchMoviesPage.fromJson(response.data));
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
-  }
-
-  Options _authOptions() {
-    return Options(
-      headers: {'Authorization': 'Bearer ${EnvConfig.tmdbAccessToken}'},
-    );
   }
 }
 

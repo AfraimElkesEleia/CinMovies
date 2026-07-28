@@ -2,7 +2,12 @@ import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
-import 'package:cinmovies_app/features/ai/data/ai_history_repository.dart';
+import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
+import 'package:cinmovies_app/features/ai/data/movie_chat_local_data_source.dart';
+import 'package:cinmovies_app/features/ai/data/movie_chat_remote_data_source.dart';
+import 'package:cinmovies_app/features/ai/data/movie_chat_repository_impl.dart';
+import 'package:cinmovies_app/features/ai/domain/repositories/movie_chat_repository.dart';
+import 'package:cinmovies_app/features/ai/presentation/cubit/ai_chat_cubit.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
@@ -39,28 +44,48 @@ Future<void> initDependencies({
   required HiveCacheService hiveCacheService,
   required SharedPreferences sharedPreferences,
 }) async {
-  serviceLocator.registerLazySingleton<Dio>(DioClientFactory.create);
-  serviceLocator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
+  serviceLocator.registerLazySingleton<SupabaseClient>(
+    () => Supabase.instance.client,
+  );
+  serviceLocator.registerLazySingleton<Dio>(
+    DioClientFactory.createTmdb,
+  );
   serviceLocator.registerLazySingleton<SupabaseDatabaseService>(
     () => SupabaseDatabaseService(serviceLocator()),
   );
   serviceLocator.registerLazySingleton<SupabaseStorageService>(
     () => SupabaseStorageService(serviceLocator()),
   );
-  serviceLocator.registerLazySingleton<HiveCacheService>(() => hiveCacheService);
+  serviceLocator.registerLazySingleton<HiveCacheService>(
+    () => hiveCacheService,
+  );
   serviceLocator.registerLazySingleton<LocalPreferencesService>(
     () => LocalPreferencesService(sharedPreferences),
   );
-  serviceLocator.registerLazySingleton<ErrorMapperRegistry>(() => defaultErrorMapper);
+  serviceLocator.registerLazySingleton<ErrorMapperRegistry>(
+    () => defaultErrorMapper,
+  );
   serviceLocator.registerLazySingleton<AuthRepository>(
-    () => AuthRepository(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()),
+    () => AuthRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () =>
+        ProfileRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
-  serviceLocator.registerLazySingleton<HomeRepository>(() => HomeRepository(serviceLocator(), serviceLocator()));
-  serviceLocator.registerLazySingleton<BrowseRepository>(() => BrowseRepository(serviceLocator(), serviceLocator()));
-  serviceLocator.registerLazySingleton<SearchRepository>(() => SearchRepository(serviceLocator(), serviceLocator()));
+  serviceLocator.registerLazySingleton<HomeRepository>(
+    () => HomeRepository(serviceLocator(), serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<BrowseRepository>(
+    () => BrowseRepository(serviceLocator(), serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<SearchRepository>(
+    () => SearchRepository(serviceLocator(), serviceLocator()),
+  );
   serviceLocator.registerLazySingleton<MovieDetailsRepository>(
     () => MovieDetailsRepository(serviceLocator(), serviceLocator()),
   );
@@ -68,31 +93,82 @@ Future<void> initDependencies({
     () => MovieRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<LibraryRepository>(
-    () => LibraryRepository(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()),
+    () => LibraryRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<ReviewRepository>(
-    () => ReviewRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () =>
+        ReviewRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<GenrePreferencesRepository>(
-    () => GenrePreferencesRepository(serviceLocator(), serviceLocator(), serviceLocator()),
+    () => GenrePreferencesRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
-  serviceLocator.registerLazySingleton<AiHistoryRepository>(() => AiHistoryRepository(serviceLocator()));
+  serviceLocator.registerLazySingleton<MovieChatAiDataSource>(
+    () => MovieChatAiDataSource(
+      serviceLocator(),
+      DioClientFactory.createGemini(),
+    ),
+  );
+  serviceLocator.registerLazySingleton<MovieChatRemoteDataSource>(
+    () => MovieChatRemoteDataSource(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<MovieChatLocalDataSource>(
+    () => MovieChatLocalDataSource(serviceLocator()),
+  );
+  serviceLocator.registerLazySingleton<MovieChatRepository>(
+    () => MovieChatRepositoryImpl(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
   serviceLocator.registerLazySingleton<TrailerHistoryRepository>(
     () => TrailerHistoryRepository(serviceLocator(), serviceLocator()),
   );
 
-  serviceLocator.registerFactory<AuthCubit>(() => AuthCubit(serviceLocator(), serviceLocator()));
+  serviceLocator.registerFactory<AuthCubit>(
+    () => AuthCubit(serviceLocator(), serviceLocator()),
+  );
   serviceLocator.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
   serviceLocator.registerFactory<HomeCubit>(() => HomeCubit(serviceLocator()));
-  serviceLocator.registerFactoryParam<MovieSectionCubit, MovieSectionArgs, void>(
-    (args, _) => MovieSectionCubit(serviceLocator(), args, serviceLocator()),
+  serviceLocator
+      .registerFactoryParam<MovieSectionCubit, MovieSectionArgs, void>(
+        (args, _) =>
+            MovieSectionCubit(serviceLocator(), args, serviceLocator()),
+      );
+  serviceLocator.registerFactory<BrowseCubit>(
+    () => BrowseCubit(serviceLocator()),
   );
-  serviceLocator.registerFactory<BrowseCubit>(() => BrowseCubit(serviceLocator()));
-  serviceLocator.registerFactory<SearchCubit>(() => SearchCubit(serviceLocator(), serviceLocator()));
-  serviceLocator.registerFactory<LibraryCubit>(() => LibraryCubit(serviceLocator(), serviceLocator()));
-  serviceLocator.registerFactory<OnboardingCubit>(() => OnboardingCubit(serviceLocator()));
+  serviceLocator.registerFactory<SearchCubit>(
+    () => SearchCubit(serviceLocator(), serviceLocator()),
+  );
+  serviceLocator.registerFactory<LibraryCubit>(
+    () => LibraryCubit(serviceLocator(), serviceLocator()),
+  );
+  serviceLocator.registerFactory<OnboardingCubit>(
+    () => OnboardingCubit(serviceLocator()),
+  );
   serviceLocator.registerFactory<OnboardingGenrePreferencesCubit>(
     () => OnboardingGenrePreferencesCubit(serviceLocator()),
   );
-  serviceLocator.registerFactory<ProfileCubit>(() => ProfileCubit(serviceLocator(), serviceLocator(), serviceLocator(), serviceLocator()));
+  serviceLocator.registerFactory<ProfileCubit>(
+    () => ProfileCubit(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
+  );
+  serviceLocator.registerFactory<AiChatCubit>(
+    () => AiChatCubit(serviceLocator()),
+  );
 }

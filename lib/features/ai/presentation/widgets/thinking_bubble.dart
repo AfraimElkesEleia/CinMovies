@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/ai_logo.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +13,7 @@ class ThinkingBubble extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AiLogo(size: 32),
-          SizedBox(width: 9),
-          _DotBubble(),
-        ],
+        children: [AiLogo(size: 32), SizedBox(width: 9), _DotBubble()],
       ),
     );
   }
@@ -64,6 +62,7 @@ class _ThinkingDot extends StatefulWidget {
 class _ThinkingDotState extends State<_ThinkingDot>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _startTimer;
 
   @override
   void initState() {
@@ -72,13 +71,14 @@ class _ThinkingDotState extends State<_ThinkingDot>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    Future<void>.delayed(Duration(milliseconds: widget.delay), () {
+    _startTimer = Timer(Duration(milliseconds: widget.delay), () {
       if (mounted) _controller.repeat(reverse: true);
     });
   }
 
   @override
   void dispose() {
+    _startTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

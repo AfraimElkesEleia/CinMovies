@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,7 +11,6 @@ void main() {
   late HomeRepository repository;
 
   setUp(() {
-    dotenv.loadFromString(envString: 'TMDB_API_KEY=test-token');
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
@@ -42,15 +40,11 @@ void main() {
     expect(page.totalPages, 4);
     expect(adapter.lastOptions?.path, '/movie/popular');
     expect(adapter.lastOptions?.queryParameters['page'], 2);
-    expect(adapter.lastOptions?.headers['Authorization'], 'Bearer test-token');
+    expect(adapter.lastOptions?.headers['Authorization'], isNull);
   });
 
   test('fetchMovieSection uses upcoming endpoint for New Releases', () async {
-    adapter.responseJson = {
-      'page': 1,
-      'total_pages': 3,
-      'results': const [],
-    };
+    adapter.responseJson = {'page': 1, 'total_pages': 3, 'results': const []};
 
     await repository.fetchMovieSection(
       section: HomeMovieSection.upcoming,

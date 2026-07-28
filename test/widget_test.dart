@@ -30,7 +30,9 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const CinMoviesApp(initialRoute: AppRoutes.onboarding));
+    await tester.pumpWidget(
+      const CinMoviesApp(initialRoute: AppRoutes.onboarding),
+    );
 
     await tester.pump();
 
@@ -43,6 +45,9 @@ class _FakeAuthRepository implements AuthRepository {
   User? get currentUser => null;
 
   @override
+  bool get isGuest => false;
+
+  @override
   Stream<AuthState> get authStateChanges => const Stream.empty();
 
   @override
@@ -53,6 +58,11 @@ class _FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, AuthResponse>> signInAsGuest() {
     throw UnimplementedError();
   }
 

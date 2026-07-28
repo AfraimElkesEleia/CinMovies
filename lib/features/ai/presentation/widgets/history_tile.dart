@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/ai/presentation/data/ai_mock_data.dart';
+import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:flutter/material.dart';
 
 class HistoryTile extends StatelessWidget {
@@ -8,17 +8,20 @@ class HistoryTile extends StatelessWidget {
     required this.session,
     required this.onTap,
     required this.onDelete,
+    this.enabled = true,
   });
 
-  final AiChatSession session;
+  final MovieChatSession session;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
+  final Future<bool> Function() onDelete;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
       key: ValueKey(session.id),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => enabled ? onDelete() : Future.value(false),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 18),
@@ -33,9 +36,8 @@ class HistoryTile extends StatelessWidget {
           size: 24,
         ),
       ),
-      onDismissed: (_) => onDelete(),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(18),
         child: Container(
           padding: const EdgeInsets.all(14),
@@ -85,7 +87,7 @@ class HistoryTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          formatSessionTime(session.timestamp),
+                          _formatSessionTime(session.updatedAt.toLocal()),
                           style: const TextStyle(
                             color: AppColors.textDisabled,
                             fontSize: 11,
@@ -107,7 +109,7 @@ class HistoryTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '${session.messages.length} messages',
+                      '${session.messageCount} messages',
                       style: const TextStyle(
                         color: AppColors.textDisabled,
                         fontSize: 11,
@@ -120,7 +122,7 @@ class HistoryTile extends StatelessWidget {
               const SizedBox(width: 4),
               IconButton(
                 tooltip: 'Delete chat',
-                onPressed: onDelete,
+                onPressed: enabled ? () => onDelete() : null,
                 style: IconButton.styleFrom(
                   foregroundColor: AppColors.iconMuted,
                   fixedSize: const Size(38, 38),
@@ -140,4 +142,13 @@ class HistoryTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSessionTime(DateTime timestamp) {
+  final diff = DateTime.now().difference(timestamp);
+  if (diff.inMinutes < 1) return 'Just now';
+  if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays == 1) return 'Yesterday';
+  return '${diff.inDays} days ago';
 }

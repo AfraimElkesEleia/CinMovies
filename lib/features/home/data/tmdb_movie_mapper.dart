@@ -4,22 +4,28 @@ import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 abstract class TmdbMovieMapper {
   static Movie fromJson(Map<String, dynamic> json) {
     final releaseDate = json['release_date'] as String?;
-    final voteCount = json['vote_count'] as int?;
+    final voteCount = (json['vote_count'] as num?)?.toInt();
+    final runtime = ((json['runtime'] ?? json['runtime_minutes']) as num?)
+        ?.toInt();
 
     return Movie(
-      id: (json['id'] as num?)?.toInt().toString() ?? '',
+      id: ((json['id'] ?? json['tmdb_id']) as num?)?.toInt().toString() ?? '',
       title:
           (json['title'] as String?) ??
           (json['original_title'] as String?) ??
           'Untitled Movie',
       imageAsset: _imageUrl(
-        (json['poster_path'] as String?) ?? (json['backdrop_path'] as String?),
+        (json['poster_path'] as String?) ??
+            (json['backdrop_path'] as String?) ??
+            (json['image_asset'] as String?),
       ),
-      genres: const [],
+      genres: _genres(json['genres'] ?? json['genre_names']),
       rating: ((json['vote_average'] as num?) ?? 0).toDouble(),
       year: _yearFromDate(releaseDate),
-      duration: 'N/A',
-      ageRating: 'NR',
+      duration: _duration(runtime),
+      ageRating: (json['age_rating'] as String?)?.trim().isNotEmpty == true
+          ? (json['age_rating'] as String).trim()
+          : 'NR',
       synopsis: (json['overview'] as String?)?.trim().isNotEmpty == true
           ? (json['overview'] as String).trim()
           : 'No synopsis available.',
@@ -59,5 +65,27 @@ abstract class TmdbMovieMapper {
     if (value == null) return '0';
     if (value >= 1000) return '${(value / 1000).toStringAsFixed(1)}K';
     return value.toString();
+  }
+
+  static List<String> _genres(Object? value) {
+    if (value is! Iterable) return const [];
+    return value
+        .map<String?>((genre) {
+          if (genre is String) return genre.trim();
+          if (genre is Map) return (genre['name'] as String?)?.trim();
+          return null;
+        })
+        .whereType<String>()
+        .where((genre) => genre.isNotEmpty)
+        .toList();
+  }
+
+  static String _duration(int? minutes) {
+    if (minutes == null || minutes <= 0) return 'N/A';
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    if (hours == 0) return '${remainingMinutes}m';
+    if (remainingMinutes == 0) return '${hours}h';
+    return '${hours}h ${remainingMinutes}m';
   }
 }

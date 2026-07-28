@@ -3,6 +3,7 @@ import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
+import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
@@ -40,6 +41,7 @@ class MovieDetailsScreen extends StatelessWidget {
         serviceLocator<LibraryRepository>(),
         serviceLocator<ReviewRepository>(),
         movie,
+        isGuest: serviceLocator<AuthRepository>().isGuest,
       )..load(),
       child: _MovieDetailsView(heroTag: heroTag),
     );
@@ -315,7 +317,10 @@ class _ReviewsTabBody extends StatelessWidget {
     }
   }
 
-  Future<bool> _deleteReview(BuildContext context, CommunityReview review) async {
+  Future<bool> _deleteReview(
+    BuildContext context,
+    CommunityReview review,
+  ) async {
     final success = await context.read<MovieDetailsCubit>().deleteReview(
       review,
     );

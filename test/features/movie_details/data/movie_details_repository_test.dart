@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,93 +12,98 @@ void main() {
   late MovieDetailsRepository repository;
 
   setUp(() {
-    dotenv.loadFromString(envString: 'TMDB_API_KEY=test-token');
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
     repository = MovieDetailsRepository(dio);
   });
 
-  test('fetchMovieDetails sends bearer auth and maps full details', () async {
-    adapter.responseJson = {
-      'id': 10,
-      'title': 'Full Movie',
-      'backdrop_path': '/backdrop.jpg',
-      'release_date': '2024-05-01',
-      'runtime': 142,
-      'vote_average': 8.2,
-      'vote_count': 12500,
-      'overview': 'Full overview',
-      'genres': [
-        {'id': 28, 'name': 'Action'},
-      ],
-      'credits': {
-        'crew': [
-          {'job': 'Director', 'name': 'Jane Director'},
+  test(
+    'fetchMovieDetails maps full details through the proxy client',
+    () async {
+      adapter.responseJson = {
+        'id': 10,
+        'title': 'Full Movie',
+        'backdrop_path': '/backdrop.jpg',
+        'release_date': '2024-05-01',
+        'runtime': 142,
+        'vote_average': 8.2,
+        'vote_count': 12500,
+        'overview': 'Full overview',
+        'genres': [
+          {'id': 28, 'name': 'Action'},
         ],
-        'cast': [
-          {
-            'name': 'Actor One',
-            'character': 'Hero',
-            'profile_path': '/actor.jpg',
-          },
-        ],
-      },
-      'reviews': {
-        'results': [
-          {
-            'author': 'critic',
-            'content': 'Great',
-            'created_at': '2024-06-01T00:00:00.000Z',
-            'author_details': {'username': 'critic_user', 'rating': 8},
-          },
-        ],
-      },
-      'similar': {
-        'results': [
-          {'id': 11, 'title': 'Similar Movie'},
-        ],
-      },
-      'videos': {
-        'results': [
-          {
-            'site': 'YouTube',
-            'type': 'Trailer',
-            'official': false,
-            'key': 'unofficial-key',
-          },
-          {
-            'site': 'YouTube',
-            'type': 'Trailer',
-            'official': true,
-            'key': 'official-key',
-          },
-        ],
-      },
-    };
+        'credits': {
+          'crew': [
+            {'job': 'Director', 'name': 'Jane Director'},
+          ],
+          'cast': [
+            {
+              'name': 'Actor One',
+              'character': 'Hero',
+              'profile_path': '/actor.jpg',
+            },
+          ],
+        },
+        'reviews': {
+          'results': [
+            {
+              'author': 'critic',
+              'content': 'Great',
+              'created_at': '2024-06-01T00:00:00.000Z',
+              'author_details': {'username': 'critic_user', 'rating': 8},
+            },
+          ],
+        },
+        'similar': {
+          'results': [
+            {'id': 11, 'title': 'Similar Movie'},
+          ],
+        },
+        'videos': {
+          'results': [
+            {
+              'site': 'YouTube',
+              'type': 'Trailer',
+              'official': false,
+              'key': 'unofficial-key',
+            },
+            {
+              'site': 'YouTube',
+              'type': 'Trailer',
+              'official': true,
+              'key': 'official-key',
+            },
+          ],
+        },
+      };
 
-    final result = await repository.fetchMovieDetails(_seed());
+      final result = await repository.fetchMovieDetails(_seed());
 
-    expect(result.isRight(), isTrue);
-    final details = result.getOrElse(
-      () => throw StateError('Expected details'),
-    );
-    expect(details.movie.title, 'Full Movie');
-    expect(details.movie.imageAsset, 'https://image.tmdb.org/t/p/w500/backdrop.jpg');
-    expect(details.movie.genres, ['Action']);
-    expect(details.movie.duration, '2h 22m');
-    expect(details.movie.director, 'Jane Director');
-    expect(details.movie.cast.single.name, 'Actor One');
-    expect(details.movie.reviews.single.username, 'critic_user');
-    expect(details.similarMovies.single.title, 'Similar Movie');
-    expect(details.videoKey, 'official-key');
-    expect(adapter.lastOptions?.path, '/movie/10');
-    expect(adapter.lastOptions?.headers['Authorization'], 'Bearer test-token');
-    expect(
-      adapter.lastOptions?.queryParameters['append_to_response'],
-      'credits,reviews,similar,videos',
-    );
-  });
+      expect(result.isRight(), isTrue);
+      final details = result.getOrElse(
+        () => throw StateError('Expected details'),
+      );
+      expect(details.movie.title, 'Full Movie');
+      expect(
+        details.movie.imageAsset,
+        'https://image.tmdb.org/t/p/w500/backdrop.jpg',
+      );
+      expect(details.movie.genres, ['Action']);
+      expect(details.movie.duration, '2h 22m');
+      expect(details.movie.director, 'Jane Director');
+      expect(details.movie.cast.single.name, 'Actor One');
+      expect(details.movie.reviews.single.username, 'critic_user');
+      expect(details.similarMovies.single.title, 'Similar Movie');
+      expect(details.videoKey, 'official-key');
+      expect(adapter.lastOptions?.path, '/movie/10');
+      expect(adapter.lastOptions?.headers['Authorization'], isNull);
+      expect(
+        adapter.lastOptions?.queryParameters['append_to_response'],
+        'credits,reviews,similar,videos',
+      );
+    },
+  );
 }
 
 class _FakeAdapter implements HttpClientAdapter {

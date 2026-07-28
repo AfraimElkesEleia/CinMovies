@@ -1,4 +1,3 @@
-import 'package:cinmovies_app/core/config/env_config.dart';
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
@@ -20,12 +19,10 @@ class HomeRepository {
         _dio.get<Map<String, dynamic>>(
           ApiConstants.popularMovies,
           queryParameters: _queryParameters(),
-          options: _authOptions(),
         ),
         _dio.get<Map<String, dynamic>>(
           ApiConstants.upcomingMovies,
           queryParameters: _queryParameters(),
-          options: _authOptions(),
         ),
       ]);
 
@@ -48,7 +45,6 @@ class HomeRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         section.path,
         queryParameters: _queryParameters(page),
-        options: _authOptions(),
       );
 
       return Right(MovieSectionPage.fromJson(response.data));
@@ -59,12 +55,6 @@ class HomeRepository {
 
   Map<String, Object> _queryParameters([int page = 1]) {
     return {'language': 'en-US', 'page': page};
-  }
-
-  Options _authOptions() {
-    return Options(
-      headers: {'Authorization': 'Bearer ${EnvConfig.tmdbAccessToken}'},
-    );
   }
 }
 

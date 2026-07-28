@@ -38,17 +38,12 @@ class AuthState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        status,
-        errorMessage,
-        rememberMe,
-        termsAccepted,
-      ];
+  List<Object?> get props => [status, errorMessage, rememberMe, termsAccepted];
 }
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._authRepository, this._preferenceRepository)
-      : super(const AuthState());
+    : super(const AuthState());
 
   final AuthRepository _authRepository;
   final GenrePreferencesRepository _preferenceRepository;
@@ -62,7 +57,9 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> login({required String email, required String password}) async {
-    emit(state.copyWith(status: AuthSubmissionStatus.loading, clearError: true));
+    emit(
+      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+    );
     final result = await _authRepository.signIn(
       email: email,
       password: password,
@@ -78,9 +75,25 @@ class AuthCubit extends Cubit<AuthState> {
         );
       },
       (_) async {
-      await _syncCachedGenres();
-      emit(state.copyWith(status: AuthSubmissionStatus.success));
+        await _syncCachedGenres();
+        emit(state.copyWith(status: AuthSubmissionStatus.success));
       },
+    );
+  }
+
+  Future<void> continueAsGuest() async {
+    emit(
+      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+    );
+    final result = await _authRepository.signInAsGuest();
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: AuthSubmissionStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) => emit(state.copyWith(status: AuthSubmissionStatus.success)),
     );
   }
 
@@ -102,7 +115,9 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
 
-    emit(state.copyWith(status: AuthSubmissionStatus.loading, clearError: true));
+    emit(
+      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+    );
     final result = await _authRepository.signUp(
       fullName: fullName,
       email: email,
@@ -122,8 +137,8 @@ class AuthCubit extends Cubit<AuthState> {
         );
       },
       (_) async {
-      await _syncCachedGenres();
-      emit(state.copyWith(status: AuthSubmissionStatus.success));
+        await _syncCachedGenres();
+        emit(state.copyWith(status: AuthSubmissionStatus.success));
       },
     );
   }

@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,14 +11,13 @@ void main() {
   late SearchRepository repository;
 
   setUp(() {
-    dotenv.loadFromString(envString: 'TMDB_API_KEY=test-token');
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
     repository = SearchRepository(dio);
   });
 
-  test('searchMovies sends bearer auth and search query params', () async {
+  test('searchMovies sends query parameters to the TMDB client', () async {
     adapter.responseJson = {
       'page': 2,
       'total_pages': 5,
@@ -42,7 +40,7 @@ void main() {
     expect(adapter.lastOptions?.queryParameters['page'], 2);
     expect(adapter.lastOptions?.queryParameters['language'], 'en-US');
     expect(adapter.lastOptions?.queryParameters['include_adult'], false);
-    expect(adapter.lastOptions?.headers['Authorization'], 'Bearer test-token');
+    expect(adapter.lastOptions?.headers['Authorization'], isNull);
   });
 }
 

@@ -6,10 +6,12 @@ class ChatInput extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onSend,
+    this.enabled = true,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +39,23 @@ class ChatInput extends StatelessWidget {
                     ),
                     child: TextField(
                       controller: controller,
+                      enabled: enabled,
+                      maxLength: 1000,
                       minLines: 1,
                       maxLines: 4,
-                      textInputAction: TextInputAction.newline,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) {
+                        if (enabled && controller.text.trim().isNotEmpty) {
+                          onSend();
+                        }
+                      },
                       style: const TextStyle(
                         color: AppColors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: const InputDecoration(
+                        counterText: '',
                         hintText: 'Ask for movie recommendations...',
                         hintStyle: TextStyle(
                           color: AppColors.iconMuted,
@@ -63,10 +73,12 @@ class ChatInput extends StatelessWidget {
                     final hasText = value.text.trim().isNotEmpty;
 
                     return IconButton(
-                      onPressed: hasText ? onSend : null,
+                      tooltip: 'Send message',
+                      onPressed: hasText && enabled ? onSend : null,
                       style: IconButton.styleFrom(
-                        backgroundColor:
-                            hasText ? AppColors.loginPrimary : AppColors.surface,
+                        backgroundColor: hasText
+                            ? AppColors.loginPrimary
+                            : AppColors.surface,
                         disabledBackgroundColor: const Color(0xFF151B2E),
                         foregroundColor: AppColors.white,
                         disabledForegroundColor: AppColors.iconMuted,

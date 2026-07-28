@@ -1,5 +1,5 @@
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/ai/presentation/data/ai_mock_data.dart';
+import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:cinmovies_app/features/ai/presentation/widgets/history_tile.dart';
 import 'package:flutter/material.dart';
 
@@ -10,15 +10,29 @@ class HistoryTab extends StatelessWidget {
     required this.onStartChat,
     required this.onSessionSelected,
     required this.onSessionDeleted,
+    required this.isLoading,
+    required this.isDeleting,
+    required this.onRetry,
+    this.failureMessage,
   });
 
-  final List<AiChatSession> sessions;
+  final List<MovieChatSession> sessions;
   final VoidCallback onStartChat;
-  final ValueChanged<AiChatSession> onSessionSelected;
-  final ValueChanged<AiChatSession> onSessionDeleted;
+  final ValueChanged<MovieChatSession> onSessionSelected;
+  final Future<bool> Function(MovieChatSession) onSessionDeleted;
+  final bool isLoading;
+  final bool isDeleting;
+  final String? failureMessage;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.loginPrimary),
+      );
+    }
+
     if (sessions.isEmpty) {
       return Center(
         child: Padding(
@@ -54,6 +68,19 @@ class HistoryTab extends StatelessWidget {
                 style: TextStyle(color: AppColors.iconMuted, fontSize: 13),
               ),
               const SizedBox(height: 18),
+              if (failureMessage != null) ...[
+                Text(
+                  failureMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.loginPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(onPressed: onRetry, child: const Text('Retry')),
+                const SizedBox(height: 6),
+              ],
               ElevatedButton(
                 onPressed: onStartChat,
                 style: ElevatedButton.styleFrom(
@@ -94,6 +121,7 @@ class HistoryTab extends StatelessWidget {
         final session = sessions[index - 1];
         return HistoryTile(
           session: session,
+          enabled: !isDeleting,
           onTap: () => onSessionSelected(session),
           onDelete: () => onSessionDeleted(session),
         );

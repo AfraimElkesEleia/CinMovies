@@ -17,4 +17,3 @@ const ErrorMapperRegistry defaultErrorMapper = ErrorMapperRegistry([
 Failure mapExceptionToFailure(Object exception) {
   return defaultErrorMapper.map(exception);
 }
-

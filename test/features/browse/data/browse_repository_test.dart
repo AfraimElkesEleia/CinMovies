@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,7 +12,6 @@ void main() {
   late BrowseRepository repository;
 
   setUp(() {
-    dotenv.loadFromString(envString: 'TMDB_API_KEY=test-token');
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
@@ -38,10 +36,7 @@ void main() {
       const BrowseGenre(id: 18, name: 'Drama'),
     ]);
     expect(adapter.lastOptions?.path, '/genre/movie/list');
-    expect(
-      adapter.lastOptions?.headers['Authorization'],
-      'Bearer test-token',
-    );
+    expect(adapter.lastOptions?.headers['Authorization'], isNull);
   });
 
   test('fetchMovies omits with_genres for All', () async {
@@ -64,15 +59,14 @@ void main() {
     expect(page.totalPages, 3);
     expect(adapter.lastOptions?.path, '/discover/movie');
     expect(adapter.lastOptions?.queryParameters['sort_by'], 'popularity.desc');
-    expect(adapter.lastOptions?.queryParameters.containsKey('with_genres'), isFalse);
+    expect(
+      adapter.lastOptions?.queryParameters.containsKey('with_genres'),
+      isFalse,
+    );
   });
 
   test('fetchMovies includes with_genres for selected TMDB genre', () async {
-    adapter.responseJson = {
-      'page': 2,
-      'total_pages': 4,
-      'results': const [],
-    };
+    adapter.responseJson = {'page': 2, 'total_pages': 4, 'results': const []};
 
     await repository.fetchMovies(
       page: 2,

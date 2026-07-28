@@ -35,7 +35,9 @@ class CinMoviesApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => AppBootstrapCubit(serviceLocator(), serviceLocator())),
+        BlocProvider(
+          create: (_) => AppBootstrapCubit(serviceLocator(), serviceLocator()),
+        ),
       ],
       child: MaterialApp(
         theme: ThemeData(

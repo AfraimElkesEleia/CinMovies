@@ -116,12 +116,14 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     this._detailsRepository,
     this._libraryRepository,
     this._reviewRepository,
-    Movie movie,
-  ) : super(MovieDetailsState.initial(movie));
+    Movie movie, {
+    this.isGuest = false,
+  }) : super(MovieDetailsState.initial(movie));
 
   final MovieDetailsRepository _detailsRepository;
   final LibraryRepository _libraryRepository;
   final ReviewRepository _reviewRepository;
+  final bool isGuest;
 
   Future<void> load() async {
     emit(
@@ -137,9 +139,15 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     await Future.wait([
       _loadDetails(),
       _loadReviews(),
-      _loadSavedState(UserMovieListType.favorite),
-      _loadSavedState(UserMovieListType.watchlist),
+      if (!isGuest) _loadSavedState(UserMovieListType.favorite),
+      if (!isGuest) _loadSavedState(UserMovieListType.watchlist),
+      if (isGuest) _finishGuestSavedStateLoading(),
     ]);
+  }
+
+  Future<void> _finishGuestSavedStateLoading() async {
+    if (isClosed) return;
+    emit(state.copyWith(isFavoriteLoading: false, isWatchlistLoading: false));
   }
 
   Future<void> _loadDetails() async {
@@ -195,9 +203,8 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
   }
 
-
   Future<bool> toggleFavorite() {
-    if (state.isFavoriteLoading || state.isFavoriteSaving) {
+    if (isGuest || state.isFavoriteLoading || state.isFavoriteSaving) {
       return Future.value(false);
     }
 
@@ -211,7 +218,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   }
 
   Future<bool> toggleWatchlist() {
-    if (state.isWatchlistLoading || state.isWatchlistSaving) {
+    if (isGuest || state.isWatchlistLoading || state.isWatchlistSaving) {
       return Future.value(false);
     }
 
@@ -228,7 +235,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     CommunityReview review,
     ReviewReaction reaction,
   ) async {
-    if (review.isOwnReview) return false;
+    if (isGuest || review.isOwnReview) return false;
 
     final previousReviews = state.reviews;
     final nextReviews = previousReviews
@@ -255,7 +262,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   }
 
   Future<bool> deleteReview(CommunityReview review) async {
-    if (!review.isOwnReview) return false;
+    if (isGuest || !review.isOwnReview) return false;
 
     final previousReviews = state.reviews;
     emit(
@@ -277,7 +284,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     required String body,
     required bool spoiler,
   }) async {
-    if (state.isReviewSaving) return false;
+    if (isGuest || state.isReviewSaving) return false;
 
     emit(state.copyWith(isReviewSaving: true, clearFailure: true));
     final result = await _reviewRepository.upsertReview(

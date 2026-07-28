@@ -9,6 +9,10 @@ class SupabaseDatabaseService {
 
   User? get currentUser => _client.auth.currentUser;
 
+  bool get isGuest => currentUser == null || currentUser!.isAnonymous;
+
+  Session? get currentSession => _client.auth.currentSession;
+
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
   Future<AuthResponse> signInWithPassword({
@@ -26,6 +30,10 @@ class SupabaseDatabaseService {
     return _client.auth.signUp(email: email, password: password, data: data);
   }
 
+  Future<AuthResponse> signInAnonymously() {
+    return _client.auth.signInAnonymously();
+  }
+
   Future<void> signOut() => _client.auth.signOut();
 
   Future<UserResponse> updateUser(UserAttributes attributes) {
@@ -40,4 +48,5 @@ class SupabaseDatabaseService {
   }) {
     return _client.rpc<dynamic>(function, params: params);
   }
+
 }

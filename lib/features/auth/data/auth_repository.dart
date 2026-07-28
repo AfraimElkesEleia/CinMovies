@@ -27,6 +27,8 @@ class AuthRepository {
 
   User? get currentUser => _database.currentUser;
 
+  bool get isGuest => _database.isGuest;
+
   Stream<AuthState> get authStateChanges => _database.authStateChanges;
 
   Future<String> resolveInitialRoute() async {
@@ -44,6 +46,14 @@ class AuthRepository {
         password: password,
       );
       return Right(response);
+    } catch (error) {
+      return Left(_errorMapper.map(error));
+    }
+  }
+
+  Future<Either<Failure, AuthResponse>> signInAsGuest() async {
+    try {
+      return Right(await _database.signInAnonymously());
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
