@@ -21,4 +21,28 @@ void main() {
     expect(searchPressed, isTrue);
     expect(find.byIcon(Icons.notifications_none_rounded), findsNothing);
   });
+
+  testWidgets('saved-data banner displays its message and retries', (
+    tester,
+  ) async {
+    var retryCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HomeErrorBanner(
+            message: 'Showing saved movies.',
+            onRetry: () => retryCount++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Showing saved movies.'), findsOneWidget);
+    expect(find.byIcon(Icons.wifi_off_rounded), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+
+    expect(retryCount, 1);
+  });
 }

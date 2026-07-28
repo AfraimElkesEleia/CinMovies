@@ -8,6 +8,7 @@ class HiveCacheService {
     this._favoriteGenresBox, {
     this._trailerHistoryBox,
     this._movieChatBox,
+    this._catalogBox,
   });
 
   static const searchBoxName = 'search_cache';
@@ -16,6 +17,7 @@ class HiveCacheService {
   static const favoriteGenresBoxName = 'favorite_genres_cache';
   static const trailerHistoryBoxName = 'trailer_history';
   static const movieChatBoxName = 'movie_chat_history';
+  static const catalogBoxName = 'catalog_cache_v1';
 
   final Box<dynamic> _searchBox;
   final Box<dynamic> _movieBox;
@@ -23,6 +25,7 @@ class HiveCacheService {
   final Box<dynamic> _favoriteGenresBox;
   final Box<dynamic>? _trailerHistoryBox;
   final Box<dynamic>? _movieChatBox;
+  final Box<dynamic>? _catalogBox;
 
   static Future<HiveCacheService> initialize() async {
     await Hive.initFlutter();
@@ -36,6 +39,7 @@ class HiveCacheService {
       trailerHistoryBoxName,
     );
     final movieChatBox = await Hive.openBox<dynamic>(movieChatBoxName);
+    final catalogBox = await Hive.openBox<dynamic>(catalogBoxName);
 
     return HiveCacheService(
       searchBox,
@@ -44,6 +48,7 @@ class HiveCacheService {
       favoriteGenresBox,
       trailerHistoryBox: trailerHistoryBox,
       movieChatBox: movieChatBox,
+      catalogBox: catalogBox,
     );
   }
 
@@ -165,6 +170,33 @@ class HiveCacheService {
     return _requiredMovieChatBox().put('$scopeId::sessions', sessions);
   }
 
+  Map<String, dynamic>? getCatalogEntry(String key) {
+    return _map(_requiredCatalogBox().get(key));
+  }
+
+  Future<void> cacheCatalogEntry(
+    String key,
+    Map<String, dynamic> value,
+  ) {
+    return _requiredCatalogBox().put(key, value);
+  }
+
+  Map<String, Map<String, dynamic>> getCatalogEntries(String keyPrefix) {
+    final entries = <String, Map<String, dynamic>>{};
+    for (final entry in _requiredCatalogBox().toMap().entries) {
+      final key = entry.key;
+      final value = _map(entry.value);
+      if (key is String && key.startsWith(keyPrefix) && value != null) {
+        entries[key] = value;
+      }
+    }
+    return entries;
+  }
+
+  Future<void> deleteCatalogEntry(String key) {
+    return _requiredCatalogBox().delete(key);
+  }
+
   Box<dynamic> _requiredTrailerHistoryBox() {
     final box = _trailerHistoryBox;
     if (box == null) {
@@ -177,6 +209,14 @@ class HiveCacheService {
     final box = _movieChatBox;
     if (box == null) {
       throw StateError('Movie chat history box is not configured.');
+    }
+    return box;
+  }
+
+  Box<dynamic> _requiredCatalogBox() {
+    final box = _catalogBox;
+    if (box == null) {
+      throw StateError('Catalog cache box is not configured.');
     }
     return box;
   }

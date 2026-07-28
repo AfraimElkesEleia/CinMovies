@@ -20,6 +20,7 @@ import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
+import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:cinmovies_app/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -65,6 +66,9 @@ Future<void> initDependencies({
   serviceLocator.registerLazySingleton<ErrorMapperRegistry>(
     () => defaultErrorMapper,
   );
+  serviceLocator.registerLazySingleton<MovieArtworkCache>(
+    DiskMovieArtworkCache.new,
+  );
   serviceLocator.registerLazySingleton<AuthRepository>(
     () => AuthRepository(
       serviceLocator(),
@@ -78,7 +82,12 @@ Future<void> initDependencies({
         ProfileRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<HomeRepository>(
-    () => HomeRepository(serviceLocator(), serviceLocator()),
+    () => HomeRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<BrowseRepository>(
     () => BrowseRepository(serviceLocator(), serviceLocator()),
@@ -87,7 +96,12 @@ Future<void> initDependencies({
     () => SearchRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<MovieDetailsRepository>(
-    () => MovieDetailsRepository(serviceLocator(), serviceLocator()),
+    () => MovieDetailsRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<MovieRepository>(
     () => MovieRepository(serviceLocator(), serviceLocator(), serviceLocator()),

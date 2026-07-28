@@ -76,10 +76,16 @@ class _HomeView extends StatelessWidget {
                         onMoviePressed: openDetails,
                       ),
                     ),
-                  if (state.status == HomeStatus.failure &&
-                      state.failure != null)
+                  if (state.failure != null &&
+                      (state.status == HomeStatus.failure ||
+                          state.isFromCache))
                     SliverToBoxAdapter(
-                      child: HomeErrorBanner(message: state.failure!.message),
+                      child: HomeErrorBanner(
+                        message: state.isFromCache
+                            ? 'Showing saved movies. Pull to refresh when you are online.'
+                            : state.failure!.message,
+                        onRetry: context.read<HomeCubit>().loadMovies,
+                      ),
                     ),
                   const SliverToBoxAdapter(child: SizedBox(height: 26)),
                   SliverToBoxAdapter(

@@ -60,6 +60,40 @@ void main() {
     expect(cubit.state.movie.title, 'Seed');
     expect(cubit.state.failure?.message, 'No connection');
   });
+
+  test('load keeps cached rich details when refresh fails', () async {
+    final seed = _movie('1', 'Seed');
+    final cachedMovie = _movie('1', 'Cached Full');
+    final cachedAt = DateTime.utc(2026, 7, 20);
+    final cubit = MovieDetailsCubit(
+      _FakeDetailsRepository(
+        const Left(NetworkFailure(message: 'No connection')),
+        cached: CachedMovieDetails(
+          data: MovieDetailsData(
+            movie: cachedMovie,
+            similarMovies: [_movie('2', 'Cached Similar')],
+            videoKey: 'saved-video',
+          ),
+          cachedAt: cachedAt,
+        ),
+      ),
+      _FakeLibraryRepository(),
+      _FakeReviewRepository(),
+      seed,
+    );
+    addTearDown(cubit.close);
+
+    await cubit.load();
+
+    expect(cubit.state.status, MovieDetailsStatus.loaded);
+    expect(cubit.state.movie.title, 'Cached Full');
+    expect(cubit.state.similarMovies.single.title, 'Cached Similar');
+    expect(cubit.state.videoKey, 'saved-video');
+    expect(cubit.state.isFromCache, isTrue);
+    expect(cubit.state.hasRichDetails, isTrue);
+    expect(cubit.state.cachedAt, cachedAt);
+    expect(cubit.state.failure?.message, 'No connection');
+  });
 }
 
 class _FakeReviewRepository implements ReviewRepository {
@@ -109,9 +143,13 @@ class _FakeReviewRepository implements ReviewRepository {
 }
 
 class _FakeDetailsRepository extends MovieDetailsRepository {
-  _FakeDetailsRepository(this.result) : super(Dio());
+  _FakeDetailsRepository(this.result, {this.cached}) : super(Dio());
 
   final Either<Failure, MovieDetailsData> result;
+  final CachedMovieDetails? cached;
+
+  @override
+  CachedMovieDetails? readCachedMovieDetails(Movie seed) => cached;
 
   @override
   Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(

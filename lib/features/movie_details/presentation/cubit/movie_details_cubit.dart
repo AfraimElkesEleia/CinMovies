@@ -13,6 +13,10 @@ class MovieDetailsState extends Equatable {
     required this.movie,
     this.similarMovies = const [],
     this.isDetailsLoading = false,
+    this.isDetailsRefreshing = false,
+    this.isFromCache = false,
+    this.hasRichDetails = false,
+    this.cachedAt,
     this.isReviewsLoading = false,
     this.isFavoriteLoading = false,
     this.isWatchlistLoading = false,
@@ -40,6 +44,10 @@ class MovieDetailsState extends Equatable {
   final Movie movie;
   final List<Movie> similarMovies;
   final bool isDetailsLoading;
+  final bool isDetailsRefreshing;
+  final bool isFromCache;
+  final bool hasRichDetails;
+  final DateTime? cachedAt;
   final bool isReviewsLoading;
   final bool isFavoriteLoading;
   final bool isWatchlistLoading;
@@ -57,6 +65,10 @@ class MovieDetailsState extends Equatable {
     Movie? movie,
     List<Movie>? similarMovies,
     bool? isDetailsLoading,
+    bool? isDetailsRefreshing,
+    bool? isFromCache,
+    bool? hasRichDetails,
+    DateTime? cachedAt,
     bool? isReviewsLoading,
     bool? isFavoriteLoading,
     bool? isWatchlistLoading,
@@ -75,6 +87,10 @@ class MovieDetailsState extends Equatable {
       movie: movie ?? this.movie,
       similarMovies: similarMovies ?? this.similarMovies,
       isDetailsLoading: isDetailsLoading ?? this.isDetailsLoading,
+      isDetailsRefreshing: isDetailsRefreshing ?? this.isDetailsRefreshing,
+      isFromCache: isFromCache ?? this.isFromCache,
+      hasRichDetails: hasRichDetails ?? this.hasRichDetails,
+      cachedAt: cachedAt ?? this.cachedAt,
       isReviewsLoading: isReviewsLoading ?? this.isReviewsLoading,
       isFavoriteLoading: isFavoriteLoading ?? this.isFavoriteLoading,
       isWatchlistLoading: isWatchlistLoading ?? this.isWatchlistLoading,
@@ -95,6 +111,10 @@ class MovieDetailsState extends Equatable {
     movie,
     similarMovies,
     isDetailsLoading,
+    isDetailsRefreshing,
+    isFromCache,
+    hasRichDetails,
+    cachedAt,
     isReviewsLoading,
     isFavoriteLoading,
     isWatchlistLoading,
@@ -124,6 +144,7 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   final LibraryRepository _libraryRepository;
   final ReviewRepository _reviewRepository;
   final bool isGuest;
+  bool _isDetailsRequestInFlight = false;
 
   Future<void> load() async {
     emit(
@@ -151,16 +172,51 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
   }
 
   Future<void> _loadDetails() async {
+    if (_isDetailsRequestInFlight) return;
+    _isDetailsRequestInFlight = true;
+
+    final cached = _detailsRepository.readCachedMovieDetails(state.movie);
+    if (cached != null && !isClosed) {
+      emit(
+        state.copyWith(
+          status: MovieDetailsStatus.loaded,
+          movie: cached.data.movie,
+          similarMovies: cached.data.similarMovies,
+          videoKey: cached.data.videoKey,
+          isDetailsLoading: false,
+          isDetailsRefreshing: true,
+          isFromCache: true,
+          hasRichDetails: true,
+          cachedAt: cached.cachedAt,
+          clearFailure: true,
+        ),
+      );
+    } else if (!isClosed) {
+      emit(
+        state.copyWith(
+          isDetailsLoading: true,
+          isDetailsRefreshing: true,
+          clearFailure: true,
+        ),
+      );
+    }
+
     final detailResult = await _detailsRepository.fetchMovieDetails(
       state.movie,
     );
+    _isDetailsRequestInFlight = false;
     if (isClosed) return;
 
     detailResult.fold(
       (failure) => emit(
         state.copyWith(
-          status: MovieDetailsStatus.failure,
+          status: cached == null
+              ? MovieDetailsStatus.failure
+              : MovieDetailsStatus.loaded,
           isDetailsLoading: false,
+          isDetailsRefreshing: false,
+          isFromCache: cached != null,
+          hasRichDetails: cached != null,
           failure: failure,
         ),
       ),
@@ -171,11 +227,17 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
           similarMovies: detail.similarMovies,
           videoKey: detail.videoKey,
           isDetailsLoading: false,
+          isDetailsRefreshing: false,
+          isFromCache: false,
+          hasRichDetails: true,
+          cachedAt: DateTime.now().toUtc(),
           clearFailure: true,
         ),
       ),
     );
   }
+
+  Future<void> retryDetails() => _loadDetails();
 
   Future<void> _loadSavedState(UserMovieListType type) async {
     final result = await _libraryRepository.contains(state.movie, type);

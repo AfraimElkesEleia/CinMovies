@@ -1,25 +1,79 @@
+import 'dart:async';
+
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
+import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
+import 'package:cinmovies_app/features/movies/data/movie_cache_codec.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
 class MovieDetailsRepository {
-  MovieDetailsRepository(this._dio, [this._errorMapper = defaultErrorMapper]);
+  MovieDetailsRepository(
+    this._dio, [
+    this._errorMapper = defaultErrorMapper,
+    this._cache,
+    this._artworkCache,
+  ]);
+
+  static const _detailsKeyPrefix = 'movie_details::';
+  static const _cacheSchemaVersion = 1;
+  static const _detailsCacheLimit = 20;
 
   final Dio _dio;
   final ErrorMapperRegistry _errorMapper;
-  final Map<String, MovieDetailsData> _detailsCache = {};
+  final HiveCacheService? _cache;
+  final MovieArtworkCache? _artworkCache;
+
+  CachedMovieDetails? readCachedMovieDetails(Movie seed) {
+    final cache = _cache;
+    if (cache == null) return null;
+
+    try {
+      final key = '$_detailsKeyPrefix${seed.id}';
+      final json = cache.getCatalogEntry(key);
+      if (json == null || json['schema_version'] != _cacheSchemaVersion) {
+        return null;
+      }
+
+      final cachedAt = DateTime.tryParse(json['cached_at'] as String? ?? '');
+      final movie = MovieCacheCodec.decode(json['movie']);
+      if (cachedAt == null || movie == null) return null;
+
+      final details = MovieDetailsData(
+        movie: movie,
+        similarMovies: MovieCacheCodec.decodeList(json['similar_movies']),
+        videoKey: json['video_key'] as String?,
+      );
+      unawaited(_touchDetails(cache, key, json));
+      return CachedMovieDetails(data: details, cachedAt: cachedAt);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _touchDetails(
+    HiveCacheService cache,
+    String key,
+    Map<String, dynamic> json,
+  ) async {
+    try {
+      await cache.cacheCatalogEntry(key, {
+        ...json,
+        'last_accessed_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (_) {
+      // LRU metadata is best effort.
+    }
+  }
 
   Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(
     Movie seed,
   ) async {
-    final cached = _detailsCache[seed.id];
-    if (cached != null) return Right(cached);
-
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '${ApiConstants.movieDetails}/${seed.id}',
@@ -30,12 +84,81 @@ class MovieDetailsRepository {
       );
 
       final result = MovieDetailsData.fromJson(response.data, seed);
-      _detailsCache[seed.id] = result;
+      await _cacheDetails(result);
+      unawaited(_warmArtwork(result));
       return Right(result);
     } catch (error) {
       return Left(_errorMapper.map(error));
     }
   }
+
+  Future<void> _cacheDetails(MovieDetailsData details) async {
+    final cache = _cache;
+    if (cache == null) return;
+
+    try {
+      final now = DateTime.now().toUtc().toIso8601String();
+      await cache.cacheCatalogEntry(
+        '$_detailsKeyPrefix${details.movie.id}',
+        {
+          'schema_version': _cacheSchemaVersion,
+          'cached_at': now,
+          'last_accessed_at': now,
+          'movie': MovieCacheCodec.encode(details.movie),
+          'similar_movies': details.similarMovies
+              .map(MovieCacheCodec.encode)
+              .toList(),
+          'video_key': details.videoKey,
+        },
+      );
+      await _evictOldDetails(cache);
+    } catch (_) {
+      // Fresh network details remain valid if persistence is unavailable.
+    }
+  }
+
+  Future<void> _evictOldDetails(HiveCacheService cache) async {
+    final entries = cache.getCatalogEntries(_detailsKeyPrefix).entries.toList();
+    if (entries.length <= _detailsCacheLimit) return;
+
+    entries.sort((a, b) {
+      final aAccessed = _cacheDate(a.value);
+      final bAccessed = _cacheDate(b.value);
+      return aAccessed.compareTo(bAccessed);
+    });
+    for (final entry in entries.take(entries.length - _detailsCacheLimit)) {
+      await cache.deleteCatalogEntry(entry.key);
+    }
+  }
+
+  DateTime _cacheDate(Map<String, dynamic> value) {
+    return DateTime.tryParse(
+          value['last_accessed_at'] as String? ??
+              value['cached_at'] as String? ??
+              '',
+        ) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  }
+
+  Future<void> _warmArtwork(MovieDetailsData details) async {
+    final artworkCache = _artworkCache;
+    if (artworkCache == null) return;
+    try {
+      await artworkCache.cacheMovies([
+        details.movie,
+        ...details.similarMovies,
+      ]);
+    } catch (_) {
+      // Artwork warming must never affect detail loading.
+    }
+  }
+}
+
+class CachedMovieDetails {
+  const CachedMovieDetails({required this.data, required this.cachedAt});
+
+  final MovieDetailsData data;
+  final DateTime cachedAt;
 }
 
 class MovieDetailsData {

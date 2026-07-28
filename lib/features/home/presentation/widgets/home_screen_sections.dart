@@ -46,9 +46,14 @@ class HomeMovieRow extends StatelessWidget {
 }
 
 class HomeErrorBanner extends StatelessWidget {
-  const HomeErrorBanner({super.key, required this.message});
+  const HomeErrorBanner({
+    super.key,
+    required this.message,
+    this.onRetry,
+  });
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +89,17 @@ class HomeErrorBanner extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onRetry != null) ...[
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: onRetry,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.loginPrimary,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
             ],
           ),
         ),

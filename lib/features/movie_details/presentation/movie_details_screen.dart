@@ -119,6 +119,32 @@ class _MovieDetailsView extends StatelessWidget {
           ),
         ),
       ),
+      SliverToBoxAdapter(
+        child: BlocBuilder<MovieDetailsCubit, MovieDetailsState>(
+          buildWhen: (previous, current) =>
+              previous.status != current.status ||
+              previous.failure != current.failure ||
+              previous.isFromCache != current.isFromCache ||
+              previous.hasRichDetails != current.hasRichDetails ||
+              previous.isDetailsLoading != current.isDetailsLoading,
+          builder: (context, state) {
+            final isDetailsFallback =
+                state.isFromCache ||
+                state.status == MovieDetailsStatus.failure;
+            if (state.failure == null ||
+                state.isDetailsLoading ||
+                !isDetailsFallback) {
+              return const SizedBox.shrink();
+            }
+            return _SavedDetailsBanner(
+              message: state.hasRichDetails
+                  ? 'Showing saved movie details. Some online content may be unavailable.'
+                  : 'Showing basic movie information. Connect to load cast and similar movies.',
+              onRetry: context.read<MovieDetailsCubit>().retryDetails,
+            );
+          },
+        ),
+      ),
       // Pinned tab bar — absorbs overlap so each tab body knows how much
       // space to reserve at the top via SliverOverlapInjector.
       SliverOverlapAbsorber(
@@ -183,6 +209,60 @@ class _MovieDetailsView extends StatelessWidget {
         AppSnackBar.showError(context, 'Could not open sharing options.');
       }
     }
+  }
+}
+
+class _SavedDetailsBanner extends StatelessWidget {
+  const _SavedDetailsBanner({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.loginPrimary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                color: AppColors.loginPrimary,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onRetry,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.loginPrimary,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
