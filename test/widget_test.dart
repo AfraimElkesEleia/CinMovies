@@ -70,7 +70,12 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthResponse>> signInAsGuest() {
+  Future<Either<Failure, void>> continueAsGuest() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, void>> leaveGuestMode() {
     throw UnimplementedError();
   }
 

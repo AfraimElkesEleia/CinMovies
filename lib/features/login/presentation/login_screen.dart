@@ -5,10 +5,8 @@ import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/core/widgets/auth_screen_layout.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/auth_divider.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_header.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_primary_button.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/social_login_button.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_options_row.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/signup_prompt.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
@@ -104,29 +102,16 @@ class _LoginViewState extends State<_LoginView> {
                     ),
                     const SizedBox(height: 16),
                     LoginPrimaryButton(
-                      text: state.isLoading ? 'Logging in...' : 'Login',
+                      text:
+                          state.isLoadingOperation(
+                            AuthSubmissionOperation.login,
+                          )
+                          ? 'Logging in...'
+                          : 'Login',
                       onPressed: state.isLoading ? null : () => _login(context),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              const AuthDivider(text: 'or continue with'),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  SocialLoginButton(
-                    label: 'Google',
-                    iconAssetPath: 'assets/images/google_icon.png',
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 8),
-                  SocialLoginButton(
-                    label: 'Facebook',
-                    iconAssetPath: 'assets/images/facebook_icon.png',
-                    onPressed: () {},
-                  ),
-                ],
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -136,7 +121,11 @@ class _LoginViewState extends State<_LoginView> {
                       ? null
                       : context.read<AuthCubit>().continueAsGuest,
                   icon: const Icon(Icons.movie_filter_outlined),
-                  label: const Text('Continue as Guest'),
+                  label: Text(
+                    state.isLoadingOperation(AuthSubmissionOperation.guest)
+                        ? 'Continuing...'
+                        : 'Continue as Guest',
+                  ),
                 ),
               ),
               const SizedBox(height: 32),

@@ -45,13 +45,12 @@ class CinMoviesApp extends StatelessWidget {
           fontFamily: 'OpenSans',
           scaffoldBackgroundColor: AppColors.scaffoldBackground,
         ),
+        debugShowCheckedModeBanner: false,
         title: 'CinMovies',
         initialRoute: initialRoute,
         onGenerateRoute: _appRouter.generateRoute,
         builder: (context, child) {
-          return AppSplashOverlay(
-            child: child ?? const SizedBox.shrink(),
-          );
+          return AppSplashOverlay(child: child ?? const SizedBox.shrink());
         },
       ),
     );

@@ -23,7 +23,7 @@ class AppBootstrapCubit extends Cubit<AppBootstrapState> {
   Future<String> resolveInitialRoute() async {
     final route = !_preferences.hasPassedOnboarding
         ? AppRoutes.onboarding
-        : _authRepository.currentUser == null
+        : _authRepository.currentUser == null && !_preferences.isGuestMode
             ? AppRoutes.login
             : AppRoutes.home;
     emit(AppBootstrapState(initialRoute: route));

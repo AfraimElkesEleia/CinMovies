@@ -4,6 +4,7 @@ import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_snack_bar.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
+import 'package:cinmovies_app/features/auth/presentation/widgets/guest_account_prompt.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/model/movie_details_tab.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
@@ -160,16 +161,34 @@ class _MovieDetailsView extends StatelessWidget {
   // ── Action handlers ────────────────────────────────────────────────────────
 
   Future<void> _toggleFavorite(BuildContext context) async {
-    final success = await context.read<MovieDetailsCubit>().toggleFavorite();
+    final cubit = context.read<MovieDetailsCubit>();
+    if (cubit.isGuest) {
+      await showGuestAccountPrompt(
+        context,
+        feature: 'save favorite movies',
+      );
+      return;
+    }
+
+    final success = await cubit.toggleFavorite();
     if (!success && context.mounted) {
-      AppSnackBar.showInfo(context, 'Sign in to update your favorite movies.');
+      AppSnackBar.showError(context, 'Could not update your favorite movies.');
     }
   }
 
   Future<void> _toggleWatchlist(BuildContext context) async {
-    final success = await context.read<MovieDetailsCubit>().toggleWatchlist();
+    final cubit = context.read<MovieDetailsCubit>();
+    if (cubit.isGuest) {
+      await showGuestAccountPrompt(
+        context,
+        feature: 'build your watchlist',
+      );
+      return;
+    }
+
+    final success = await cubit.toggleWatchlist();
     if (!success && context.mounted) {
-      AppSnackBar.showInfo(context, 'Sign in to update your watchlist.');
+      AppSnackBar.showError(context, 'Could not update your watchlist.');
     }
   }
 
@@ -361,9 +380,8 @@ class _ReviewsTabBody extends StatelessWidget {
                 isLoading: state.isReviewsLoading,
                 isReviewSaving: state.isReviewSaving,
                 onWriteReviewPressed: () => _writeReview(context),
-                onReactionPressed: (review, reaction) => context
-                    .read<MovieDetailsCubit>()
-                    .toggleReviewReaction(review, reaction),
+                onReactionPressed: (review, reaction) =>
+                    _toggleReviewReaction(context, review, reaction),
                 onDeletePressed: (review) => _deleteReview(context, review),
               ),
             ),
@@ -374,6 +392,15 @@ class _ReviewsTabBody extends StatelessWidget {
   }
 
   Future<void> _writeReview(BuildContext context) async {
+    final cubit = context.read<MovieDetailsCubit>();
+    if (cubit.isGuest) {
+      await showGuestAccountPrompt(
+        context,
+        feature: 'write a review',
+      );
+      return;
+    }
+
     final request = await showModalBottomSheet<ReviewComposerRequest>(
       context: context,
       isScrollControlled: true,
@@ -382,7 +409,7 @@ class _ReviewsTabBody extends StatelessWidget {
     );
     if (request == null || !context.mounted) return;
 
-    final success = await context.read<MovieDetailsCubit>().submitReview(
+    final success = await cubit.submitReview(
       rating: request.rating,
       title: request.title,
       body: request.body,
@@ -397,13 +424,41 @@ class _ReviewsTabBody extends StatelessWidget {
     }
   }
 
+  Future<bool> _toggleReviewReaction(
+    BuildContext context,
+    CommunityReview review,
+    ReviewReaction reaction,
+  ) async {
+    final cubit = context.read<MovieDetailsCubit>();
+    if (cubit.isGuest) {
+      await showGuestAccountPrompt(
+        context,
+        feature: 'react to reviews',
+      );
+      return false;
+    }
+
+    final success = await cubit.toggleReviewReaction(review, reaction);
+    if (!success && context.mounted) {
+      AppSnackBar.showError(context, 'Could not update your reaction.');
+    }
+    return success;
+  }
+
   Future<bool> _deleteReview(
     BuildContext context,
     CommunityReview review,
   ) async {
-    final success = await context.read<MovieDetailsCubit>().deleteReview(
-      review,
-    );
+    final cubit = context.read<MovieDetailsCubit>();
+    if (cubit.isGuest) {
+      await showGuestAccountPrompt(
+        context,
+        feature: 'manage reviews',
+      );
+      return false;
+    }
+
+    final success = await cubit.deleteReview(review);
     if (!context.mounted) return success;
 
     if (success) {

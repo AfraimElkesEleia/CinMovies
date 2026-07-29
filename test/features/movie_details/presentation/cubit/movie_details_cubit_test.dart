@@ -94,9 +94,65 @@ void main() {
     expect(cubit.state.cachedAt, cachedAt);
     expect(cubit.state.failure?.message, 'No connection');
   });
+
+  test('guest mode skips saved state and blocks account mutations', () async {
+    final movie = _movie('1', 'Guest movie');
+    final library = _FakeLibraryRepository();
+    final reviews = _FakeReviewRepository();
+    final cubit = MovieDetailsCubit(
+      _FakeDetailsRepository(
+        Right(MovieDetailsData(movie: movie, similarMovies: const [])),
+      ),
+      library,
+      reviews,
+      movie,
+      isGuest: true,
+    );
+    addTearDown(cubit.close);
+
+    await cubit.load();
+    final review = CommunityReview(
+      id: 'review-1',
+      movie: movie,
+      authorId: 'account-1',
+      authorName: 'Reviewer',
+      authorAvatarUrl: '',
+      rating: 8,
+      title: 'Title',
+      body: 'Body',
+      spoiler: false,
+      createdAt: DateTime.utc(2026, 7, 29),
+      likeCount: 0,
+      dislikeCount: 0,
+      currentUserReaction: null,
+      isOwnReview: false,
+    );
+
+    expect(await cubit.toggleFavorite(), isFalse);
+    expect(await cubit.toggleWatchlist(), isFalse);
+    expect(
+      await cubit.submitReview(
+        rating: 8,
+        body: 'Guest review',
+        spoiler: false,
+      ),
+      isFalse,
+    );
+    expect(
+      await cubit.toggleReviewReaction(review, ReviewReaction.like),
+      isFalse,
+    );
+    expect(library.containsCalls, 0);
+    expect(library.setListedCalls, 0);
+    expect(reviews.upsertCalls, 0);
+    expect(reviews.setReactionCalls, 0);
+  });
 }
 
 class _FakeReviewRepository implements ReviewRepository {
+  int upsertCalls = 0;
+  int setReactionCalls = 0;
+
   @override
   Future<Either<Failure, int>> countForCurrentUser() async {
     return const Right(0);
@@ -127,6 +183,7 @@ class _FakeReviewRepository implements ReviewRepository {
     required String reviewId,
     required ReviewReaction reaction,
   }) async {
+    setReactionCalls++;
     return const Right(null);
   }
 
@@ -138,6 +195,7 @@ class _FakeReviewRepository implements ReviewRepository {
     String? body,
     bool spoiler = false,
   }) async {
+    upsertCalls++;
     return const Right(null);
   }
 }
@@ -163,12 +221,15 @@ class _FakeLibraryRepository implements LibraryRepository {
   _FakeLibraryRepository({this.containsResults = const {}});
 
   final Map<UserMovieListType, bool> containsResults;
+  int containsCalls = 0;
+  int setListedCalls = 0;
 
   @override
   Future<Either<Failure, bool>> contains(
     Movie movie,
     UserMovieListType type,
   ) async {
+    containsCalls++;
     return Right(containsResults[type] ?? false);
   }
 
@@ -204,6 +265,7 @@ class _FakeLibraryRepository implements LibraryRepository {
     UserMovieListType type, {
     required bool listed,
   }) async {
+    setListedCalls++;
     return const Right(null);
   }
 

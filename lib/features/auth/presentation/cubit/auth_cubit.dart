@@ -7,23 +7,32 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum AuthSubmissionStatus { initial, loading, success, failure }
 
+enum AuthSubmissionOperation { login, signup, guest }
+
 class AuthState extends Equatable {
   const AuthState({
     this.status = AuthSubmissionStatus.initial,
+    this.operation,
     this.errorMessage,
     this.rememberMe = false,
     this.termsAccepted = false,
   });
 
   final AuthSubmissionStatus status;
+  final AuthSubmissionOperation? operation;
   final String? errorMessage;
   final bool rememberMe;
   final bool termsAccepted;
 
   bool get isLoading => status == AuthSubmissionStatus.loading;
 
+  bool isLoadingOperation(AuthSubmissionOperation value) {
+    return isLoading && operation == value;
+  }
+
   AuthState copyWith({
     AuthSubmissionStatus? status,
+    AuthSubmissionOperation? operation,
     String? errorMessage,
     bool clearError = false,
     bool? rememberMe,
@@ -31,6 +40,7 @@ class AuthState extends Equatable {
   }) {
     return AuthState(
       status: status ?? this.status,
+      operation: operation ?? this.operation,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       rememberMe: rememberMe ?? this.rememberMe,
       termsAccepted: termsAccepted ?? this.termsAccepted,
@@ -38,7 +48,13 @@ class AuthState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, errorMessage, rememberMe, termsAccepted];
+  List<Object?> get props => [
+    status,
+    operation,
+    errorMessage,
+    rememberMe,
+    termsAccepted,
+  ];
 }
 
 class AuthCubit extends Cubit<AuthState> {
@@ -58,7 +74,11 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login({required String email, required String password}) async {
     emit(
-      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+      state.copyWith(
+        status: AuthSubmissionStatus.loading,
+        operation: AuthSubmissionOperation.login,
+        clearError: true,
+      ),
     );
     final result = await _authRepository.signIn(
       email: email,
@@ -83,9 +103,13 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> continueAsGuest() async {
     emit(
-      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+      state.copyWith(
+        status: AuthSubmissionStatus.loading,
+        operation: AuthSubmissionOperation.guest,
+        clearError: true,
+      ),
     );
-    final result = await _authRepository.signInAsGuest();
+    final result = await _authRepository.continueAsGuest();
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -116,7 +140,11 @@ class AuthCubit extends Cubit<AuthState> {
     }
 
     emit(
-      state.copyWith(status: AuthSubmissionStatus.loading, clearError: true),
+      state.copyWith(
+        status: AuthSubmissionStatus.loading,
+        operation: AuthSubmissionOperation.signup,
+        clearError: true,
+      ),
     );
     final result = await _authRepository.signUp(
       fullName: fullName,

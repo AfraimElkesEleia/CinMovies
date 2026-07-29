@@ -1,10 +1,10 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
-import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
 import 'package:cinmovies_app/core/widgets/app_bottom_navigation_bar.dart';
 import 'package:cinmovies_app/features/ai/presentation/ai_chat_screen.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
+import 'package:cinmovies_app/features/auth/presentation/widgets/guest_account_prompt.dart';
 import 'package:cinmovies_app/features/browse/presentation/browse_screen.dart';
 import 'package:cinmovies_app/features/home/presentation/home_screen.dart';
 import 'package:cinmovies_app/features/library/presentation/library_screen.dart';
@@ -93,7 +93,7 @@ class _GuestAccessGate extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Your guest movie-chat history stays on this device and will not be merged into an account.',
+                  'Your guest movie chat and trailer history stay on this device and will not be merged into an account.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textMuted,
@@ -103,8 +103,14 @@ class _GuestAccessGate extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => _openLogin(context),
+                  onPressed: () => openAccountAccess(context, AppRoutes.login),
                   child: const Text('Sign in'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () =>
+                      openAccountAccess(context, AppRoutes.register),
+                  child: const Text('Create account'),
                 ),
               ],
             ),
@@ -112,12 +118,6 @@ class _GuestAccessGate extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _openLogin(BuildContext context) async {
-    await serviceLocator<AuthRepository>().signOut();
-    if (!context.mounted) return;
-    context.pushNamedAndRemoveUntil(AppRoutes.login);
   }
 }
 

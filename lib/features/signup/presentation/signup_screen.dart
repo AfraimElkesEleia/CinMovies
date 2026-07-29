@@ -90,8 +90,6 @@ class _SignupViewState extends State<_SignupView> {
                 passwordValidator: _requiredPassword,
                 confirmPasswordValidator: _confirmPassword,
               ),
-              const SizedBox(height: 16),
-              const SignupSocialLoginSection(),
               const SizedBox(height: 32),
               LoginPrompt(
                 onLoginPressed: () =>

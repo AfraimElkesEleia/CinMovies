@@ -24,13 +24,16 @@ class AuthRepository {
 
   User? get currentUser => _database.currentUser;
 
-  bool get isGuest => _database.isGuest;
+  bool get isGuest =>
+      _preferences.isGuestMode || currentUser?.isAnonymous == true;
 
   Stream<AuthState> get authStateChanges => _database.authStateChanges;
 
   Future<String> resolveInitialRoute() async {
     if (!_preferences.hasPassedOnboarding) return AppRoutes.onboarding;
-    return currentUser == null ? AppRoutes.login : AppRoutes.home;
+    return currentUser == null && !_preferences.isGuestMode
+        ? AppRoutes.login
+        : AppRoutes.home;
   }
 
   Future<Either<Failure, AuthResponse>> signIn({
@@ -38,6 +41,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
+      await _preferences.setGuestMode(false);
       final response = await _database.signInWithPassword(
         email: email,
         password: password,
@@ -48,9 +52,25 @@ class AuthRepository {
     }
   }
 
-  Future<Either<Failure, AuthResponse>> signInAsGuest() async {
+  Future<Either<Failure, void>> continueAsGuest() async {
     try {
-      return Right(await _database.signInAnonymously());
+      if (currentUser != null) {
+        await _database.signOut();
+      }
+      await _preferences.setGuestMode(true);
+      return const Right(null);
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
+  Future<Either<Failure, void>> leaveGuestMode() async {
+    try {
+      if (currentUser?.isAnonymous == true) {
+        await _database.signOut();
+      }
+      await _preferences.setGuestMode(false);
+      return const Right(null);
     } catch (error) {
       return Left(mapError(error));
     }
@@ -65,6 +85,7 @@ class AuthRepository {
     String? avatarContentType,
   }) async {
     try {
+      await _preferences.setGuestMode(false);
       final response = await _database.signUp(
         email: email,
         password: password,
@@ -94,7 +115,15 @@ class AuthRepository {
     }
   }
 
-  Future<void> signOut() => _database.signOut();
+  Future<void> signOut() async {
+    try {
+      if (currentUser != null) {
+        await _database.signOut();
+      }
+    } finally {
+      await _preferences.setGuestMode(false);
+    }
+  }
 
   Future<Either<Failure, void>> updatePassword(String password) async {
     try {

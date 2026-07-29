@@ -1,9 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cinmovies_app/core/theme/app_colors.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/auth_divider.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_styles.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/social_login_button.dart';
 import 'package:flutter/material.dart';
 
 class SignupHeader extends StatelessWidget {
@@ -30,37 +28,6 @@ class SignupHeader extends StatelessWidget {
       ],
     );
   }
-}
-
-class SignupSocialLoginSection extends StatelessWidget {
-  const SignupSocialLoginSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        AuthDivider(text: 'or continue with'),
-        SizedBox(height: 16),
-        Row(
-          children: [
-            SocialLoginButton(
-              label: 'Google',
-              iconAssetPath: 'assets/images/google_icon.png',
-              onPressed: _noop,
-            ),
-            SizedBox(width: 8),
-            SocialLoginButton(
-              label: 'Facebook',
-              iconAssetPath: 'assets/images/facebook_icon.png',
-              onPressed: _noop,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  static void _noop() {}
 }
 
 class SignupProfileImagePicker extends StatelessWidget {
