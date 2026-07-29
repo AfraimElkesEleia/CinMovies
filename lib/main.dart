@@ -4,6 +4,7 @@ import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/navigation/app_router.dart';
 import 'package:cinmovies_app/core/supabase/supabase_config.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
+import 'package:cinmovies_app/core/widgets/app_splash_overlay.dart';
 import 'package:cinmovies_app/features/app/presentation/cubit/app_bootstrap_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,6 +48,11 @@ class CinMoviesApp extends StatelessWidget {
         title: 'CinMovies',
         initialRoute: initialRoute,
         onGenerateRoute: _appRouter.generateRoute,
+        builder: (context, child) {
+          return AppSplashOverlay(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
       ),
     );
   }
