@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cinmovies_app/core/error/exceptions.dart';
+import 'package:cinmovies_app/features/ai/data/gemini_service.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
+import 'package:cinmovies_app/features/ai/data/tmdb_catalog_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,12 +17,15 @@ void main() {
   setUp(() {
     geminiAdapter = _GeminiAdapter();
     tmdbAdapter = _TmdbAdapter();
-    final gemini = Dio(
+    final geminiDio = Dio(
       BaseOptions(baseUrl: 'https://generativelanguage.googleapis.com/v1beta'),
     )..httpClientAdapter = geminiAdapter;
-    final tmdb = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
+    final tmdbDio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = tmdbAdapter;
-    dataSource = MovieChatAiDataSource(tmdb, gemini, model: 'gemini-test');
+    dataSource = MovieChatAiDataSource(
+      GeminiService(geminiDio, model: 'gemini-test'),
+      TmdbCatalogService(tmdbDio),
+    );
   });
 
   test('grounds Gemini selections in canonical TMDB movie details', () async {

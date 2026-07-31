@@ -1,9 +1,11 @@
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
+import 'package:cinmovies_app/features/ai/data/gemini_service.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_local_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_remote_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_repository_impl.dart';
+import 'package:cinmovies_app/features/ai/data/tmdb_catalog_service.dart';
 import 'package:cinmovies_app/features/ai/domain/repositories/movie_chat_repository.dart';
 import 'package:cinmovies_app/features/ai/presentation/cubit/ai_chat_cubit.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
@@ -114,10 +116,16 @@ Future<void> initDependencies({
       serviceLocator(),
     ),
   );
+  serviceLocator.registerLazySingleton<GeminiService>(
+    () => GeminiService(DioClientFactory.createGemini()),
+  );
+  serviceLocator.registerLazySingleton<TmdbCatalogService>(
+    () => TmdbCatalogService(serviceLocator()),
+  );
   serviceLocator.registerLazySingleton<MovieChatAiDataSource>(
     () => MovieChatAiDataSource(
       serviceLocator(),
-      DioClientFactory.createGemini(),
+      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<MovieChatRemoteDataSource>(
