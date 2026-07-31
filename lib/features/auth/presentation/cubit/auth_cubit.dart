@@ -14,14 +14,12 @@ class AuthState extends Equatable {
     this.status = AuthSubmissionStatus.initial,
     this.operation,
     this.errorMessage,
-    this.rememberMe = false,
     this.termsAccepted = false,
   });
 
   final AuthSubmissionStatus status;
   final AuthSubmissionOperation? operation;
   final String? errorMessage;
-  final bool rememberMe;
   final bool termsAccepted;
 
   bool get isLoading => status == AuthSubmissionStatus.loading;
@@ -35,14 +33,12 @@ class AuthState extends Equatable {
     AuthSubmissionOperation? operation,
     String? errorMessage,
     bool clearError = false,
-    bool? rememberMe,
     bool? termsAccepted,
   }) {
     return AuthState(
       status: status ?? this.status,
       operation: operation ?? this.operation,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      rememberMe: rememberMe ?? this.rememberMe,
       termsAccepted: termsAccepted ?? this.termsAccepted,
     );
   }
@@ -52,7 +48,6 @@ class AuthState extends Equatable {
     status,
     operation,
     errorMessage,
-    rememberMe,
     termsAccepted,
   ];
 }
@@ -63,10 +58,6 @@ class AuthCubit extends Cubit<AuthState> {
 
   final AuthRepository _authRepository;
   final GenrePreferencesRepository _preferenceRepository;
-
-  void setRememberMe(bool value) {
-    emit(state.copyWith(rememberMe: value));
-  }
 
   void setTermsAccepted(bool value) {
     emit(state.copyWith(termsAccepted: value));

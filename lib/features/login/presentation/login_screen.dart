@@ -94,10 +94,6 @@ class _LoginViewState extends State<_LoginView> {
                       onSubmitted: (_) => _login(context),
                     ),
                     LoginOptionsRow(
-                      rememberMe: state.rememberMe,
-                      onRememberMeChanged: context
-                          .read<AuthCubit>()
-                          .setRememberMe,
                       onForgotPasswordPressed: () {},
                     ),
                     const SizedBox(height: 16),

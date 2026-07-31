@@ -142,6 +142,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     final result = await _homeRepository.fetchMovieSection(
       section: homeSection,
       page: 1,
+      genreIds: state.args.genreIds,
     );
 
     result.fold(
@@ -193,6 +194,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     final result = await _homeRepository.fetchMovieSection(
       section: homeSection,
       page: state.currentPage + 1,
+      genreIds: state.args.genreIds,
     );
 
     result.fold(

@@ -13,19 +13,36 @@ class GenrePreferencesRepository {
   final HiveCacheService _cache;
   final LocalPreferencesService _preferences;
 
+  String? get userScopeId {
+    final user = _database.currentUser;
+    if (user == null || user.isAnonymous) return null;
+    return user.id;
+  }
+
   String get _userId {
-    final id = _database.currentUser?.id;
+    final id = userScopeId;
     if (id == null) throw StateError('No authenticated user.');
     return id;
   }
 
-  Set<String> cachedFavoriteGenres() => _cache.getFavoriteGenres();
+  Set<String> cachedFavoriteGenres() {
+    final scopeId = userScopeId;
+    if (scopeId == null) return const {};
+    return _cache.getFavoriteGenres(scopeId: scopeId);
+  }
+
+  Stream<Set<String>> watchFavoriteGenres() {
+    final scopeId = userScopeId;
+    if (scopeId == null) return const Stream.empty();
+    return _cache.watchFavoriteGenres(scopeId: scopeId);
+  }
 
   Future<Set<String>> loadFavoriteGenres() async {
+    final userId = _userId;
     final rows = await _database
         .from('user_genre_preferences')
         .select('genres(name)')
-        .eq('user_id', _userId);
+        .eq('user_id', userId);
 
     final genres = rows
         .map<String?>((row) {
@@ -36,18 +53,19 @@ class GenrePreferencesRepository {
         .whereType<String>()
         .toSet();
 
-    await _cache.cacheFavoriteGenres(genres);
+    await _cache.cacheFavoriteGenres(genres, scopeId: userId);
     return genres;
   }
 
   Future<void> saveFavoriteGenres(Set<String> genreNames) async {
-    await _cache.cacheFavoriteGenres(genreNames);
+    await _cache.cacheFavoriteGenres(genreNames, scopeId: _userId);
     await _preferences.setHasPassedOnboarding(true);
     await syncCachedFavoriteGenres();
   }
 
   Future<void> syncCachedFavoriteGenres() async {
-    final genreNames = _cache.getFavoriteGenres();
+    final userId = _userId;
+    final genreNames = _cache.getFavoriteGenres(scopeId: userId);
     if (genreNames.isEmpty) return;
 
     final genres = await _database
@@ -55,11 +73,14 @@ class GenrePreferencesRepository {
         .select('id, name')
         .inFilter('name', genreNames.toList());
 
-    await _database.from('user_genre_preferences').delete().eq('user_id', _userId);
+    await _database
+        .from('user_genre_preferences')
+        .delete()
+        .eq('user_id', userId);
 
     final rows = genres
         .map<Map<String, dynamic>>(
-          (genre) => {'user_id': _userId, 'genre_id': genre['id']},
+          (genre) => {'user_id': userId, 'genre_id': genre['id']},
         )
         .toList();
 
@@ -70,6 +91,6 @@ class GenrePreferencesRepository {
     await _database
         .from('profiles')
         .update({'onboarding_completed': true})
-        .eq('id', _userId);
+        .eq('id', userId);
   }
 }

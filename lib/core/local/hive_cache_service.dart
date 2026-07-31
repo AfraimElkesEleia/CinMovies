@@ -98,12 +98,27 @@ class HiveCacheService {
     return value is T ? value : null;
   }
 
-  Set<String> getFavoriteGenres() {
-    return _stringList(_favoriteGenresBox.get('genres')).toSet();
+  Set<String> getFavoriteGenres({String? scopeId}) {
+    return _stringList(
+      _favoriteGenresBox.get(_favoriteGenresKey(scopeId)),
+    ).toSet();
   }
 
-  Future<void> cacheFavoriteGenres(Set<String> genres) async {
-    await _favoriteGenresBox.put('genres', genres.toList()..sort());
+  Future<void> cacheFavoriteGenres(
+    Set<String> genres, {
+    String? scopeId,
+  }) async {
+    await _favoriteGenresBox.put(
+      _favoriteGenresKey(scopeId),
+      genres.toList()..sort(),
+    );
+  }
+
+  Stream<Set<String>> watchFavoriteGenres({String? scopeId}) async* {
+    final key = _favoriteGenresKey(scopeId);
+    await for (final _ in _favoriteGenresBox.watch(key: key)) {
+      yield _stringList(_favoriteGenresBox.get(key)).toSet();
+    }
   }
 
   List<Map<String, dynamic>> getTrailerHistory(String scopeId) {
@@ -174,10 +189,7 @@ class HiveCacheService {
     return _map(_requiredCatalogBox().get(key));
   }
 
-  Future<void> cacheCatalogEntry(
-    String key,
-    Map<String, dynamic> value,
-  ) {
+  Future<void> cacheCatalogEntry(String key, Map<String, dynamic> value) {
     return _requiredCatalogBox().put(key, value);
   }
 
@@ -225,6 +237,12 @@ class HiveCacheService {
 
   String _trailerKey(String scopeId, String videoKey) {
     return '${_trailerKeyPrefix(scopeId)}$videoKey';
+  }
+
+  String _favoriteGenresKey(String? scopeId) {
+    final normalizedScope = scopeId?.trim();
+    if (normalizedScope == null || normalizedScope.isEmpty) return 'genres';
+    return '$normalizedScope::genres';
   }
 
   List<String> _stringList(dynamic value) {

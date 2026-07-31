@@ -1,5 +1,6 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/preferences/domain/movie_genre_option.dart';
 
 abstract class TmdbMovieMapper {
   static Movie fromJson(Map<String, dynamic> json) {
@@ -19,7 +20,9 @@ abstract class TmdbMovieMapper {
             (json['backdrop_path'] as String?) ??
             (json['image_asset'] as String?),
       ),
-      genres: _genres(json['genres'] ?? json['genre_names']),
+      genres: _genres(
+        json['genres'] ?? json['genre_names'] ?? json['genre_ids'],
+      ),
       rating: ((json['vote_average'] as num?) ?? 0).toDouble(),
       year: _yearFromDate(releaseDate),
       duration: _duration(runtime),
@@ -72,6 +75,9 @@ abstract class TmdbMovieMapper {
     return value
         .map<String?>((genre) {
           if (genre is String) return genre.trim();
+          if (genre is num) {
+            return movieGenreNameFromTmdbId(genre.toInt());
+          }
           if (genre is Map) return (genre['name'] as String?)?.trim();
           return null;
         })

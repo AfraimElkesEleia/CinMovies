@@ -141,7 +141,9 @@ Future<void> initDependencies({
     () => AuthCubit(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerFactory<MainNavigationCubit>(MainNavigationCubit.new);
-  serviceLocator.registerFactory<HomeCubit>(() => HomeCubit(serviceLocator()));
+  serviceLocator.registerFactory<HomeCubit>(
+    () => HomeCubit(serviceLocator(), serviceLocator()),
+  );
   serviceLocator
       .registerFactoryParam<MovieSectionCubit, MovieSectionArgs, void>(
         (args, _) =>

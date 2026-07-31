@@ -135,6 +135,44 @@ void main() {
       expect(repository.readCachedHomeMovies(), isNull);
     });
 
+    test('For You cache requires matching user and genre signature', () async {
+      final repository = HomeRepository(dio, cache);
+
+      final result = await repository.fetchForYouMovies(
+        genreIds: const [878, 28],
+        page: 1,
+        cacheScope: 'user-one',
+      );
+
+      expect(result.isRight(), isTrue);
+      expect(
+        repository
+            .readCachedForYouMovies(
+              scopeId: 'user-one',
+              genreIds: const [28, 878],
+            )
+            ?.page
+            .movies
+            .single
+            .title,
+        'For You',
+      );
+      expect(
+        repository.readCachedForYouMovies(
+          scopeId: 'user-two',
+          genreIds: const [28, 878],
+        ),
+        isNull,
+      );
+      expect(
+        repository.readCachedForYouMovies(
+          scopeId: 'user-one',
+          genreIds: const [35],
+        ),
+        isNull,
+      );
+    });
+
     test('details persist and evict the least recently stored record', () async {
       final repository = MovieDetailsRepository(
         dio,
@@ -208,6 +246,18 @@ class _CatalogAdapter implements HttpClientAdapter {
               'title': 'Upcoming $id',
               'poster_path': '/upcoming-$id.jpg',
             },
+        ],
+      },
+      '/discover/movie' => {
+        'page': 1,
+        'total_pages': 3,
+        'results': [
+          {
+            'id': 500,
+            'title': 'For You',
+            'poster_path': '/for-you.jpg',
+            'genre_ids': [28, 878],
+          },
         ],
       },
       _ => _detailPayload(options.path),

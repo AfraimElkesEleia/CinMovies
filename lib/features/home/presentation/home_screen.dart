@@ -88,6 +88,26 @@ class _HomeView extends StatelessWidget {
                       ),
                     ),
                   const SliverToBoxAdapter(child: SizedBox(height: 26)),
+                  if (state.forYouMovies.isNotEmpty) ...[
+                    SliverToBoxAdapter(
+                      child: HomeSectionHeader(
+                        title: HomeMovieSection.forYou.title,
+                        onSeeAllPressed: () => _openForYouSection(
+                          context,
+                          state.favoriteGenreIds,
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    SliverToBoxAdapter(
+                      child: HomeMovieRow(
+                        movies: state.forYouMovies,
+                        heroTagPrefix: 'home-for-you',
+                        onMoviePressed: openDetails,
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  ],
                   SliverToBoxAdapter(
                     child: HomeSectionHeader(
                       title: 'Trending Now',
@@ -137,6 +157,13 @@ class _HomeView extends StatelessWidget {
     context.pushNamed(
       AppRoutes.movieSection,
       arguments: MovieSectionArgs(section: section),
+    );
+  }
+
+  void _openForYouSection(BuildContext context, List<int> genreIds) {
+    context.pushNamed(
+      AppRoutes.movieSection,
+      arguments: MovieSectionArgs.forYou(genreIds: genreIds),
     );
   }
 }

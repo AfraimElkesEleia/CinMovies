@@ -54,6 +54,68 @@ void main() {
     expect(adapter.lastOptions?.path, '/movie/upcoming');
     expect(adapter.lastOptions?.queryParameters['language'], 'en-US');
   });
+
+  test('fetchForYouMovies uses OR genre filtering and safe defaults', () async {
+    adapter.responseJson = {
+      'page': 2,
+      'total_pages': 5,
+      'results': [
+        {
+          'id': 20,
+          'title': 'Personalized Movie',
+          'genre_ids': [878, 28],
+        },
+      ],
+    };
+
+    final result = await repository.fetchForYouMovies(
+      genreIds: const [878, 28, 28],
+      page: 2,
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(adapter.lastOptions?.path, '/discover/movie');
+    expect(adapter.lastOptions?.queryParameters, containsPair('page', 2));
+    expect(
+      adapter.lastOptions?.queryParameters,
+      containsPair('with_genres', '28|878'),
+    );
+    expect(
+      adapter.lastOptions?.queryParameters,
+      containsPair('sort_by', 'popularity.desc'),
+    );
+    expect(
+      adapter.lastOptions?.queryParameters,
+      containsPair('include_adult', false),
+    );
+    expect(
+      adapter.lastOptions?.queryParameters,
+      containsPair('include_video', false),
+    );
+
+    final page = result.getOrElse(
+      () => const MovieSectionPage(movies: [], page: 0, totalPages: 0),
+    );
+    expect(page.movies.single.genres, ['Sci-Fi', 'Action']);
+    expect(page.page, 2);
+    expect(page.totalPages, 5);
+  });
+
+  test('For You movie section retains genre filters', () async {
+    adapter.responseJson = {'page': 1, 'total_pages': 1, 'results': const []};
+
+    await repository.fetchMovieSection(
+      section: HomeMovieSection.forYou,
+      page: 1,
+      genreIds: const [35, 18],
+    );
+
+    expect(adapter.lastOptions?.path, '/discover/movie');
+    expect(
+      adapter.lastOptions?.queryParameters['with_genres'],
+      '18|35',
+    );
+  });
 }
 
 class _FakeAdapter implements HttpClientAdapter {

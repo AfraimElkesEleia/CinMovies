@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
+import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,19 +83,211 @@ void main() {
     expect(cubit.state.popularMovies, isEmpty);
     expect(cubit.state.isFromCache, isFalse);
   });
+
+  test('loads For You from normalized cached favorite genres', () async {
+    final repository = _FakeHomeRepository(
+      remote: Right(
+        HomeFeedData(
+          popularMovies: [_movie('1', 'Popular')],
+          upcomingMovies: const [],
+        ),
+      ),
+      forYouHandler: (genreIds) => Right(
+        MovieSectionPage(
+          movies: [_movie('2', 'Personalized')],
+          page: 1,
+          totalPages: 2,
+        ),
+      ),
+    );
+    final preferences = _FakeGenrePreferencesRepository(
+      cached: {'Action', 'Sci Fi', 'science fiction'},
+    );
+    final cubit = HomeCubit(repository, preferences);
+    addTearDown(cubit.close);
+    addTearDown(preferences.close);
+
+    await cubit.loadMovies();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.forYouRequests, [
+      [28, 878],
+    ]);
+    expect(cubit.state.favoriteGenreIds, [28, 878]);
+    expect(cubit.state.forYouMovies.single.title, 'Personalized');
+    expect(cubit.state.popularMovies.single.title, 'Popular');
+  });
+
+  test('keeps generic and cached personalized movies on For You failure', () async {
+    final repository = _FakeHomeRepository(
+      remote: Right(
+        HomeFeedData(
+          popularMovies: [_movie('1', 'Popular')],
+          upcomingMovies: const [],
+        ),
+      ),
+      cachedForYou: CachedMovieSection(
+        page: MovieSectionPage(
+          movies: [_movie('2', 'Cached For You')],
+          page: 1,
+          totalPages: 1,
+        ),
+        cachedAt: DateTime.utc(2026, 7, 20),
+      ),
+      forYouHandler: (_) => const Left(Failure(message: 'No connection')),
+    );
+    final preferences = _FakeGenrePreferencesRepository(cached: {'Drama'});
+    final cubit = HomeCubit(repository, preferences);
+    addTearDown(cubit.close);
+    addTearDown(preferences.close);
+
+    await cubit.loadMovies();
+
+    expect(cubit.state.status, HomeStatus.loaded);
+    expect(cubit.state.popularMovies.single.title, 'Popular');
+    expect(cubit.state.forYouMovies.single.title, 'Cached For You');
+    expect(cubit.state.failure, isNull);
+  });
+
+  test('refreshes For You when scoped favorite genres change', () async {
+    final repository = _FakeHomeRepository(
+      remote: Right(
+        HomeFeedData(
+          popularMovies: [_movie('1', 'Popular')],
+          upcomingMovies: const [],
+        ),
+      ),
+      forYouHandler: (genreIds) => Right(
+        MovieSectionPage(
+          movies: [_movie('${genreIds.first}', 'For ${genreIds.first}')],
+          page: 1,
+          totalPages: 1,
+        ),
+      ),
+    );
+    final preferences = _FakeGenrePreferencesRepository(cached: {'Action'});
+    final cubit = HomeCubit(repository, preferences);
+    addTearDown(cubit.close);
+    addTearDown(preferences.close);
+
+    await cubit.loadMovies();
+    preferences.emit({'Comedy'});
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.forYouRequests, [
+      [28],
+      [35],
+    ]);
+    expect(cubit.state.favoriteGenreIds, [35]);
+    expect(cubit.state.forYouMovies.single.title, 'For 35');
+  });
+
+  test('does not personalize when no authenticated preference scope exists', () async {
+    final repository = _FakeHomeRepository(
+      remote: Right(
+        HomeFeedData(
+          popularMovies: [_movie('1', 'Popular')],
+          upcomingMovies: const [],
+        ),
+      ),
+    );
+    final preferences = _FakeGenrePreferencesRepository(scopeId: null);
+    final cubit = HomeCubit(repository, preferences);
+    addTearDown(cubit.close);
+    addTearDown(preferences.close);
+
+    await cubit.loadMovies();
+
+    expect(repository.forYouRequests, isEmpty);
+    expect(cubit.state.forYouMovies, isEmpty);
+  });
 }
 
 class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository({this.cached, required this.remote}) : super(Dio());
+  _FakeHomeRepository({
+    this.cached,
+    required this.remote,
+    this.cachedForYou,
+    this.forYouHandler,
+  }) : super(Dio());
 
   final CachedHomeFeed? cached;
   final Either<Failure, HomeFeedData> remote;
+  final CachedMovieSection? cachedForYou;
+  final Either<Failure, MovieSectionPage> Function(List<int> genreIds)?
+  forYouHandler;
+  final List<List<int>> forYouRequests = [];
 
   @override
   CachedHomeFeed? readCachedHomeMovies() => cached;
 
   @override
   Future<Either<Failure, HomeFeedData>> fetchHomeMovies() async => remote;
+
+  @override
+  CachedMovieSection? readCachedForYouMovies({
+    required String scopeId,
+    required List<int> genreIds,
+  }) {
+    return cachedForYou;
+  }
+
+  @override
+  Future<Either<Failure, MovieSectionPage>> fetchForYouMovies({
+    required List<int> genreIds,
+    required int page,
+    String? cacheScope,
+  }) async {
+    forYouRequests.add([...genreIds]);
+    return forYouHandler?.call(genreIds) ??
+        const Right(
+          MovieSectionPage(movies: [], page: 1, totalPages: 1),
+        );
+  }
+}
+
+class _FakeGenrePreferencesRepository
+    implements GenrePreferencesRepository {
+  _FakeGenrePreferencesRepository({
+    this.scopeId = 'user-1',
+    this.cached = const {},
+    Set<String>? remote,
+  }) : remote = remote ?? cached;
+
+  final String? scopeId;
+  Set<String> cached;
+  Set<String> remote;
+  final StreamController<Set<String>> _controller =
+      StreamController<Set<String>>.broadcast();
+
+  @override
+  String? get userScopeId => scopeId;
+
+  @override
+  Set<String> cachedFavoriteGenres() => {...cached};
+
+  @override
+  Future<Set<String>> loadFavoriteGenres() async => {...remote};
+
+  @override
+  Future<void> saveFavoriteGenres(Set<String> genreNames) async {
+    cached = {...genreNames};
+    remote = {...genreNames};
+    _controller.add({...genreNames});
+  }
+
+  @override
+  Future<void> syncCachedFavoriteGenres() async {}
+
+  @override
+  Stream<Set<String>> watchFavoriteGenres() => _controller.stream;
+
+  void emit(Set<String> genres) {
+    cached = {...genres};
+    _controller.add({...genres});
+  }
+
+  Future<void> close() => _controller.close();
 }
 
 Movie _movie(String id, String title) {

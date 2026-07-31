@@ -54,6 +54,9 @@ void main() {
 class _FakeGenrePreferencesRepository
     implements GenrePreferencesRepository {
   @override
+  String? get userScopeId => null;
+
+  @override
   Set<String> cachedFavoriteGenres() => {};
 
   @override
@@ -64,4 +67,7 @@ class _FakeGenrePreferencesRepository
 
   @override
   Future<void> syncCachedFavoriteGenres() async {}
+
+  @override
+  Stream<Set<String>> watchFavoriteGenres() => const Stream.empty();
 }

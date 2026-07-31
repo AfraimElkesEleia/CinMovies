@@ -61,6 +61,35 @@ void main() {
     expect(repository.requests, ['popular:1', 'popular:2']);
   });
 
+  test('For You pagination preserves the normalized genre IDs', () async {
+    final repository = _FakeHomeRepository({
+      'forYou:1': MovieSectionPage(
+        movies: [_movie('1', 'Page One')],
+        page: 1,
+        totalPages: 2,
+      ),
+      'forYou:2': MovieSectionPage(
+        movies: [_movie('2', 'Page Two')],
+        page: 2,
+        totalPages: 2,
+      ),
+    });
+    final cubit = MovieSectionCubit(
+      repository,
+      MovieSectionArgs.forYou(genreIds: const [28, 878]),
+    );
+    addTearDown(cubit.close);
+
+    await cubit.loadInitial();
+    await cubit.loadNextPage();
+
+    expect(repository.requests, ['forYou:1', 'forYou:2']);
+    expect(repository.genreRequests, [
+      [28, 878],
+      [28, 878],
+    ]);
+  });
+
   test('query filters loaded movies locally', () async {
     final repository = _FakeHomeRepository({
       'upcoming:1': MovieSectionPage(
@@ -147,14 +176,17 @@ class _FakeHomeRepository extends HomeRepository {
   final Map<String, MovieSectionPage> pages;
   final Set<String> failures;
   final List<String> requests = [];
+  final List<List<int>> genreRequests = [];
 
   @override
   Future<Either<Failure, MovieSectionPage>> fetchMovieSection({
     required HomeMovieSection section,
     required int page,
+    List<int> genreIds = const [],
   }) async {
     final key = '${section.name}:$page';
     requests.add(key);
+    genreRequests.add([...genreIds]);
     if (failures.contains(key)) {
       return const Left(Failure(message: 'No connection'));
     }
