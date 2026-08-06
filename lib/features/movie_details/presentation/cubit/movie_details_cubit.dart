@@ -265,6 +265,8 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
   }
 
+  Future<void> refreshReviews() => _loadReviews();
+
   Future<bool> toggleFavorite() {
     if (isGuest || state.isFavoriteLoading || state.isFavoriteSaving) {
       return Future.value(false);

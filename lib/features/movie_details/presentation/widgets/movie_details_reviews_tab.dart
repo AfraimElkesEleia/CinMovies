@@ -12,6 +12,7 @@ class MovieDetailsReviewsTab extends StatelessWidget {
     required this.onWriteReviewPressed,
     required this.onReactionPressed,
     required this.onDeletePressed,
+    this.onReviewPressed,
   });
 
   final List<CommunityReview> reviews;
@@ -21,6 +22,7 @@ class MovieDetailsReviewsTab extends StatelessWidget {
   final Future<bool> Function(CommunityReview review, ReviewReaction reaction)
   onReactionPressed;
   final Future<bool> Function(CommunityReview review) onDeletePressed;
+  final ValueChanged<CommunityReview>? onReviewPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +84,9 @@ class MovieDetailsReviewsTab extends StatelessWidget {
               review: visibleReviews[index],
               onReactionPressed: onReactionPressed,
               onDeletePressed: onDeletePressed,
+              onRepliesPressed: onReviewPressed == null
+                  ? null
+                  : () => onReviewPressed!(visibleReviews[index]),
             ),
             if (index < visibleReviews.length - 1) const SizedBox(height: 14),
           ],
@@ -434,6 +439,7 @@ class ReviewCard extends StatelessWidget {
     this.onMoviePressed,
     this.onReactionPressed,
     this.onDeletePressed,
+    this.onRepliesPressed,
   });
 
   final CommunityReview review;
@@ -442,19 +448,23 @@ class ReviewCard extends StatelessWidget {
   final Future<bool> Function(CommunityReview review, ReviewReaction reaction)?
   onReactionPressed;
   final Future<bool> Function(CommunityReview review)? onDeletePressed;
+  final VoidCallback? onRepliesPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.surfaceBorder),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onRepliesPressed,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.surfaceBorder),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           if (showMovie) ...[
             _ReviewMovieHeader(review: review, onPressed: onMoviePressed),
             const SizedBox(height: 12),
@@ -494,8 +504,10 @@ class ReviewCard extends StatelessWidget {
             review: review,
             onReactionPressed: onReactionPressed,
             onDeletePressed: onDeletePressed,
+            onRepliesPressed: onRepliesPressed,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -692,12 +704,14 @@ class _ReviewActions extends StatelessWidget {
     required this.review,
     required this.onReactionPressed,
     required this.onDeletePressed,
+    required this.onRepliesPressed,
   });
 
   final CommunityReview review;
   final Future<bool> Function(CommunityReview review, ReviewReaction reaction)?
   onReactionPressed;
   final Future<bool> Function(CommunityReview review)? onDeletePressed;
+  final VoidCallback? onRepliesPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -721,6 +735,15 @@ class _ReviewActions extends StatelessWidget {
           enabled: canReact,
           onPressed: () =>
               onReactionPressed?.call(review, ReviewReaction.dislike),
+        ),
+        const SizedBox(width: 18),
+        _ReactionButton(
+          icon: Icons.chat_bubble_outline_rounded,
+          selectedIcon: Icons.chat_bubble_rounded,
+          label: review.replyCount.toString(),
+          selected: false,
+          enabled: onRepliesPressed != null,
+          onPressed: () => onRepliesPressed?.call(),
         ),
         if (review.isOwnReview && onDeletePressed != null) ...[
           const Spacer(),

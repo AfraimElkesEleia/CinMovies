@@ -198,6 +198,9 @@ class _FakeReviewRepository implements ReviewRepository {
     upsertCalls++;
     return const Right(null);
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _FakeDetailsRepository extends MovieDetailsRepository {

@@ -80,4 +80,19 @@ class MyReviewsCubit extends Cubit<MyReviewsState> {
       (_) => true,
     );
   }
+
+  Future<void> refresh() async {
+    final result = await _reviewRepository.reviewsForCurrentUser();
+    if (isClosed) return;
+    result.fold(
+      (_) {},
+      (reviews) => emit(
+        state.copyWith(
+          status: MyReviewsStatus.loaded,
+          reviews: reviews,
+          clearFailure: true,
+        ),
+      ),
+    );
+  }
 }

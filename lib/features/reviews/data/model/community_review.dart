@@ -35,11 +35,13 @@ class CommunityReview extends Equatable {
     required this.dislikeCount,
     required this.currentUserReaction,
     required this.isOwnReview,
+    this.replyCount = 0,
   });
 
   factory CommunityReview.fromRow(
     Map<String, dynamic> row, {
     required String? currentUserId,
+    int replyCount = 0,
   }) {
     final movieRow = _map(row['movies']);
     final profileRow = _map(row['profiles']);
@@ -76,6 +78,7 @@ class CommunityReview extends Equatable {
         _currentUserReactionValue(reactions, currentUserId),
       ),
       isOwnReview: currentUserId != null && currentUserId == authorId,
+      replyCount: replyCount,
     );
   }
 
@@ -93,6 +96,7 @@ class CommunityReview extends Equatable {
   final int dislikeCount;
   final ReviewReaction? currentUserReaction;
   final bool isOwnReview;
+  final int replyCount;
 
   String get displayDate {
     final value = createdAt;
@@ -112,6 +116,7 @@ class CommunityReview extends Equatable {
     int? dislikeCount,
     ReviewReaction? currentUserReaction,
     bool clearCurrentUserReaction = false,
+    int? replyCount,
   }) {
     return CommunityReview(
       id: id,
@@ -130,6 +135,7 @@ class CommunityReview extends Equatable {
           ? null
           : currentUserReaction ?? this.currentUserReaction,
       isOwnReview: isOwnReview,
+      replyCount: replyCount ?? this.replyCount,
     );
   }
 
@@ -149,6 +155,7 @@ class CommunityReview extends Equatable {
     dislikeCount,
     currentUserReaction,
     isOwnReview,
+    replyCount,
   ];
 
   static Map<String, dynamic> _map(Object? value) {

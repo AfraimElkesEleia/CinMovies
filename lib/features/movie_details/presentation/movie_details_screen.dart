@@ -19,6 +19,7 @@ import 'package:cinmovies_app/features/movie_details/presentation/widgets/simila
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
+import 'package:cinmovies_app/features/reviews/presentation/model/review_replies_args.dart';
 import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -383,6 +384,8 @@ class _ReviewsTabBody extends StatelessWidget {
                 onReactionPressed: (review, reaction) =>
                     _toggleReviewReaction(context, review, reaction),
                 onDeletePressed: (review) => _deleteReview(context, review),
+                onReviewPressed: (review) =>
+                    _openReviewReplies(context, review),
               ),
             ),
           ),
@@ -422,6 +425,18 @@ class _ReviewsTabBody extends StatelessWidget {
     } else {
       AppSnackBar.showError(context, 'Could not save your review.');
     }
+  }
+
+  Future<void> _openReviewReplies(
+    BuildContext context,
+    CommunityReview review,
+  ) async {
+    final cubit = context.read<MovieDetailsCubit>();
+    await context.pushNamed(
+      AppRoutes.reviewReplies,
+      arguments: ReviewRepliesArgs(review: review),
+    );
+    if (context.mounted) await cubit.refreshReviews();
   }
 
   Future<bool> _toggleReviewReaction(

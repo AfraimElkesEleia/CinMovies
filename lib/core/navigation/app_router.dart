@@ -11,6 +11,8 @@ import 'package:cinmovies_app/features/onboarding/onboarding_genre_preferences_s
 import 'package:cinmovies_app/features/profile/presentation/edit_profile_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/favorite_genres_screen.dart';
 import 'package:cinmovies_app/features/profile/presentation/my_reviews_screen.dart';
+import 'package:cinmovies_app/features/reviews/presentation/model/review_replies_args.dart';
+import 'package:cinmovies_app/features/reviews/presentation/review_replies_screen.dart';
 import 'package:cinmovies_app/features/search/presentation/search_screen.dart';
 import 'package:cinmovies_app/features/signup/presentation/signup_screen.dart';
 import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
@@ -77,6 +79,14 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const FavoriteGenresScreen());
       case AppRoutes.myReviews:
         return MaterialPageRoute(builder: (_) => const MyReviewsScreen());
+      case AppRoutes.reviewReplies:
+        final args = settings.arguments;
+        if (args is ReviewRepliesArgs) {
+          return MaterialPageRoute(
+            builder: (_) => ReviewRepliesScreen(review: args.review),
+          );
+        }
+        return MaterialPageRoute(builder: (_) => const MainNavigationScreen());
     }
 
     return null;

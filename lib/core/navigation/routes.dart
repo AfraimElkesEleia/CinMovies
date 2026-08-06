@@ -12,4 +12,5 @@ abstract class AppRoutes {
   static const String editProfile = '/editProfile';
   static const String favoriteGenres = '/favoriteGenres';
   static const String myReviews = '/myReviews';
+  static const String reviewReplies = '/reviewReplies';
 }

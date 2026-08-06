@@ -8,6 +8,7 @@ import 'package:cinmovies_app/features/movie_details/presentation/widgets/movie_
 import 'package:cinmovies_app/features/profile/presentation/cubit/my_reviews_cubit.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
+import 'package:cinmovies_app/features/reviews/presentation/model/review_replies_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -64,6 +65,8 @@ class _MyReviewsView extends StatelessWidget {
                     showMovie: true,
                     onDeletePressed: (review) =>
                         _deleteReview(context, review),
+                    onRepliesPressed: () =>
+                        _openReviewReplies(context, review),
                     onMoviePressed: () {
                       context.pushNamed(
                         AppRoutes.movieDetails,
@@ -95,6 +98,18 @@ class _MyReviewsView extends StatelessWidget {
       AppSnackBar.showError(context, 'Could not remove your review.');
     }
     return success;
+  }
+
+  Future<void> _openReviewReplies(
+    BuildContext context,
+    CommunityReview review,
+  ) async {
+    final cubit = context.read<MyReviewsCubit>();
+    await context.pushNamed(
+      AppRoutes.reviewReplies,
+      arguments: ReviewRepliesArgs(review: review),
+    );
+    if (context.mounted) await cubit.refresh();
   }
 }
 

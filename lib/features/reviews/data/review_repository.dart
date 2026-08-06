@@ -2,6 +2,7 @@ import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
+import 'package:cinmovies_app/features/reviews/data/model/review_reply.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:dartz/dartz.dart';
@@ -66,15 +67,7 @@ class ReviewRepository {
               )
               .eq('movie_id', movieId)
               .order('created_at', ascending: false);
-          return Right(
-            rows
-                .map<Map<String, dynamic>>(Map<String, dynamic>.from)
-                .map(
-                  (row) =>
-                      CommunityReview.fromRow(row, currentUserId: _database.currentUser?.id),
-                )
-                .toList(),
-          );
+          return Right(await _reviewsFromRowsWithCounts(rows));
         },
       );
     } catch (error) {
@@ -93,17 +86,7 @@ class ReviewRepository {
           )
           .eq('user_id', _userId)
           .order('created_at', ascending: false);
-      return Right(
-        rows
-            .map<Map<String, dynamic>>(Map<String, dynamic>.from)
-            .map(
-              (row) => CommunityReview.fromRow(
-                row,
-                currentUserId: _database.currentUser?.id,
-              ),
-            )
-            .toList(),
-      );
+      return Right(await _reviewsFromRowsWithCounts(rows));
     } catch (error) {
       return Left(mapError(error));
     }
@@ -151,6 +134,94 @@ class ReviewRepository {
     }
   }
 
+  Future<Either<Failure, List<ReviewReply>>> repliesForReview(
+    String reviewId,
+  ) async {
+    try {
+      final rows = await _database
+          .from('review_replies')
+          .select(
+            '*, profiles!review_replies_user_id_profiles_fkey'
+            '(username, full_name, avatar_url), '
+            'reply_reactions(user_id, reaction)',
+          )
+          .eq('review_id', reviewId)
+          .order('created_at');
+      return Right(
+        rows
+            .map<Map<String, dynamic>>(Map<String, dynamic>.from)
+            .map(
+              (row) => ReviewReply.fromRow(
+                row,
+                currentUserId: _database.currentUser?.id,
+              ),
+            )
+            .toList(),
+      );
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
+  Future<Either<Failure, void>> createReply({
+    required String reviewId,
+    required String body,
+  }) async {
+    try {
+      await _database.from('review_replies').insert({
+        'review_id': reviewId,
+        'user_id': _userId,
+        'body': body.trim(),
+      });
+      return const Right(null);
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
+  Future<Either<Failure, void>> deleteReply(String replyId) async {
+    try {
+      await _database
+          .from('review_replies')
+          .delete()
+          .eq('id', replyId)
+          .eq('user_id', _userId);
+      return const Right(null);
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
+  Future<Either<Failure, void>> setReplyReaction({
+    required String replyId,
+    required ReviewReaction reaction,
+  }) async {
+    try {
+      await _database.from('reply_reactions').upsert({
+        'reply_id': replyId,
+        'user_id': _userId,
+        'reaction': reaction.value,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'reply_id,user_id');
+      return const Right(null);
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
+  Future<Either<Failure, void>> clearReplyReaction(String replyId) async {
+    try {
+      await _database
+          .from('reply_reactions')
+          .delete()
+          .eq('reply_id', replyId)
+          .eq('user_id', _userId);
+      return const Right(null);
+    } catch (error) {
+      return Left(mapError(error));
+    }
+  }
+
   Future<Either<Failure, void>> deleteReview(String reviewId) async {
     try {
       await _database
@@ -162,6 +233,46 @@ class ReviewRepository {
     } catch (error) {
       return Left(mapError(error));
     }
+  }
+
+  Future<List<CommunityReview>> _reviewsFromRowsWithCounts(
+    List<dynamic> rows,
+  ) async {
+    final normalizedRows = rows
+        .map<Map<String, dynamic>>(
+          (row) => Map<String, dynamic>.from(row as Map),
+        )
+        .toList();
+    if (normalizedRows.isEmpty) return const [];
+
+    final reviewIds = normalizedRows
+        .map((row) => row['id'] as String? ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+    final countRows = await _database.rpc(
+      'get_review_reply_counts',
+      params: {'p_review_ids': reviewIds},
+    );
+    final counts = <String, int>{};
+    if (countRows is List) {
+      for (final rawRow in countRows.whereType<Map>()) {
+        final row = Map<String, dynamic>.from(rawRow);
+        final reviewId = row['review_id'] as String?;
+        if (reviewId != null) {
+          counts[reviewId] = (row['reply_count'] as num?)?.toInt() ?? 0;
+        }
+      }
+    }
+
+    return normalizedRows
+        .map(
+          (row) => CommunityReview.fromRow(
+            row,
+            currentUserId: _database.currentUser?.id,
+            replyCount: counts[row['id']] ?? 0,
+          ),
+        )
+        .toList();
   }
 }
 

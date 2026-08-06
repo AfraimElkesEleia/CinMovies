@@ -121,4 +121,7 @@ class _FakeReviewRepository implements ReviewRepository {
   }) async {
     return const Right(null);
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
