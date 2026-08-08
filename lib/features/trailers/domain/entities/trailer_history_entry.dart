@@ -63,15 +63,14 @@ class TrailerHistoryEntry extends Equatable {
   }
 
   Map<String, dynamic> toMap() {
-    final entry = normalized();
     return {
-      'video_key': entry.videoKey,
-      'movie_id': entry.movieId,
-      'title': entry.title,
-      'image_asset': entry.imageAsset,
-      'watched_seconds': entry.watchedSeconds,
-      'total_seconds': entry.totalSeconds,
-      'updated_at': entry.updatedAt.millisecondsSinceEpoch,
+      'video_key': videoKey,
+      'movie_id': movieId,
+      'title': title,
+      'image_asset': imageAsset,
+      'watched_seconds': watchedSeconds,
+      'total_seconds': totalSeconds,
+      'updated_at': updatedAt.millisecondsSinceEpoch,
     };
   }
 

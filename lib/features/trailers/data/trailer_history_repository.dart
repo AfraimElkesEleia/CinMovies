@@ -37,17 +37,7 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
   @override
   Future<Either<Failure, List<TrailerHistoryEntry>>> history() async {
     try {
-      final entries =
-          _cache
-              .getTrailerHistory(_scopeId)
-              .map(_tryParse)
-              .whereType<TrailerHistoryEntry>()
-              .where(
-                (entry) => entry.videoKey.isNotEmpty && entry.totalSeconds > 0,
-              )
-              .toList()
-            ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-      return Right(entries);
+      return Right(await _historyForScope(_scopeId));
     } catch (error) {
       return Left(mapError(error));
     }

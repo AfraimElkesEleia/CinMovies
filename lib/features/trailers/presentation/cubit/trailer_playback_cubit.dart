@@ -28,6 +28,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     : super(const TrailerPlaybackState());
 
   static const saveInterval = Duration(seconds: 5);
+  static const _maxFlushDepth = 2;
 
   final TrailerHistoryRepositoryContract _repository;
   final TrailerViewerArgs args;
@@ -89,11 +90,14 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     await flushProgress();
   }
 
-  Future<void> flushProgress() async {
+  Future<void> flushProgress({int depth = 0}) async {
+    if (depth > _maxFlushDepth) return;
     final activeSave = _activeSave;
     if (activeSave != null) {
       final succeeded = await activeSave;
-      if (succeeded && _hasUnsavedProgress) await flushProgress();
+      if (succeeded && _hasUnsavedProgress) {
+        await flushProgress(depth: depth + 1);
+      }
       return;
     }
     if (!_hasUnsavedProgress || _totalSeconds <= 0) return;
@@ -105,7 +109,9 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     _activeSave = save;
     final succeeded = await save;
     if (identical(_activeSave, save)) _activeSave = null;
-    if (succeeded && _hasUnsavedProgress) await flushProgress();
+    if (succeeded && _hasUnsavedProgress) {
+      await flushProgress(depth: depth + 1);
+    }
   }
 
   Future<bool> _saveSnapshot(int watchedSeconds, int totalSeconds) async {
