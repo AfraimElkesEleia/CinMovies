@@ -1,18 +1,39 @@
+import 'package:cinmovies_app/core/error/error_mapper.dart';
+import 'package:cinmovies_app/core/error/exceptions.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 
-class GenrePreferencesRepository {
-  const GenrePreferencesRepository(
+abstract interface class GenrePreferencesRepository {
+  String? get userScopeId;
+
+  Set<String> cachedFavoriteGenres();
+
+  Stream<Set<String>> watchFavoriteGenres();
+
+  Future<Result<Set<String>>> loadFavoriteGenres();
+
+  Future<Result<void>> saveFavoriteGenres(Set<String> genreNames);
+
+  Future<Result<void>> syncCachedFavoriteGenres();
+}
+
+final class CachedGenrePreferencesRepository
+    implements GenrePreferencesRepository {
+  const CachedGenrePreferencesRepository(
     this._database,
     this._cache,
     this._preferences,
+    this._errorMapper,
   );
 
   final SupabaseDatabaseService _database;
   final HiveCacheService _cache;
   final LocalPreferencesService _preferences;
+  final ErrorMapper _errorMapper;
 
+  @override
   String? get userScopeId {
     final user = _database.currentUser;
     if (user == null || user.isAnonymous) return null;
@@ -21,76 +42,97 @@ class GenrePreferencesRepository {
 
   String get _userId {
     final id = userScopeId;
-    if (id == null) throw StateError('No authenticated user.');
+    if (id == null) throw const AuthenticationRequiredException();
     return id;
   }
 
+  @override
   Set<String> cachedFavoriteGenres() {
     final scopeId = userScopeId;
     if (scopeId == null) return const {};
     return _cache.getFavoriteGenres(scopeId: scopeId);
   }
 
+  @override
   Stream<Set<String>> watchFavoriteGenres() {
     final scopeId = userScopeId;
     if (scopeId == null) return const Stream.empty();
     return _cache.watchFavoriteGenres(scopeId: scopeId);
   }
 
-  Future<Set<String>> loadFavoriteGenres() async {
-    final userId = _userId;
-    final rows = await _database
-        .from('user_genre_preferences')
-        .select('genres(name)')
-        .eq('user_id', userId);
+  @override
+  Future<Result<Set<String>>> loadFavoriteGenres() async {
+    try {
+      final userId = _userId;
+      final rows = await _database
+          .from('user_genre_preferences')
+          .select('genres(name)')
+          .eq('user_id', userId);
 
-    final genres = rows
-        .map<String?>((row) {
-          final genre = row['genres'];
-          if (genre is! Map<String, dynamic>) return null;
-          return genre['name'] as String?;
-        })
-        .whereType<String>()
-        .toSet();
+      final genres = rows
+          .map<String?>((row) {
+            final genre = row['genres'];
+            if (genre is! Map<String, dynamic>) return null;
+            return genre['name'] as String?;
+          })
+          .whereType<String>()
+          .toSet();
 
-    await _cache.cacheFavoriteGenres(genres, scopeId: userId);
-    return genres;
-  }
-
-  Future<void> saveFavoriteGenres(Set<String> genreNames) async {
-    await _cache.cacheFavoriteGenres(genreNames, scopeId: _userId);
-    await _preferences.setHasPassedOnboarding(true);
-    await syncCachedFavoriteGenres();
-  }
-
-  Future<void> syncCachedFavoriteGenres() async {
-    final userId = _userId;
-    final genreNames = _cache.getFavoriteGenres(scopeId: userId);
-    if (genreNames.isEmpty) return;
-
-    final genres = await _database
-        .from('genres')
-        .select('id, name')
-        .inFilter('name', genreNames.toList());
-
-    await _database
-        .from('user_genre_preferences')
-        .delete()
-        .eq('user_id', userId);
-
-    final rows = genres
-        .map<Map<String, dynamic>>(
-          (genre) => {'user_id': userId, 'genre_id': genre['id']},
-        )
-        .toList();
-
-    if (rows.isNotEmpty) {
-      await _database.from('user_genre_preferences').insert(rows);
+      await _cache.cacheFavoriteGenres(genres, scopeId: userId);
+      return Success(genres);
+    } catch (error) {
+      return _errorMapper.toFailure(error);
     }
+  }
 
-    await _database
-        .from('profiles')
-        .update({'onboarding_completed': true})
-        .eq('id', userId);
+  @override
+  Future<Result<void>> saveFavoriteGenres(Set<String> genreNames) async {
+    try {
+      await _cache.cacheFavoriteGenres(genreNames, scopeId: _userId);
+      await _preferences.setHasPassedOnboarding(true);
+      final syncResult = await syncCachedFavoriteGenres();
+      if (syncResult.isFailure) return syncResult;
+      return const Success(null);
+    } catch (error) {
+      return _errorMapper.toFailure(error);
+    }
+  }
+
+  @override
+  Future<Result<void>> syncCachedFavoriteGenres() async {
+    try {
+      final userId = _userId;
+      final genreNames = _cache.getFavoriteGenres(scopeId: userId);
+      if (genreNames.isEmpty) return const Success(null);
+
+      final genres = await _database
+          .from('genres')
+          .select('id, name')
+          .inFilter('name', genreNames.toList());
+
+      await _database
+          .from('user_genre_preferences')
+          .delete()
+          .eq('user_id', userId);
+
+      final rows = genres
+          .map<Map<String, dynamic>>(
+            (genre) => {'user_id': userId, 'genre_id': genre['id']},
+          )
+          .toList();
+
+      if (rows.isNotEmpty) {
+        await _database.from('user_genre_preferences').insert(rows);
+      }
+
+      await _database
+          .from('profiles')
+          .update({'onboarding_completed': true})
+          .eq('id', userId);
+
+      return const Success(null);
+    } catch (error) {
+      return _errorMapper.toFailure(error);
+    }
   }
 }

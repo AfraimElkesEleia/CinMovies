@@ -73,8 +73,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
         }
 
         if (state.status == EditProfileStatus.failure &&
-            state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
+            state.failure != null) {
+          AppSnackBar.showError(context, state.failure!.message);
         }
       },
       builder: (context, state) {
@@ -166,13 +166,13 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (!_profileFormKey.currentState!.validate()) return;
 
     await context.read<EditProfileCubit>().saveProfile(
-          fullName: _fullNameController.text,
-          username: _usernameController.text,
-          bio: _bioController.text,
-          avatarBytes: _profileImageBytes,
-          avatarFileName: _profileImageName,
-          avatarContentType: _profileImageContentType,
-        );
+      fullName: _fullNameController.text,
+      username: _usernameController.text,
+      bio: _bioController.text,
+      avatarBytes: _profileImageBytes,
+      avatarFileName: _profileImageName,
+      avatarContentType: _profileImageContentType,
+    );
 
     if (!mounted) return;
     final state = context.read<EditProfileCubit>().state;
@@ -186,8 +186,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (!_passwordFormKey.currentState!.validate()) return;
 
     await context.read<EditProfileCubit>().changePassword(
-          _passwordController.text,
-        );
+      _passwordController.text,
+    );
 
     if (!mounted) return;
     final state = context.read<EditProfileCubit>().state;

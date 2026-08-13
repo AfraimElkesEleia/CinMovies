@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:dio/dio.dart';
@@ -15,7 +17,7 @@ void main() {
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
-    repository = BrowseRepository(dio);
+    repository = TmdbBrowseRepository(dio, const DefaultErrorMapper());
   });
 
   test('fetchGenres parses TMDB genres and adds All first', () async {
@@ -28,7 +30,7 @@ void main() {
 
     final result = await repository.fetchGenres();
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     final genres = result.getOrElse(() => const []);
     expect(genres, [
       BrowseGenre.all,
@@ -50,7 +52,7 @@ void main() {
 
     final result = await repository.fetchMovies(page: 1);
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     final page = result.getOrElse(
       () => const BrowseMoviesPage(movies: [], page: 0, totalPages: 0),
     );

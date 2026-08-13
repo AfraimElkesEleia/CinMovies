@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
@@ -58,7 +59,7 @@ class MovieDetailsState extends Equatable {
   final bool isFavoriteSaving;
   final bool isWatchlistSaving;
   final bool isReviewSaving;
-  final Failure? failure;
+  final AppError? failure;
 
   MovieDetailsState copyWith({
     MovieDetailsStatus? status,
@@ -79,7 +80,7 @@ class MovieDetailsState extends Equatable {
     bool? isFavoriteSaving,
     bool? isWatchlistSaving,
     bool? isReviewSaving,
-    Failure? failure,
+    AppError? failure,
     bool clearFailure = false,
   }) {
     return MovieDetailsState(
@@ -207,20 +208,8 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     _isDetailsRequestInFlight = false;
     if (isClosed) return;
 
-    detailResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: cached == null
-              ? MovieDetailsStatus.failure
-              : MovieDetailsStatus.loaded,
-          isDetailsLoading: false,
-          isDetailsRefreshing: false,
-          isFromCache: cached != null,
-          hasRichDetails: cached != null,
-          failure: failure,
-        ),
-      ),
-      (detail) => emit(
+    detailResult.when(
+      onSuccess: (detail) => emit(
         state.copyWith(
           status: MovieDetailsStatus.loaded,
           movie: detail.movie,
@@ -232,6 +221,18 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
           hasRichDetails: true,
           cachedAt: DateTime.now().toUtc(),
           clearFailure: true,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: cached == null
+              ? MovieDetailsStatus.failure
+              : MovieDetailsStatus.loaded,
+          isDetailsLoading: false,
+          isDetailsRefreshing: false,
+          isFromCache: cached != null,
+          hasRichDetails: cached != null,
+          failure: error,
         ),
       ),
     );
@@ -258,10 +259,10 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     final result = await _reviewRepository.reviewsForMovie(state.movie);
     if (isClosed) return;
 
-    result.fold(
-      (_) => emit(state.copyWith(isReviewsLoading: false)),
-      (reviews) =>
+    result.when(
+      onSuccess: (reviews) =>
           emit(state.copyWith(reviews: reviews, isReviewsLoading: false)),
+      onFailure: (_) => emit(state.copyWith(isReviewsLoading: false)),
     );
   }
 
@@ -319,10 +320,13 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
             reaction: reaction,
           );
 
-    return result.fold((_) {
-      emit(state.copyWith(reviews: previousReviews));
-      return false;
-    }, (_) => true);
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
+        emit(state.copyWith(reviews: previousReviews));
+        return false;
+      },
+    );
   }
 
   Future<bool> deleteReview(CommunityReview review) async {
@@ -336,10 +340,13 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
 
     final result = await _reviewRepository.deleteReview(review.id);
-    return result.fold((_) {
-      emit(state.copyWith(reviews: previousReviews));
-      return false;
-    }, (_) => true);
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
+        emit(state.copyWith(reviews: previousReviews));
+        return false;
+      },
+    );
   }
 
   Future<bool> submitReview({
@@ -360,17 +367,17 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
     );
     if (isClosed) return false;
 
-    return result.fold(
-      (failure) {
-        emit(state.copyWith(isReviewSaving: false, failure: failure));
-        return false;
-      },
-      (_) async {
+    return result.when(
+      onSuccess: (_) async {
         await _loadReviews();
         if (!isClosed) {
           emit(state.copyWith(isReviewSaving: false));
         }
         return true;
+      },
+      onFailure: (error) {
+        emit(state.copyWith(isReviewSaving: false, failure: error));
+        return false;
       },
     );
   }
@@ -417,14 +424,14 @@ class MovieDetailsCubit extends Cubit<MovieDetailsState> {
         type,
         listed: nextValue,
       );
-      return result.fold(
-        (_) {
-          emitBusy(false, current);
-          return false;
-        },
-        (_) {
+      return result.when(
+        onSuccess: (_) {
           emitBusy(false, nextValue);
           return true;
+        },
+        onFailure: (_) {
+          emitBusy(false, current);
+          return false;
         },
       );
     } catch (_) {

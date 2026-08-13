@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
@@ -40,7 +41,7 @@ class HomeState extends Equatable {
   final bool isFromCache;
   final bool isRefreshing;
   final DateTime? cachedAt;
-  final Failure? failure;
+  final AppError? failure;
 
   List<Movie> get carouselMovies => popularMovies.take(5).toList();
 
@@ -53,7 +54,7 @@ class HomeState extends Equatable {
     bool? isFromCache,
     bool? isRefreshing,
     DateTime? cachedAt,
-    Failure? failure,
+    AppError? failure,
     bool clearFailure = false,
   }) {
     return HomeState(
@@ -142,21 +143,8 @@ class HomeCubit extends Cubit<HomeState> {
       final result = await _repository.fetchHomeMovies();
       if (isClosed) return;
 
-      result.fold(
-        (failure) {
-          final hasFallback =
-              state.popularMovies.isNotEmpty ||
-              state.upcomingMovies.isNotEmpty;
-          emit(
-            state.copyWith(
-              status: hasFallback ? HomeStatus.loaded : HomeStatus.failure,
-              isFromCache: hasFallback,
-              isRefreshing: false,
-              failure: failure,
-            ),
-          );
-        },
-        (movies) => emit(
+      result.when(
+        onSuccess: (movies) => emit(
           HomeState(
             status: HomeStatus.loaded,
             popularMovies: movies.popularMovies,
@@ -168,6 +156,18 @@ class HomeCubit extends Cubit<HomeState> {
             cachedAt: DateTime.now().toUtc(),
           ),
         ),
+        onFailure: (error) {
+          final hasFallback =
+              state.popularMovies.isNotEmpty || state.upcomingMovies.isNotEmpty;
+          emit(
+            state.copyWith(
+              status: hasFallback ? HomeStatus.loaded : HomeStatus.failure,
+              isFromCache: hasFallback,
+              isRefreshing: false,
+              failure: error,
+            ),
+          );
+        },
       );
 
       if (!isClosed) {
@@ -197,35 +197,28 @@ class HomeCubit extends Cubit<HomeState> {
     );
   }
 
-  void _setFavoriteGenres(
-    Set<String> genres, {
-    required bool refresh,
-  }) {
+  void _setFavoriteGenres(Set<String> genres, {required bool refresh}) {
     if (isClosed) return;
     final genreIds = normalizeFavoriteGenreIds(genres);
     final signature = genreIds.join('|');
     if (signature == _favoriteGenreSignature) return;
 
     _favoriteGenreSignature = signature;
-    emit(
-      state.copyWith(
-        favoriteGenreIds: genreIds,
-        forYouMovies: const [],
-      ),
-    );
+    emit(state.copyWith(favoriteGenreIds: genreIds, forYouMovies: const []));
     if (refresh) unawaited(_refreshForYou());
   }
 
   Future<void> _refreshFavoriteGenresFromRemote() async {
     final repository = _preferencesRepository;
     if (repository == null || _preferenceScopeId == null) return;
-    try {
-      final genres = await repository.loadFavoriteGenres();
-      if (isClosed) return;
-      _setFavoriteGenres(genres, refresh: true);
-    } catch (_) {
-      // Scoped local preferences remain usable while Supabase is unavailable.
-    }
+    final result = await repository.loadFavoriteGenres();
+    if (isClosed) return;
+    result.when(
+      onSuccess: (genres) => _setFavoriteGenres(genres, refresh: true),
+      onFailure: (_) {
+        // Scoped local preferences remain usable while Supabase is unavailable.
+      },
+    );
   }
 
   Future<void> _refreshForYou() async {
@@ -257,9 +250,9 @@ class HomeCubit extends Cubit<HomeState> {
       );
       if (isClosed || signature != _favoriteGenreSignature) return;
 
-      result.fold(
-        (_) {},
-        (page) => emit(state.copyWith(forYouMovies: page.movies)),
+      result.when(
+        onSuccess: (page) => emit(state.copyWith(forYouMovies: page.movies)),
+        onFailure: (_) {},
       );
     } finally {
       _forYouRequestsInFlight.remove(requestKey);

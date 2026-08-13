@@ -1,20 +1,17 @@
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
 
 class MovieRepository {
-  const MovieRepository(
-    this._database,
-    this._cache,
-  );
+  const MovieRepository(this._database, this._cache, this._errorMapper);
 
   final SupabaseDatabaseService _database;
   final HiveCacheService _cache;
+  final ErrorMapper _errorMapper;
 
-  Future<Either<Failure, String>> cacheMovie(Movie movie) async {
+  Future<Result<String>> cacheMovie(Movie movie) async {
     try {
       final response = await _database.rpc(
         'cache_movie',
@@ -44,9 +41,9 @@ class MovieRepository {
         'release_date': _releaseDate(movie.year),
         'runtime_minutes': _runtimeMinutes(movie.duration),
       });
-      return Right(movieId);
+      return Success(movieId);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 

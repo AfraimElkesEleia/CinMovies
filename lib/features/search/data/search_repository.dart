@@ -1,17 +1,25 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
-class SearchRepository {
-  const SearchRepository(this._dio);
+abstract interface class SearchRepository {
+  Future<Result<SearchMoviesPage>> searchMovies({
+    required String query,
+    required int page,
+  });
+}
+
+final class TmdbSearchRepository implements SearchRepository {
+  const TmdbSearchRepository(this._dio, this._errorMapper);
 
   final Dio _dio;
+  final ErrorMapper _errorMapper;
 
-  Future<Either<Failure, SearchMoviesPage>> searchMovies({
+  @override
+  Future<Result<SearchMoviesPage>> searchMovies({
     required String query,
     required int page,
   }) async {
@@ -26,9 +34,9 @@ class SearchRepository {
         },
       );
 
-      return Right(SearchMoviesPage.fromJson(response.data));
+      return Success(SearchMoviesPage.fromJson(response.data));
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
@@ -29,7 +30,7 @@ class SearchState extends Equatable {
   final bool isLoadingMore;
   final List<String> recentSearches;
   final MovieSortOption sortOption;
-  final Failure? failure;
+  final AppError? failure;
 
   bool get hasQuery => query.trim().isNotEmpty;
 
@@ -44,7 +45,7 @@ class SearchState extends Equatable {
     bool? isLoadingMore,
     List<String>? recentSearches,
     MovieSortOption? sortOption,
-    Failure? failure,
+    AppError? failure,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -185,23 +186,22 @@ class SearchCubit extends Cubit<SearchState> {
 
     if (requestToken != _requestToken || query != state.query) return;
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(isLoadingMore: false, failure: failure),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           status: MovieListStatus.loaded,
-          results: _sortedMovies(
-            [...state.results, ...page.movies],
-            state.sortOption,
-          ),
+          results: _sortedMovies([
+            ...state.results,
+            ...page.movies,
+          ], state.sortOption),
           currentPage: page.page,
           totalPages: page.totalPages,
           isLoadingMore: false,
           failure: null,
         ),
       ),
+      onFailure: (error) =>
+          emit(state.copyWith(isLoadingMore: false, failure: error)),
     );
   }
 
@@ -209,18 +209,8 @@ class SearchCubit extends Cubit<SearchState> {
     final result = await _repository.searchMovies(query: query, page: 1);
     if (requestToken != _requestToken || query != state.query) return;
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: MovieListStatus.failure,
-          results: const [],
-          currentPage: 0,
-          totalPages: 1,
-          isLoadingMore: false,
-          failure: failure,
-        ),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           status: MovieListStatus.loaded,
           results: _sortedMovies(page.movies, state.sortOption),
@@ -228,6 +218,16 @@ class SearchCubit extends Cubit<SearchState> {
           totalPages: page.totalPages,
           isLoadingMore: false,
           failure: null,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: MovieListStatus.failure,
+          results: const [],
+          currentPage: 0,
+          totalPages: 1,
+          isLoadingMore: false,
+          failure: error,
         ),
       ),
     );
@@ -240,10 +240,7 @@ class SearchCubit extends Cubit<SearchState> {
     emit(state.copyWith(recentSearches: _cache.getRecentSearches()));
   }
 
-  List<Movie> _sortedMovies(
-    List<Movie> movies,
-    MovieSortOption mode,
-  ) {
+  List<Movie> _sortedMovies(List<Movie> movies, MovieSortOption mode) {
     final sorted = [...movies];
     switch (mode) {
       case MovieSortOption.rating:

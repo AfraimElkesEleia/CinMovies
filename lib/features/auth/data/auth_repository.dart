@@ -1,19 +1,49 @@
 import 'dart:typed_data';
 
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/exceptions.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
-import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_storage_service.dart';
-import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AuthRepository {
-  const AuthRepository(
+abstract interface class AuthRepository {
+  bool get isAuthenticated;
+
+  bool get isGuest;
+
+  String? get currentUserEmail;
+
+  Future<Result<void>> signIn({
+    required String email,
+    required String password,
+  });
+
+  Future<Result<void>> continueAsGuest();
+
+  Future<Result<void>> leaveGuestMode();
+
+  Future<Result<void>> signUp({
+    required String fullName,
+    required String email,
+    required String password,
+    Uint8List? avatarBytes,
+    String? avatarFileName,
+    String? avatarContentType,
+  });
+
+  Future<Result<void>> signOut();
+
+  Future<Result<void>> updatePassword(String password);
+}
+
+final class SupabaseAuthRepository implements AuthRepository {
+  const SupabaseAuthRepository(
     this._database,
     this._storage,
     this._preferences,
+    this._errorMapper,
   );
 
   static const avatarBucket = 'avatars';
@@ -21,77 +51,69 @@ class AuthRepository {
   final SupabaseDatabaseService _database;
   final SupabaseStorageService _storage;
   final LocalPreferencesService _preferences;
+  final ErrorMapper _errorMapper;
 
-  User? get currentUser => _database.currentUser;
+  User? get _currentUser => _database.currentUser;
 
+  @override
+  bool get isAuthenticated =>
+      _currentUser != null && _currentUser?.isAnonymous != true;
+
+  @override
   bool get isGuest =>
-      _preferences.isGuestMode || currentUser?.isAnonymous == true;
+      _preferences.isGuestMode || _currentUser?.isAnonymous == true;
 
-  Stream<AuthState> get authStateChanges => _database.authStateChanges;
+  @override
+  String? get currentUserEmail => _currentUser?.email;
 
-  Future<String> resolveInitialRoute() async {
-    if (!_preferences.hasPassedOnboarding) return AppRoutes.onboarding;
-    return currentUser == null && !_preferences.isGuestMode
-        ? AppRoutes.login
-        : AppRoutes.home;
-  }
-
-  Future<Either<Failure, AuthResponse>> signIn({
+  @override
+  Future<Result<void>> signIn({
     required String email,
     required String password,
-  }) async {
-    try {
+  }) {
+    return _errorMapper.capture(() async {
       await _preferences.setGuestMode(false);
-      final response = await _database.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      return Right(response);
-    } catch (error) {
-      return Left(mapError(error));
-    }
+      await _database.signInWithPassword(email: email, password: password);
+    });
   }
 
-  Future<Either<Failure, void>> continueAsGuest() async {
-    try {
-      if (currentUser != null) {
+  @override
+  Future<Result<void>> continueAsGuest() {
+    return _errorMapper.capture(() async {
+      if (_currentUser != null) {
         await _database.signOut();
       }
       await _preferences.setGuestMode(true);
-      return const Right(null);
-    } catch (error) {
-      return Left(mapError(error));
-    }
+    });
   }
 
-  Future<Either<Failure, void>> leaveGuestMode() async {
-    try {
-      if (currentUser?.isAnonymous == true) {
+  @override
+  Future<Result<void>> leaveGuestMode() {
+    return _errorMapper.capture(() async {
+      if (_currentUser?.isAnonymous == true) {
         await _database.signOut();
       }
       await _preferences.setGuestMode(false);
-      return const Right(null);
-    } catch (error) {
-      return Left(mapError(error));
-    }
+    });
   }
 
-  Future<Either<Failure, AuthResponse>> signUp({
+  @override
+  Future<Result<void>> signUp({
     required String fullName,
     required String email,
     required String password,
     Uint8List? avatarBytes,
     String? avatarFileName,
     String? avatarContentType,
-  }) async {
-    try {
+  }) {
+    return _errorMapper.capture(() async {
       await _preferences.setGuestMode(false);
-      final response = await _database.signUp(
+      await _database.signUp(
         email: email,
         password: password,
         data: {'full_name': fullName},
       );
-      if (avatarBytes != null && _database.currentUser != null) {
+      if (avatarBytes != null && _currentUser != null) {
         try {
           final avatarUrl = await _uploadSignupAvatar(
             fullName: fullName,
@@ -109,29 +131,27 @@ class AuthRepository {
           // because the storage upload was rejected.
         }
       }
-      return Right(response);
-    } catch (error) {
-      return Left(mapError(error));
-    }
+    });
   }
 
-  Future<void> signOut() async {
-    try {
-      if (currentUser != null) {
-        await _database.signOut();
+  @override
+  Future<Result<void>> signOut() {
+    return _errorMapper.capture(() async {
+      try {
+        if (_currentUser != null) {
+          await _database.signOut();
+        }
+      } finally {
+        await _preferences.setGuestMode(false);
       }
-    } finally {
-      await _preferences.setGuestMode(false);
-    }
+    });
   }
 
-  Future<Either<Failure, void>> updatePassword(String password) async {
-    try {
+  @override
+  Future<Result<void>> updatePassword(String password) {
+    return _errorMapper.capture(() async {
       await _database.updateUser(UserAttributes(password: password));
-      return const Right(null);
-    } catch (error) {
-      return Left(mapError(error));
-    }
+    });
   }
 
   Future<String> _uploadSignupAvatar({
@@ -140,8 +160,8 @@ class AuthRepository {
     required String fileName,
     String? contentType,
   }) async {
-    final userId = _database.currentUser?.id;
-    if (userId == null) throw StateError('No authenticated user.');
+    final userId = _currentUser?.id;
+    if (userId == null) throw const AuthenticationRequiredException();
 
     final path = 'profiles/$userId/${_timestampedFileName(fileName)}';
     await _storage.uploadBytes(

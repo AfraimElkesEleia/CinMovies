@@ -42,5 +42,4 @@ class SupabaseDatabaseService {
   }) {
     return _client.rpc<dynamic>(function, params: params);
   }
-
 }

@@ -1,10 +1,9 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/model/review_reply.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:cinmovies_app/features/reviews/presentation/cubit/review_replies_cubit.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -38,11 +37,7 @@ void main() {
   test('guest cannot submit or react', () async {
     final repository = _FakeReviewRepository();
     final reply = _reply('reply-1');
-    final cubit = ReviewRepliesCubit(
-      repository,
-      _review(),
-      isGuest: true,
-    );
+    final cubit = ReviewRepliesCubit(repository, _review(), isGuest: true);
     addTearDown(cubit.close);
 
     expect(await cubit.submitReply('Blocked'), isFalse);
@@ -55,8 +50,7 @@ void main() {
   });
 
   test('reply reactions toggle optimistically and persist', () async {
-    final repository = _FakeReviewRepository()
-      ..replies = [_reply('reply-1')];
+    final repository = _FakeReviewRepository()..replies = [_reply('reply-1')];
     final cubit = ReviewRepliesCubit(repository, _review());
     addTearDown(cubit.close);
     await cubit.load();
@@ -68,10 +62,7 @@ void main() {
 
     expect(success, isTrue);
     expect(cubit.state.replies.single.likeCount, 1);
-    expect(
-      cubit.state.replies.single.currentUserReaction,
-      ReviewReaction.like,
-    );
+    expect(cubit.state.replies.single.currentUserReaction, ReviewReaction.like);
     expect(repository.replyReactionCalls, 1);
   });
 
@@ -98,14 +89,12 @@ class _FakeReviewRepository implements ReviewRepository {
   int replyReactionCalls = 0;
 
   @override
-  Future<Either<Failure, List<ReviewReply>>> repliesForReview(
-    String reviewId,
-  ) async {
-    return Right(List.of(replies));
+  Future<Result<List<ReviewReply>>> repliesForReview(String reviewId) async {
+    return Success(List.of(replies));
   }
 
   @override
-  Future<Either<Failure, void>> createReply({
+  Future<Result<void>> createReply({
     required String reviewId,
     required String body,
   }) async {
@@ -114,28 +103,28 @@ class _FakeReviewRepository implements ReviewRepository {
       ...replies,
       _reply('reply-${replies.length + 1}', body: body, isOwnReply: true),
     ];
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> deleteReply(String replyId) async {
+  Future<Result<void>> deleteReply(String replyId) async {
     deletedReplyIds.add(replyId);
     replies = replies.where((reply) => reply.id != replyId).toList();
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> setReplyReaction({
+  Future<Result<void>> setReplyReaction({
     required String replyId,
     required ReviewReaction reaction,
   }) async {
     replyReactionCalls++;
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> clearReplyReaction(String replyId) async {
-    return const Right(null);
+  Future<Result<void>> clearReplyReaction(String replyId) async {
+    return const Success(null);
   }
 
   @override

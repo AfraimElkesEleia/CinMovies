@@ -1,28 +1,72 @@
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/exceptions.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/model/review_reply.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
-import 'package:dartz/dartz.dart';
 
-class ReviewRepository {
-  const ReviewRepository(
+abstract interface class ReviewRepository {
+  Future<Result<void>> upsertReview({
+    required Movie movie,
+    required double rating,
+    String? title,
+    String? body,
+    bool spoiler = false,
+  });
+
+  Future<Result<List<CommunityReview>>> reviewsForMovie(Movie movie);
+
+  Future<Result<List<CommunityReview>>> reviewsForCurrentUser();
+
+  Future<Result<int>> countForCurrentUser();
+
+  Future<Result<void>> setReaction({
+    required String reviewId,
+    required ReviewReaction reaction,
+  });
+
+  Future<Result<void>> clearReaction(String reviewId);
+
+  Future<Result<List<ReviewReply>>> repliesForReview(String reviewId);
+
+  Future<Result<void>> createReply({
+    required String reviewId,
+    required String body,
+  });
+
+  Future<Result<void>> deleteReply(String replyId);
+
+  Future<Result<void>> setReplyReaction({
+    required String replyId,
+    required ReviewReaction reaction,
+  });
+
+  Future<Result<void>> clearReplyReaction(String replyId);
+
+  Future<Result<void>> deleteReview(String reviewId);
+}
+
+final class SupabaseReviewRepository implements ReviewRepository {
+  const SupabaseReviewRepository(
     this._database,
     this._movieRepository,
+    this._errorMapper,
   );
 
   final SupabaseDatabaseService _database;
   final MovieRepository _movieRepository;
+  final ErrorMapper _errorMapper;
 
   String get _userId {
     final id = _database.currentUser?.id;
-    if (id == null) throw StateError('No authenticated user.');
+    if (id == null) throw const AuthenticationRequiredException();
     return id;
   }
 
-  Future<Either<Failure, void>> upsertReview({
+  @override
+  Future<Result<void>> upsertReview({
     required Movie movie,
     required double rating,
     String? title,
@@ -31,51 +75,45 @@ class ReviewRepository {
   }) async {
     try {
       final movieIdResult = await _movieRepository.cacheMovie(movie);
-      return movieIdResult.fold(
-        Left.new,
-        (movieId) async {
-          await _database.from('user_reviews').upsert({
-            'user_id': _userId,
-            'movie_id': movieId,
-            'rating': rating,
-            'title': title,
-            'body': body,
-            'spoiler': spoiler,
-          }, onConflict: 'user_id,movie_id');
-          return const Right(null);
-        },
-      );
+      return await movieIdResult.flatMapAsync((movieId) async {
+        await _database.from('user_reviews').upsert({
+          'user_id': _userId,
+          'movie_id': movieId,
+          'rating': rating,
+          'title': title,
+          'body': body,
+          'spoiler': spoiler,
+        }, onConflict: 'user_id,movie_id');
+        return const Success(null);
+      });
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, List<CommunityReview>>> reviewsForMovie(
-    Movie movie,
-  ) async {
+  @override
+  Future<Result<List<CommunityReview>>> reviewsForMovie(Movie movie) async {
     try {
       final movieIdResult = await _movieRepository.cacheMovie(movie);
-      return movieIdResult.fold(
-        Left.new,
-        (movieId) async {
-          final rows = await _database
-              .from('user_reviews')
-              .select(
-                '*, profiles!user_reviews_user_id_profiles_fkey'
-                '(username, full_name, avatar_url), '
-                'movies(*), review_reactions(user_id, reaction)',
-              )
-              .eq('movie_id', movieId)
-              .order('created_at', ascending: false);
-          return Right(await _reviewsFromRowsWithCounts(rows));
-        },
-      );
+      return await movieIdResult.flatMapAsync((movieId) async {
+        final rows = await _database
+            .from('user_reviews')
+            .select(
+              '*, profiles!user_reviews_user_id_profiles_fkey'
+              '(username, full_name, avatar_url), '
+              'movies(*), review_reactions(user_id, reaction)',
+            )
+            .eq('movie_id', movieId)
+            .order('created_at', ascending: false);
+        return Success(await _reviewsFromRowsWithCounts(rows));
+      });
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, List<CommunityReview>>> reviewsForCurrentUser() async {
+  @override
+  Future<Result<List<CommunityReview>>> reviewsForCurrentUser() async {
     try {
       final rows = await _database
           .from('user_reviews')
@@ -86,25 +124,27 @@ class ReviewRepository {
           )
           .eq('user_id', _userId)
           .order('created_at', ascending: false);
-      return Right(await _reviewsFromRowsWithCounts(rows));
+      return Success(await _reviewsFromRowsWithCounts(rows));
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, int>> countForCurrentUser() async {
+  @override
+  Future<Result<int>> countForCurrentUser() async {
     try {
       final rows = await _database
           .from('user_reviews')
           .select('id')
           .eq('user_id', _userId);
-      return Right(rows.length);
+      return Success(rows.length);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> setReaction({
+  @override
+  Future<Result<void>> setReaction({
     required String reviewId,
     required ReviewReaction reaction,
   }) async {
@@ -115,28 +155,28 @@ class ReviewRepository {
         'reaction': reaction.value,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'review_id,user_id');
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> clearReaction(String reviewId) async {
+  @override
+  Future<Result<void>> clearReaction(String reviewId) async {
     try {
       await _database
           .from('review_reactions')
           .delete()
           .eq('review_id', reviewId)
           .eq('user_id', _userId);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, List<ReviewReply>>> repliesForReview(
-    String reviewId,
-  ) async {
+  @override
+  Future<Result<List<ReviewReply>>> repliesForReview(String reviewId) async {
     try {
       final rows = await _database
           .from('review_replies')
@@ -147,7 +187,7 @@ class ReviewRepository {
           )
           .eq('review_id', reviewId)
           .order('created_at');
-      return Right(
+      return Success(
         rows
             .map<Map<String, dynamic>>(Map<String, dynamic>.from)
             .map(
@@ -159,11 +199,12 @@ class ReviewRepository {
             .toList(),
       );
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> createReply({
+  @override
+  Future<Result<void>> createReply({
     required String reviewId,
     required String body,
   }) async {
@@ -173,26 +214,28 @@ class ReviewRepository {
         'user_id': _userId,
         'body': body.trim(),
       });
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> deleteReply(String replyId) async {
+  @override
+  Future<Result<void>> deleteReply(String replyId) async {
     try {
       await _database
           .from('review_replies')
           .delete()
           .eq('id', replyId)
           .eq('user_id', _userId);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> setReplyReaction({
+  @override
+  Future<Result<void>> setReplyReaction({
     required String replyId,
     required ReviewReaction reaction,
   }) async {
@@ -203,35 +246,37 @@ class ReviewRepository {
         'reaction': reaction.value,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'reply_id,user_id');
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> clearReplyReaction(String replyId) async {
+  @override
+  Future<Result<void>> clearReplyReaction(String replyId) async {
     try {
       await _database
           .from('reply_reactions')
           .delete()
           .eq('reply_id', replyId)
           .eq('user_id', _userId);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, void>> deleteReview(String reviewId) async {
+  @override
+  Future<Result<void>> deleteReview(String reviewId) async {
     try {
       await _database
           .from('user_reviews')
           .delete()
           .eq('id', reviewId)
           .eq('user_id', _userId);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
@@ -275,4 +320,3 @@ class ReviewRepository {
         .toList();
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
@@ -24,10 +25,11 @@ void main() {
       'test-publishable-key',
     );
     serviceLocator.registerSingleton<AuthRepository>(
-      AuthRepository(
+      SupabaseAuthRepository(
         SupabaseDatabaseService(client),
         SupabaseStorageService(client),
         preferences,
+        const DefaultErrorMapper(),
       ),
     );
   });

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +16,7 @@ void main() {
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
-    repository = HomeRepository(dio);
+    repository = TmdbHomeRepository(dio, const DefaultErrorMapper());
   });
 
   test('fetchMovieSection uses popular endpoint for Trending Now', () async {
@@ -31,7 +33,7 @@ void main() {
       page: 2,
     );
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     final page = result.getOrElse(
       () => const MovieSectionPage(movies: [], page: 0, totalPages: 0),
     );
@@ -73,7 +75,7 @@ void main() {
       page: 2,
     );
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     expect(adapter.lastOptions?.path, '/discover/movie');
     expect(adapter.lastOptions?.queryParameters, containsPair('page', 2));
     expect(
@@ -111,10 +113,7 @@ void main() {
     );
 
     expect(adapter.lastOptions?.path, '/discover/movie');
-    expect(
-      adapter.lastOptions?.queryParameters['with_genres'],
-      '18|35',
-    );
+    expect(adapter.lastOptions?.queryParameters['with_genres'], '18|35');
   });
 }
 

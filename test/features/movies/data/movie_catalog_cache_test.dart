@@ -1,12 +1,12 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
-import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
 import 'package:cinmovies_app/features/movies/data/movie_cache_codec.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:dio/dio.dart';
@@ -88,27 +88,25 @@ void main() {
     });
 
     test('Home saves and restores at most 20 movies per section', () async {
-      final artworkCache = _BlockingArtworkCache();
-      final repository = HomeRepository(
+      final repository = TmdbHomeRepository(
         dio,
+        const DefaultErrorMapper(),
         cache,
-        artworkCache,
       );
 
       final result = await repository.fetchHomeMovies();
       final cached = repository.readCachedHomeMovies();
 
-      expect(result.isRight(), isTrue);
+      expect(result.isSuccess, isTrue);
       expect(cached, isNotNull);
       expect(cached!.data.popularMovies, hasLength(20));
       expect(cached.data.upcomingMovies, hasLength(20));
       expect(cached.data.popularMovies.first.title, 'Popular 1');
       expect(cached.data.popularMovies.last.title, 'Popular 20');
-      expect(artworkCache.movies, hasLength(40));
-      artworkCache.complete();
 
-      final restoredRepository = HomeRepository(
+      final restoredRepository = TmdbHomeRepository(
         Dio(),
+        const DefaultErrorMapper(),
         cache,
       );
       expect(
@@ -130,13 +128,21 @@ void main() {
         'upcoming': const [],
       });
 
-      final repository = HomeRepository(dio, cache);
+      final repository = TmdbHomeRepository(
+        dio,
+        const DefaultErrorMapper(),
+        cache,
+      );
 
       expect(repository.readCachedHomeMovies(), isNull);
     });
 
     test('For You cache requires matching user and genre signature', () async {
-      final repository = HomeRepository(dio, cache);
+      final repository = TmdbHomeRepository(
+        dio,
+        const DefaultErrorMapper(),
+        cache,
+      );
 
       final result = await repository.fetchForYouMovies(
         genreIds: const [878, 28],
@@ -144,7 +150,7 @@ void main() {
         cacheScope: 'user-one',
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isSuccess, isTrue);
       expect(
         repository
             .readCachedForYouMovies(
@@ -173,48 +179,37 @@ void main() {
       );
     });
 
-    test('details persist and evict the least recently stored record', () async {
-      final repository = MovieDetailsRepository(
-        dio,
-        cache,
-      );
-
-      for (var id = 1; id <= 21; id++) {
-        final result = await repository.fetchMovieDetails(
-          _movie('$id', 'Seed $id'),
+    test(
+      'details persist and evict the least recently stored record',
+      () async {
+        final repository = TmdbMovieDetailsRepository(
+          dio,
+          const DefaultErrorMapper(),
+          cache,
         );
-        expect(result.isRight(), isTrue);
-      }
 
-      final entries = cache.getCatalogEntries('movie_details::');
-      expect(entries, hasLength(20));
-      expect(entries, isNot(contains('movie_details::1')));
-      expect(entries, contains('movie_details::21'));
+        for (var id = 1; id <= 21; id++) {
+          final result = await repository.fetchMovieDetails(
+            _movie('$id', 'Seed $id'),
+          );
+          expect(result.isSuccess, isTrue);
+        }
 
-      final restored = repository.readCachedMovieDetails(
-        _movie('21', 'Seed 21'),
-      );
-      expect(restored, isNotNull);
-      expect(restored!.data.movie.title, 'Full 21');
-      expect(restored.data.similarMovies.single.title, 'Similar 21');
-      expect(restored.data.videoKey, 'video-21');
-    });
+        final entries = cache.getCatalogEntries('movie_details::');
+        expect(entries, hasLength(20));
+        expect(entries, isNot(contains('movie_details::1')));
+        expect(entries, contains('movie_details::21'));
+
+        final restored = repository.readCachedMovieDetails(
+          _movie('21', 'Seed 21'),
+        );
+        expect(restored, isNotNull);
+        expect(restored!.data.movie.title, 'Full 21');
+        expect(restored.data.similarMovies.single.title, 'Similar 21');
+        expect(restored.data.videoKey, 'video-21');
+      },
+    );
   });
-}
-
-class _BlockingArtworkCache implements MovieArtworkCache {
-  final _completer = Completer<void>();
-  List<Movie> movies = const [];
-
-  @override
-  Future<void> cacheMovies(Iterable<Movie> movies) {
-    this.movies = movies.toList();
-    return _completer.future;
-  }
-
-  void complete() {
-    if (!_completer.isCompleted) _completer.complete();
-  }
 }
 
 class _CatalogAdapter implements HttpClientAdapter {

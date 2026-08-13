@@ -2,20 +2,24 @@ import 'dart:async';
 
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
-import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
 import 'package:cinmovies_app/features/movies/data/movie_cache_codec.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
-class MovieDetailsRepository {
-  MovieDetailsRepository(
-    this._dio, [
+abstract interface class MovieDetailsRepository {
+  CachedMovieDetails? readCachedMovieDetails(Movie seed);
+
+  Future<Result<MovieDetailsData>> fetchMovieDetails(Movie seed);
+}
+
+final class TmdbMovieDetailsRepository implements MovieDetailsRepository {
+  TmdbMovieDetailsRepository(
+    this._dio,
+    this._errorMapper, [
     this._cache,
-    this._artworkCache,
   ]);
 
   static const _detailsKeyPrefix = 'movie_details::';
@@ -23,9 +27,10 @@ class MovieDetailsRepository {
   static const _detailsCacheLimit = 20;
 
   final Dio _dio;
+  final ErrorMapper _errorMapper;
   final HiveCacheService? _cache;
-  final MovieArtworkCache? _artworkCache;
 
+  @override
   CachedMovieDetails? readCachedMovieDetails(Movie seed) {
     final cache = _cache;
     if (cache == null) return null;
@@ -68,9 +73,8 @@ class MovieDetailsRepository {
     }
   }
 
-  Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(
-    Movie seed,
-  ) async {
+  @override
+  Future<Result<MovieDetailsData>> fetchMovieDetails(Movie seed) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '${ApiConstants.movieDetails}/${seed.id}',
@@ -80,12 +84,11 @@ class MovieDetailsRepository {
         },
       );
 
-      final result = MovieDetailsData.fromJson(response.data, seed);
-      await _cacheDetails(result);
-      unawaited(_warmArtwork(result));
-      return Right(result);
+      final details = MovieDetailsData.fromJson(response.data, seed);
+      await _cacheDetails(details);
+      return Success(details);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
@@ -95,19 +98,16 @@ class MovieDetailsRepository {
 
     try {
       final now = DateTime.now().toUtc().toIso8601String();
-      await cache.cacheCatalogEntry(
-        '$_detailsKeyPrefix${details.movie.id}',
-        {
-          'schema_version': _cacheSchemaVersion,
-          'cached_at': now,
-          'last_accessed_at': now,
-          'movie': MovieCacheCodec.encode(details.movie),
-          'similar_movies': details.similarMovies
-              .map(MovieCacheCodec.encode)
-              .toList(),
-          'video_key': details.videoKey,
-        },
-      );
+      await cache.cacheCatalogEntry('$_detailsKeyPrefix${details.movie.id}', {
+        'schema_version': _cacheSchemaVersion,
+        'cached_at': now,
+        'last_accessed_at': now,
+        'movie': MovieCacheCodec.encode(details.movie),
+        'similar_movies': details.similarMovies
+            .map(MovieCacheCodec.encode)
+            .toList(),
+        'video_key': details.videoKey,
+      });
       await _evictOldDetails(cache);
     } catch (_) {
       // Fresh network details remain valid if persistence is unavailable.
@@ -137,18 +137,6 @@ class MovieDetailsRepository {
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
   }
 
-  Future<void> _warmArtwork(MovieDetailsData details) async {
-    final artworkCache = _artworkCache;
-    if (artworkCache == null) return;
-    try {
-      await artworkCache.cacheMovies([
-        details.movie,
-        ...details.similarMovies,
-      ]);
-    } catch (_) {
-      // Artwork warming must never affect detail loading.
-    }
-  }
 }
 
 class CachedMovieDetails {

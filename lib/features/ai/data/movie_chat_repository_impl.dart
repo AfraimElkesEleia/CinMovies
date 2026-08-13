@@ -1,52 +1,51 @@
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_local_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_remote_data_source.dart';
 import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:cinmovies_app/features/ai/domain/repositories/movie_chat_repository.dart';
-import 'package:dartz/dartz.dart';
 import 'package:uuid/uuid.dart';
 
 class MovieChatRepositoryImpl implements MovieChatRepository {
   MovieChatRepositoryImpl(
     this._ai,
     this._remote,
-    this._local, [
+    this._local,
+    this._errorMapper, [
     Uuid? uuid,
   ]) : _uuid = uuid ?? const Uuid();
 
   final MovieChatAiDataSource _ai;
   final MovieChatRemoteDataSource _remote;
   final MovieChatLocalDataSource _local;
+  final ErrorMapper _errorMapper;
   final Uuid _uuid;
 
   @override
   bool get isGuest => _remote.isGuest;
 
   @override
-  Future<Either<Failure, List<MovieChatSession>>> loadSessions() async {
+  Future<Result<List<MovieChatSession>>> loadSessions() async {
     final scopeId = _remote.scopeId;
-    if (isGuest) return Right(_local.loadSessions(scopeId));
+    if (isGuest) return Success(_local.loadSessions(scopeId));
 
     try {
       final sessions = await _remote.loadSessions();
       await _local.replaceSessions(scopeId, sessions);
-      return Right(sessions);
+      return Success(sessions);
     } catch (error) {
       final cached = _local.loadSessions(scopeId);
       return cached.isNotEmpty
-          ? Right(cached)
-          : Left(mapError(error));
+          ? Success(cached)
+          : _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, List<MovieChatMessage>>> loadMessages(
-    String sessionId,
-  ) async {
+  Future<Result<List<MovieChatMessage>>> loadMessages(String sessionId) async {
     final scopeId = _remote.scopeId;
-    if (isGuest) return Right(_local.loadMessages(scopeId, sessionId));
+    if (isGuest) return Success(_local.loadMessages(scopeId, sessionId));
 
     try {
       final messages = await _remote.loadMessages(sessionId);
@@ -55,17 +54,17 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
         conversationId: sessionId,
         messages: messages,
       );
-      return Right(messages);
+      return Success(messages);
     } catch (error) {
       final cached = _local.loadMessages(scopeId, sessionId);
       return cached.isNotEmpty
-          ? Right(cached)
-          : Left(mapError(error));
+          ? Success(cached)
+          : _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, MovieChatResponse>> sendMessage({
+  Future<Result<MovieChatResponse>> sendMessage({
     required String conversationId,
     required String requestId,
     required MovieChatMessage optimisticMessage,
@@ -131,21 +130,21 @@ class MovieChatRepositoryImpl implements MovieChatRepository {
         // The Supabase transaction already succeeded. Return the answer and
         // let the next history refresh rebuild this account's local cache.
       }
-      return Right(response);
+      return Success(response);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, void>> deleteSession(String sessionId) async {
+  Future<Result<void>> deleteSession(String sessionId) async {
     final scopeId = _remote.scopeId;
     try {
       if (!isGuest) await _remote.deleteSession(sessionId);
       await _local.deleteSession(scopeId, sessionId);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 }

@@ -330,7 +330,8 @@ Key architectural choices:
 - **GetIt** supplies repositories, services, API clients, and Cubit factories.
 - **Repository pattern** isolates UI state from HTTP, SQL rows, storage, and
   caching decisions.
-- **Dartz `Either<Failure, T>`** makes expected failures explicit.
+- **Sealed `Result<T>` and `AppError` types** make expected failures explicit
+  while keeping framework exceptions outside the UI.
 - **Equatable** gives immutable states and entities predictable equality.
 - **Dio** provides separately configured TMDB and Gemini clients.
 - **Feature-first folders** keep each screen's data and presentation code close
@@ -460,7 +461,6 @@ owner-based row-level security.
 | `dio` | `^5.10.0` | TMDB and Gemini REST clients |
 | `flutter_bloc` | `^9.1.1` | Cubit state management and Bloc UI bindings |
 | `get_it` | `^9.2.1` | Dependency injection/service locator |
-| `dartz` | `^0.10.1` | `Either<Failure, T>` repository results |
 | `equatable` | `^2.1.0` | Value equality for state and domain objects |
 | `smooth_page_indicator` | `^2.0.1` | Onboarding page indicator |
 | `font_awesome_flutter` | `^11.0.0` | Declared icon package; currently no direct import in `lib/` |

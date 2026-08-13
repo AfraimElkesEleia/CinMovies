@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
 import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
 import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
@@ -12,15 +14,15 @@ class TrailerPlaybackState extends Equatable {
   const TrailerPlaybackState({
     this.status = TrailerPlaybackStatus.loading,
     this.initialSeconds = 0,
-    this.errorMessage,
+    this.failure,
   });
 
   final TrailerPlaybackStatus status;
   final int initialSeconds;
-  final String? errorMessage;
+  final AppError? failure;
 
   @override
-  List<Object?> get props => [status, initialSeconds, errorMessage];
+  List<Object?> get props => [status, initialSeconds, failure];
 }
 
 class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
@@ -30,7 +32,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
   static const saveInterval = Duration(seconds: 5);
   static const _maxFlushDepth = 2;
 
-  final TrailerHistoryRepositoryContract _repository;
+  final TrailerHistoryRepository _repository;
   final TrailerViewerArgs args;
 
   Timer? _saveTimer;
@@ -45,14 +47,8 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     final result = await _repository.findByVideoKey(args.videoKey);
     if (isClosed) return;
 
-    result.fold(
-      (failure) => emit(
-        TrailerPlaybackState(
-          status: TrailerPlaybackStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (entry) {
+    result.when(
+      onSuccess: (entry) {
         final initialSeconds = entry == null || entry.isComplete
             ? 0
             : entry.watchedSeconds;
@@ -66,6 +62,12 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
           ),
         );
       },
+      onFailure: (error) => emit(
+        TrailerPlaybackState(
+          status: TrailerPlaybackStatus.failure,
+          failure: error,
+        ),
+      ),
     );
   }
 
@@ -127,14 +129,14 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
       ),
     );
 
-    return result.fold(
-      (_) {
-        _hasUnsavedProgress = true;
-        return false;
-      },
-      (_) {
+    return result.when(
+      onSuccess: (_) {
         _lastSavedSeconds = watchedSeconds;
         return true;
+      },
+      onFailure: (_) {
+        _hasUnsavedProgress = true;
+        return false;
       },
     );
   }
@@ -144,7 +146,7 @@ class TrailerPlaybackCubit extends Cubit<TrailerPlaybackState> {
     emit(
       const TrailerPlaybackState(
         status: TrailerPlaybackStatus.failure,
-        errorMessage: 'This trailer could not be played.',
+        failure: UnknownAppError(message: 'This trailer could not be played.'),
       ),
     );
   }

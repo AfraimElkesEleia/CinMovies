@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:cinmovies_app/features/ai/domain/repositories/movie_chat_repository.dart';
 import 'package:cinmovies_app/features/ai/presentation/model/ai_screen_tab.dart';
@@ -60,7 +61,7 @@ class AiChatState extends Equatable {
   final AiScreenTab activeTab;
   final List<MovieChatMessage> messages;
   final List<MovieChatSession> sessions;
-  final Failure? failure;
+  final AppError? failure;
   final PendingMovieChatSend? pendingSend;
 
   bool get isSending => status == AiChatStatus.sending;
@@ -75,7 +76,7 @@ class AiChatState extends Equatable {
     AiScreenTab? activeTab,
     List<MovieChatMessage>? messages,
     List<MovieChatSession>? sessions,
-    Failure? failure,
+    AppError? failure,
     PendingMovieChatSend? pendingSend,
     bool clearFailure = false,
     bool clearPendingSend = false,
@@ -127,16 +128,16 @@ class AiChatCubit extends Cubit<AiChatState> {
     );
     final result = await _repository.loadSessions();
     if (isClosed) return;
-    result.fold(
-      (failure) => emit(
-        state.copyWith(status: AiChatStatus.historyFailure, failure: failure),
-      ),
-      (sessions) => emit(
+    result.when(
+      onSuccess: (sessions) => emit(
         state.copyWith(
           status: AiChatStatus.ready,
           sessions: sessions,
           clearFailure: true,
         ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(status: AiChatStatus.historyFailure, failure: error),
       ),
     );
   }
@@ -148,7 +149,7 @@ class AiChatCubit extends Cubit<AiChatState> {
       emit(
         state.copyWith(
           status: AiChatStatus.sendFailure,
-          failure: const Failure(
+          failure: const ValidationAppError(
             message: 'Enter a movie question first.',
           ),
           clearPendingSend: true,
@@ -160,7 +161,7 @@ class AiChatCubit extends Cubit<AiChatState> {
       emit(
         state.copyWith(
           status: AiChatStatus.sendFailure,
-          failure: const Failure(
+          failure: const ValidationAppError(
             message: 'Keep your message under 1,000 characters.',
           ),
           clearPendingSend: true,
@@ -213,15 +214,8 @@ class AiChatCubit extends Cubit<AiChatState> {
       context: pending.context,
     );
     if (isClosed) return;
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: AiChatStatus.sendFailure,
-          failure: failure,
-          pendingSend: pending,
-        ),
-      ),
-      (response) {
+    result.when(
+      onSuccess: (response) {
         final messages = [...state.messages];
         final userIndex = messages.indexWhere(
           (message) =>
@@ -250,6 +244,13 @@ class AiChatCubit extends Cubit<AiChatState> {
           ),
         );
       },
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: AiChatStatus.sendFailure,
+          failure: error,
+          pendingSend: pending,
+        ),
+      ),
     );
   }
 
@@ -267,16 +268,16 @@ class AiChatCubit extends Cubit<AiChatState> {
     );
     final result = await _repository.loadMessages(session.id);
     if (isClosed) return;
-    result.fold(
-      (failure) => emit(
-        state.copyWith(status: AiChatStatus.historyFailure, failure: failure),
-      ),
-      (messages) => emit(
+    result.when(
+      onSuccess: (messages) => emit(
         state.copyWith(
           status: AiChatStatus.ready,
           messages: messages,
           clearFailure: true,
         ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(status: AiChatStatus.historyFailure, failure: error),
       ),
     );
   }
@@ -288,14 +289,8 @@ class AiChatCubit extends Cubit<AiChatState> {
     );
     final result = await _repository.deleteSession(session.id);
     if (isClosed) return false;
-    return result.fold(
-      (failure) {
-        emit(
-          state.copyWith(status: AiChatStatus.historyFailure, failure: failure),
-        );
-        return false;
-      },
-      (_) {
+    return result.when(
+      onSuccess: (_) {
         final wasActive = session.id == state.conversationId;
         emit(
           state.copyWith(
@@ -310,6 +305,12 @@ class AiChatCubit extends Cubit<AiChatState> {
           ),
         );
         return true;
+      },
+      onFailure: (error) {
+        emit(
+          state.copyWith(status: AiChatStatus.historyFailure, failure: error),
+        );
+        return false;
       },
     );
   }

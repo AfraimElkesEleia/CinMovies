@@ -1,4 +1,5 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/extensions/context_extension.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/theme/app_colors.dart';
@@ -32,9 +33,9 @@ Future<void> openAccountAccess(BuildContext context, String route) async {
   final result = await serviceLocator<AuthRepository>().leaveGuestMode();
   if (!context.mounted) return;
 
-  result.fold(
-    (failure) => AppSnackBar.showError(context, failure.message),
-    (_) => context.pushNamedAndRemoveUntil(route),
+  result.when(
+    onSuccess: (_) => context.pushNamedAndRemoveUntil(route),
+    onFailure: (error) => AppSnackBar.showError(context, error.message),
   );
 }
 
@@ -94,10 +95,8 @@ class _GuestAccountSheet extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pop(
-                    context,
-                    _GuestAccountDestination.login,
-                  ),
+                  onPressed: () =>
+                      Navigator.pop(context, _GuestAccountDestination.login),
                   child: const Text('Sign in'),
                 ),
               ),
@@ -105,10 +104,8 @@ class _GuestAccountSheet extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(
-                    context,
-                    _GuestAccountDestination.register,
-                  ),
+                  onPressed: () =>
+                      Navigator.pop(context, _GuestAccountDestination.register),
                   child: const Text('Create account'),
                 ),
               ),

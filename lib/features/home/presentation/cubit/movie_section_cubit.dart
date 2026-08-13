@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
@@ -28,7 +29,7 @@ class MovieSectionState extends Equatable {
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
-  final Failure? failure;
+  final AppError? failure;
 
   bool get hasQuery => query.trim().isNotEmpty;
 
@@ -61,7 +62,7 @@ class MovieSectionState extends Equatable {
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
-    Failure? failure,
+    AppError? failure,
   }) {
     return MovieSectionState(
       args: args,
@@ -115,8 +116,7 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
     this._homeRepository,
     MovieSectionArgs args, [
     this._libraryRepository,
-  ])
-    : super(MovieSectionState(args: args));
+  ]) : super(MovieSectionState(args: args));
 
   final HomeRepository _homeRepository;
   final LibraryRepository? _libraryRepository;
@@ -145,22 +145,22 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       genreIds: state.args.genreIds,
     );
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: MovieListStatus.failure,
-          currentPage: 0,
-          totalPages: 1,
-          failure: failure,
-        ),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           status: MovieListStatus.loaded,
           movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
           failure: null,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: MovieListStatus.failure,
+          currentPage: 0,
+          totalPages: 1,
+          failure: error,
         ),
       ),
     );
@@ -197,11 +197,8 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       genreIds: state.args.genreIds,
     );
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(isLoadingMore: false, failure: failure),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           movies: [...state.movies, ...page.movies],
           currentPage: page.page,
@@ -210,6 +207,8 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
           failure: null,
         ),
       ),
+      onFailure: (error) =>
+          emit(state.copyWith(isLoadingMore: false, failure: error)),
     );
   }
 
@@ -222,29 +221,29 @@ class MovieSectionCubit extends Cubit<MovieSectionState> {
       emit(
         state.copyWith(
           status: MovieListStatus.failure,
-          failure: const Failure(message: 'Library is unavailable.'),
+          failure: const UnknownAppError(message: 'Library is unavailable.'),
         ),
       );
       return;
     }
 
     final result = await repository.movies(type);
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: MovieListStatus.failure,
-          currentPage: 0,
-          totalPages: 1,
-          failure: failure,
-        ),
-      ),
-      (movies) => emit(
+    result.when(
+      onSuccess: (movies) => emit(
         state.copyWith(
           status: MovieListStatus.loaded,
           movies: movies,
           currentPage: 1,
           totalPages: 1,
           failure: null,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: MovieListStatus.failure,
+          currentPage: 0,
+          totalPages: 1,
+          failure: error,
         ),
       ),
     );

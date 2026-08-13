@@ -1,12 +1,12 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
+import 'package:cinmovies_app/features/library/domain/entities/library_movie_entry.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:cinmovies_app/features/movie_details/presentation/cubit/movie_details_cubit.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
-import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -15,7 +15,7 @@ void main() {
     final full = _movie('1', 'Full');
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        Right(
+        Success(
           MovieDetailsData(
             movie: full,
             similarMovies: [_movie('2', 'Similar')],
@@ -46,7 +46,7 @@ void main() {
     final seed = _movie('1', 'Seed');
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        const Left(Failure(message: 'No connection')),
+        const Failure(NetworkAppError(message: 'No connection')),
       ),
       _FakeLibraryRepository(),
       _FakeReviewRepository(),
@@ -67,7 +67,7 @@ void main() {
     final cachedAt = DateTime.utc(2026, 7, 20);
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        const Left(Failure(message: 'No connection')),
+        const Failure(NetworkAppError(message: 'No connection')),
         cached: CachedMovieDetails(
           data: MovieDetailsData(
             movie: cachedMovie,
@@ -101,7 +101,7 @@ void main() {
     final reviews = _FakeReviewRepository();
     final cubit = MovieDetailsCubit(
       _FakeDetailsRepository(
-        Right(MovieDetailsData(movie: movie, similarMovies: const [])),
+        Success(MovieDetailsData(movie: movie, similarMovies: const [])),
       ),
       library,
       reviews,
@@ -131,11 +131,7 @@ void main() {
     expect(await cubit.toggleFavorite(), isFalse);
     expect(await cubit.toggleWatchlist(), isFalse);
     expect(
-      await cubit.submitReview(
-        rating: 8,
-        body: 'Guest review',
-        spoiler: false,
-      ),
+      await cubit.submitReview(rating: 8, body: 'Guest review', spoiler: false),
       isFalse,
     );
     expect(
@@ -154,41 +150,41 @@ class _FakeReviewRepository implements ReviewRepository {
   int setReactionCalls = 0;
 
   @override
-  Future<Either<Failure, int>> countForCurrentUser() async {
-    return const Right(0);
+  Future<Result<int>> countForCurrentUser() async {
+    return const Success(0);
   }
 
   @override
-  Future<Either<Failure, void>> clearReaction(String reviewId) async {
-    return const Right(null);
+  Future<Result<void>> clearReaction(String reviewId) async {
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> deleteReview(String reviewId) async {
-    return const Right(null);
+  Future<Result<void>> deleteReview(String reviewId) async {
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, List<CommunityReview>>> reviewsForCurrentUser() async {
-    return const Right([]);
+  Future<Result<List<CommunityReview>>> reviewsForCurrentUser() async {
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, List<CommunityReview>>> reviewsForMovie(Movie movie) async {
-    return const Right([]);
+  Future<Result<List<CommunityReview>>> reviewsForMovie(Movie movie) async {
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, void>> setReaction({
+  Future<Result<void>> setReaction({
     required String reviewId,
     required ReviewReaction reaction,
   }) async {
     setReactionCalls++;
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> upsertReview({
+  Future<Result<void>> upsertReview({
     required Movie movie,
     required double rating,
     String? title,
@@ -196,28 +192,29 @@ class _FakeReviewRepository implements ReviewRepository {
     bool spoiler = false,
   }) async {
     upsertCalls++;
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeDetailsRepository extends MovieDetailsRepository {
-  _FakeDetailsRepository(this.result, {this.cached}) : super(Dio());
+class _FakeDetailsRepository implements MovieDetailsRepository {
+  _FakeDetailsRepository(this.result, {this.cached});
 
-  final Either<Failure, MovieDetailsData> result;
+  final Result<MovieDetailsData> result;
   final CachedMovieDetails? cached;
 
   @override
   CachedMovieDetails? readCachedMovieDetails(Movie seed) => cached;
 
   @override
-  Future<Either<Failure, MovieDetailsData>> fetchMovieDetails(
-    Movie seed,
-  ) async {
+  Future<Result<MovieDetailsData>> fetchMovieDetails(Movie seed) async {
     return result;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _FakeLibraryRepository implements LibraryRepository {
@@ -228,56 +225,53 @@ class _FakeLibraryRepository implements LibraryRepository {
   int setListedCalls = 0;
 
   @override
-  Future<Either<Failure, bool>> contains(
-    Movie movie,
-    UserMovieListType type,
-  ) async {
+  Future<Result<bool>> contains(Movie movie, UserMovieListType type) async {
     containsCalls++;
-    return Right(containsResults[type] ?? false);
+    return Success(containsResults[type] ?? false);
   }
 
   @override
-  Future<Either<Failure, int>> count(UserMovieListType type) async {
-    return const Right(0);
+  Future<Result<int>> count(UserMovieListType type) async {
+    return const Success(0);
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> movieRows(
+  Future<Result<List<LibraryMovieEntry>>> movieEntries(
     UserMovieListType type,
   ) async {
-    return const Right([]);
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> movieRowsPage({
+  Future<Result<List<LibraryMovieEntry>>> movieEntriesPage({
     required UserMovieListType type,
     required int page,
     required int pageSize,
   }) async {
-    return const Right([]);
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, List<Movie>>> movies(UserMovieListType type) async {
-    return const Right([]);
+  Future<Result<List<Movie>>> movies(UserMovieListType type) async {
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, void>> setListed(
+  Future<Result<void>> setListed(
     Movie movie,
     UserMovieListType type, {
     required bool listed,
   }) async {
     setListedCalls++;
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> removeMovieIdFromList({
+  Future<Result<void>> removeMovieIdFromList({
     required String movieId,
     required UserMovieListType type,
   }) async {
-    return const Right(null);
+    return const Success(null);
   }
 }
 

@@ -19,8 +19,10 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          AuthCubit(serviceLocator<AuthRepository>(), serviceLocator<GenrePreferencesRepository>()),
+      create: (_) => AuthCubit(
+        serviceLocator<AuthRepository>(),
+        serviceLocator<GenrePreferencesRepository>(),
+      ),
       child: const _SignupView(),
     );
   }
@@ -66,8 +68,8 @@ class _SignupViewState extends State<_SignupView> {
         }
 
         if (state.status == AuthSubmissionStatus.failure &&
-            state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
+            state.failure != null) {
+          AppSnackBar.showError(context, state.failure!.message);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(

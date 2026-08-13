@@ -59,7 +59,8 @@ class _TrailerViewerView extends StatelessWidget {
               ),
               TrailerPlaybackStatus.failure => _TrailerError(
                 message:
-                    state.errorMessage ?? 'This trailer could not be played.',
+                    state.failure?.message ??
+                    'This trailer could not be played.',
                 onRetry: context.read<TrailerPlaybackCubit>().initialize,
               ),
               TrailerPlaybackStatus.ready => _YoutubeTrailerPlayer(

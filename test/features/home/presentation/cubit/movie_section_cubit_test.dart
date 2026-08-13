@@ -1,11 +1,10 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/home/data/home_repository.dart';
 import 'package:cinmovies_app/features/home/presentation/model/movie_section_args.dart';
 import 'package:cinmovies_app/features/home/presentation/cubit/movie_section_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
-import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -93,10 +92,7 @@ void main() {
   test('query filters loaded movies locally', () async {
     final repository = _FakeHomeRepository({
       'upcoming:1': MovieSectionPage(
-        movies: [
-          _movie('1', 'Avatar'),
-          _movie('2', 'Batman'),
-        ],
+        movies: [_movie('1', 'Avatar'), _movie('2', 'Batman')],
         page: 1,
         totalPages: 1,
       ),
@@ -170,8 +166,8 @@ void main() {
   });
 }
 
-class _FakeHomeRepository extends HomeRepository {
-  _FakeHomeRepository(this.pages, {this.failures = const {}}) : super(Dio());
+class _FakeHomeRepository extends Fake implements HomeRepository {
+  _FakeHomeRepository(this.pages, {this.failures = const {}});
 
   final Map<String, MovieSectionPage> pages;
   final Set<String> failures;
@@ -179,7 +175,7 @@ class _FakeHomeRepository extends HomeRepository {
   final List<List<int>> genreRequests = [];
 
   @override
-  Future<Either<Failure, MovieSectionPage>> fetchMovieSection({
+  Future<Result<MovieSectionPage>> fetchMovieSection({
     required HomeMovieSection section,
     required int page,
     List<int> genreIds = const [],
@@ -188,9 +184,9 @@ class _FakeHomeRepository extends HomeRepository {
     requests.add(key);
     genreRequests.add([...genreIds]);
     if (failures.contains(key)) {
-      return const Left(Failure(message: 'No connection'));
+      return const Failure(NetworkAppError(message: 'No connection'));
     }
-    return Right(
+    return Success(
       pages[key] ??
           MovieSectionPage(
             movies: [_movie('$page', key)],

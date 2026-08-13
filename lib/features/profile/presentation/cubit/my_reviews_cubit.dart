@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -15,12 +16,12 @@ class MyReviewsState extends Equatable {
 
   final MyReviewsStatus status;
   final List<CommunityReview> reviews;
-  final Failure? failure;
+  final AppError? failure;
 
   MyReviewsState copyWith({
     MyReviewsStatus? status,
     List<CommunityReview>? reviews,
-    Failure? failure,
+    AppError? failure,
     bool clearFailure = false,
   }) {
     return MyReviewsState(
@@ -44,20 +45,16 @@ class MyReviewsCubit extends Cubit<MyReviewsState> {
     final result = await _reviewRepository.reviewsForCurrentUser();
     if (isClosed) return;
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: MyReviewsStatus.failure,
-          failure: failure,
-        ),
-      ),
-      (reviews) => emit(
+    result.when(
+      onSuccess: (reviews) => emit(
         state.copyWith(
           status: MyReviewsStatus.loaded,
           reviews: reviews,
           clearFailure: true,
         ),
       ),
+      onFailure: (error) =>
+          emit(state.copyWith(status: MyReviewsStatus.failure, failure: error)),
     );
   }
 
@@ -65,34 +62,32 @@ class MyReviewsCubit extends Cubit<MyReviewsState> {
     final previousReviews = state.reviews;
     emit(
       state.copyWith(
-        reviews: previousReviews
-            .where((item) => item.id != review.id)
-            .toList(),
+        reviews: previousReviews.where((item) => item.id != review.id).toList(),
       ),
     );
 
     final result = await _reviewRepository.deleteReview(review.id);
-    return result.fold(
-      (_) {
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
         emit(state.copyWith(reviews: previousReviews));
         return false;
       },
-      (_) => true,
     );
   }
 
   Future<void> refresh() async {
     final result = await _reviewRepository.reviewsForCurrentUser();
     if (isClosed) return;
-    result.fold(
-      (_) {},
-      (reviews) => emit(
+    result.when(
+      onSuccess: (reviews) => emit(
         state.copyWith(
           status: MyReviewsStatus.loaded,
           reviews: reviews,
           clearFailure: true,
         ),
       ),
+      onFailure: (_) {},
     );
   }
 }

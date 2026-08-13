@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +16,7 @@ void main() {
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
-    repository = SearchRepository(dio);
+    repository = TmdbSearchRepository(dio, const DefaultErrorMapper());
   });
 
   test('searchMovies sends query parameters to the TMDB client', () async {
@@ -28,7 +30,7 @@ void main() {
 
     final result = await repository.searchMovies(query: 'avatar', page: 2);
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     final page = result.getOrElse(
       () => const SearchMoviesPage(movies: [], page: 0, totalPages: 0),
     );

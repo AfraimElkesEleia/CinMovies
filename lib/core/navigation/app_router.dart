@@ -42,10 +42,8 @@ class AppRouter {
         final args = settings.arguments;
         if (args is MovieDetailsArgs) {
           return MaterialPageRoute(
-            builder: (_) => MovieDetailsScreen(
-              movie: args.movie,
-              heroTag: args.heroTag,
-            ),
+            builder: (_) =>
+                MovieDetailsScreen(movie: args.movie, heroTag: args.heroTag),
           );
         }
         if (args is Movie) {

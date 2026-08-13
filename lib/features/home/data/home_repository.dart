@@ -1,21 +1,40 @@
-import 'dart:async';
-
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
-import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
 import 'package:cinmovies_app/features/movies/data/movie_cache_codec.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
-class HomeRepository {
-  const HomeRepository(
-    this._dio, [
+abstract interface class HomeRepository {
+  CachedHomeFeed? readCachedHomeMovies();
+
+  Future<Result<HomeFeedData>> fetchHomeMovies();
+
+  Future<Result<MovieSectionPage>> fetchMovieSection({
+    required HomeMovieSection section,
+    required int page,
+    List<int> genreIds = const [],
+  });
+
+  CachedMovieSection? readCachedForYouMovies({
+    required String scopeId,
+    required List<int> genreIds,
+  });
+
+  Future<Result<MovieSectionPage>> fetchForYouMovies({
+    required List<int> genreIds,
+    required int page,
+    String? cacheScope,
+  });
+}
+
+final class TmdbHomeRepository implements HomeRepository {
+  const TmdbHomeRepository(
+    this._dio,
+    this._errorMapper, [
     this._cache,
-    this._artworkCache,
   ]);
 
   static const _homeFeedCacheKey = 'home_feed';
@@ -25,9 +44,10 @@ class HomeRepository {
   static const _sectionCacheLimit = 20;
 
   final Dio _dio;
+  final ErrorMapper _errorMapper;
   final HiveCacheService? _cache;
-  final MovieArtworkCache? _artworkCache;
 
+  @override
   CachedHomeFeed? readCachedHomeMovies() {
     final cache = _cache;
     if (cache == null) return null;
@@ -43,10 +63,7 @@ class HomeRepository {
       final upcoming = MovieCacheCodec.decodeList(json['upcoming']);
       if (cachedAt != null && (popular.isNotEmpty || upcoming.isNotEmpty)) {
         return CachedHomeFeed(
-          data: HomeFeedData(
-            popularMovies: popular,
-            upcomingMovies: upcoming,
-          ),
+          data: HomeFeedData(popularMovies: popular, upcomingMovies: upcoming),
           cachedAt: cachedAt,
         );
       }
@@ -56,7 +73,8 @@ class HomeRepository {
     return null;
   }
 
-  Future<Either<Failure, HomeFeedData>> fetchHomeMovies() async {
+  @override
+  Future<Result<HomeFeedData>> fetchHomeMovies() async {
     try {
       final responses = await Future.wait([
         _dio.get<Map<String, dynamic>>(
@@ -78,14 +96,14 @@ class HomeRepository {
         ).take(_sectionCacheLimit).toList(),
       );
       await _cacheHomeFeed(data);
-      unawaited(_warmArtwork(data));
-      return Right(data);
+      return Success(data);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, MovieSectionPage>> fetchMovieSection({
+  @override
+  Future<Result<MovieSectionPage>> fetchMovieSection({
     required HomeMovieSection section,
     required int page,
     List<int> genreIds = const [],
@@ -100,12 +118,13 @@ class HomeRepository {
         queryParameters: _queryParameters(page),
       );
 
-      return Right(MovieSectionPage.fromJson(response.data));
+      return Success(MovieSectionPage.fromJson(response.data));
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
+  @override
   CachedMovieSection? readCachedForYouMovies({
     required String scopeId,
     required List<int> genreIds,
@@ -118,8 +137,7 @@ class HomeRepository {
       final json = cache.getCatalogEntry(
         _forYouCacheKey(scopeId, normalizedIds),
       );
-      if (json == null ||
-          json['schema_version'] != _forYouCacheSchemaVersion) {
+      if (json == null || json['schema_version'] != _forYouCacheSchemaVersion) {
         return null;
       }
 
@@ -127,8 +145,7 @@ class HomeRepository {
           ?.whereType<num>()
           .map((id) => id.toInt())
           .toList();
-      if (cachedIds == null ||
-          cachedIds.join('|') != normalizedIds.join('|')) {
+      if (cachedIds == null || cachedIds.join('|') != normalizedIds.join('|')) {
         return null;
       }
 
@@ -149,14 +166,15 @@ class HomeRepository {
     }
   }
 
-  Future<Either<Failure, MovieSectionPage>> fetchForYouMovies({
+  @override
+  Future<Result<MovieSectionPage>> fetchForYouMovies({
     required List<int> genreIds,
     required int page,
     String? cacheScope,
   }) async {
     final normalizedIds = _normalizedGenreIds(genreIds);
     if (normalizedIds.isEmpty) {
-      return const Right(
+      return const Success(
         MovieSectionPage(movies: [], page: 1, totalPages: 1),
       );
     }
@@ -175,10 +193,9 @@ class HomeRepository {
           page: sectionPage,
         );
       }
-      unawaited(_warmMovieArtwork(sectionPage.movies));
-      return Right(sectionPage);
+      return Success(sectionPage);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
@@ -186,10 +203,7 @@ class HomeRepository {
     return {'language': 'en-US', 'page': page};
   }
 
-  Map<String, Object> _forYouQueryParameters(
-    List<int> genreIds,
-    int page,
-  ) {
+  Map<String, Object> _forYouQueryParameters(List<int> genreIds, int page) {
     return {
       'language': 'en-US',
       'page': page,
@@ -212,23 +226,6 @@ class HomeRepository {
       });
     } catch (_) {
       // Fresh network data remains valid even if persistence is unavailable.
-    }
-  }
-
-  Future<void> _warmArtwork(HomeFeedData data) async {
-    await _warmMovieArtwork([
-      ...data.popularMovies,
-      ...data.upcomingMovies,
-    ]);
-  }
-
-  Future<void> _warmMovieArtwork(Iterable<Movie> movies) async {
-    final artworkCache = _artworkCache;
-    if (artworkCache == null) return;
-    try {
-      await artworkCache.cacheMovies(movies);
-    } catch (_) {
-      // Artwork warming must never affect catalog loading.
     }
   }
 

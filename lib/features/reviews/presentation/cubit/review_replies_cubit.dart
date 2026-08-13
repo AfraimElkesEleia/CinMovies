@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/reviews/data/model/community_review.dart';
 import 'package:cinmovies_app/features/reviews/data/model/review_reply.dart';
 import 'package:cinmovies_app/features/reviews/data/review_repository.dart';
@@ -20,14 +21,14 @@ class ReviewRepliesState extends Equatable {
   final ReviewRepliesStatus status;
   final List<ReviewReply> replies;
   final bool isReplySaving;
-  final Failure? failure;
+  final AppError? failure;
 
   ReviewRepliesState copyWith({
     CommunityReview? review,
     ReviewRepliesStatus? status,
     List<ReviewReply>? replies,
     bool? isReplySaving,
-    Failure? failure,
+    AppError? failure,
     bool clearFailure = false,
   }) {
     return ReviewRepliesState(
@@ -40,13 +41,7 @@ class ReviewRepliesState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-    review,
-    status,
-    replies,
-    isReplySaving,
-    failure,
-  ];
+  List<Object?> get props => [review, status, replies, isReplySaving, failure];
 }
 
 class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
@@ -61,22 +56,13 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
 
   Future<void> load() async {
     emit(
-      state.copyWith(
-        status: ReviewRepliesStatus.loading,
-        clearFailure: true,
-      ),
+      state.copyWith(status: ReviewRepliesStatus.loading, clearFailure: true),
     );
     final result = await _reviewRepository.repliesForReview(state.review.id);
     if (isClosed) return;
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: ReviewRepliesStatus.failure,
-          failure: failure,
-        ),
-      ),
-      (replies) => emit(
+    result.when(
+      onSuccess: (replies) => emit(
         state.copyWith(
           status: ReviewRepliesStatus.loaded,
           replies: replies,
@@ -84,12 +70,18 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
           clearFailure: true,
         ),
       ),
+      onFailure: (error) => emit(
+        state.copyWith(status: ReviewRepliesStatus.failure, failure: error),
+      ),
     );
   }
 
   Future<bool> submitReply(String body) async {
     final value = body.trim();
-    if (isGuest || state.isReplySaving || value.isEmpty || value.length > 1000) {
+    if (isGuest ||
+        state.isReplySaving ||
+        value.isEmpty ||
+        value.length > 1000) {
       return false;
     }
 
@@ -100,33 +92,36 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
     );
     if (isClosed) return false;
 
-    Failure? createFailure;
+    AppError? createError;
     var created = false;
-    result.fold((failure) => createFailure = failure, (_) => created = true);
+    result.when(
+      onSuccess: (_) => created = true,
+      onFailure: (error) => createError = error,
+    );
     if (!created) {
-      emit(state.copyWith(isReplySaving: false, failure: createFailure));
+      emit(state.copyWith(isReplySaving: false, failure: createError));
       return false;
     }
 
     final refreshed = await _reviewRepository.repliesForReview(state.review.id);
     if (isClosed) return true;
-    refreshed.fold(
-      (failure) => emit(
-        state.copyWith(
-          isReplySaving: false,
-          review: state.review.copyWith(
-            replyCount: state.review.replyCount + 1,
-          ),
-          failure: failure,
-        ),
-      ),
-      (replies) => emit(
+    refreshed.when(
+      onSuccess: (replies) => emit(
         state.copyWith(
           status: ReviewRepliesStatus.loaded,
           replies: replies,
           review: state.review.copyWith(replyCount: replies.length),
           isReplySaving: false,
           clearFailure: true,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          isReplySaving: false,
+          review: state.review.copyWith(
+            replyCount: state.review.replyCount + 1,
+          ),
+          failure: error,
         ),
       ),
     );
@@ -147,10 +142,13 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
           );
     if (isClosed) return false;
 
-    return result.fold((_) {
-      emit(state.copyWith(review: review));
-      return false;
-    }, (_) => true);
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
+        emit(state.copyWith(review: review));
+        return false;
+      },
+    );
   }
 
   Future<bool> toggleReplyReaction(
@@ -179,10 +177,13 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
           );
     if (isClosed) return false;
 
-    return result.fold((_) {
-      emit(state.copyWith(replies: previousReplies));
-      return false;
-    }, (_) => true);
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
+        emit(state.copyWith(replies: previousReplies));
+        return false;
+      },
+    );
   }
 
   Future<bool> deleteReply(ReviewReply reply) async {
@@ -203,10 +204,13 @@ class ReviewRepliesCubit extends Cubit<ReviewRepliesState> {
     final result = await _reviewRepository.deleteReply(reply.id);
     if (isClosed) return false;
 
-    return result.fold((_) {
-      emit(state.copyWith(replies: previousReplies, review: previousReview));
-      return false;
-    }, (_) => true);
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (_) {
+        emit(state.copyWith(replies: previousReplies, review: previousReview));
+        return false;
+      },
+    );
   }
 
   CommunityReview _reviewWithToggledReaction(

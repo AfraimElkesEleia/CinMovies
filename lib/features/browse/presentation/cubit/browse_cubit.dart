@@ -1,4 +1,5 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
@@ -43,7 +44,7 @@ class BrowseState extends Equatable {
   final int currentPage;
   final int totalPages;
   final bool isLoadingMore;
-  final Failure? failure;
+  final AppError? failure;
 
   bool get canLoadMore => currentPage < totalPages;
 
@@ -55,7 +56,7 @@ class BrowseState extends Equatable {
     int? currentPage,
     int? totalPages,
     bool? isLoadingMore,
-    Failure? failure,
+    AppError? failure,
   }) {
     return BrowseState(
       status: status ?? this.status,
@@ -100,19 +101,8 @@ class BrowseCubit extends Cubit<BrowseState> {
       genre: BrowseGenre.all,
     );
 
-    moviesResult.fold(
-      (failure) => emit(
-        BrowseState(
-          status: BrowseStatus.failure,
-          genres: genres,
-          selectedGenre: BrowseGenre.all,
-          movies: const [],
-          currentPage: 1,
-          totalPages: 1,
-          failure: failure,
-        ),
-      ),
-      (page) => emit(
+    moviesResult.when(
+      onSuccess: (page) => emit(
         BrowseState(
           status: BrowseStatus.loaded,
           genres: genres,
@@ -120,6 +110,17 @@ class BrowseCubit extends Cubit<BrowseState> {
           movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
+        ),
+      ),
+      onFailure: (error) => emit(
+        BrowseState(
+          status: BrowseStatus.failure,
+          genres: genres,
+          selectedGenre: BrowseGenre.all,
+          movies: const [],
+          currentPage: 1,
+          totalPages: 1,
+          failure: error,
         ),
       ),
     );
@@ -143,23 +144,23 @@ class BrowseCubit extends Cubit<BrowseState> {
     );
 
     final result = await _repository.fetchMovies(page: 1, genre: genre);
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: BrowseStatus.failure,
-          movies: const [],
-          currentPage: 1,
-          totalPages: 1,
-          failure: failure,
-        ),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           status: BrowseStatus.loaded,
           movies: page.movies,
           currentPage: page.page,
           totalPages: page.totalPages,
           failure: null,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: BrowseStatus.failure,
+          movies: const [],
+          currentPage: 1,
+          totalPages: 1,
+          failure: error,
         ),
       ),
     );
@@ -174,18 +175,8 @@ class BrowseCubit extends Cubit<BrowseState> {
       genre: selectedGenre,
     );
 
-    moviesResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: state.movies.isEmpty
-              ? BrowseStatus.failure
-              : BrowseStatus.loaded,
-          genres: genres,
-          isLoadingMore: false,
-          failure: failure,
-        ),
-      ),
-      (page) => emit(
+    moviesResult.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           status: BrowseStatus.loaded,
           genres: genres,
@@ -194,6 +185,16 @@ class BrowseCubit extends Cubit<BrowseState> {
           totalPages: page.totalPages,
           isLoadingMore: false,
           failure: null,
+        ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(
+          status: state.movies.isEmpty
+              ? BrowseStatus.failure
+              : BrowseStatus.loaded,
+          genres: genres,
+          isLoadingMore: false,
+          failure: error,
         ),
       ),
     );
@@ -213,11 +214,8 @@ class BrowseCubit extends Cubit<BrowseState> {
       genre: state.selectedGenre,
     );
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(isLoadingMore: false, failure: failure),
-      ),
-      (page) => emit(
+    result.when(
+      onSuccess: (page) => emit(
         state.copyWith(
           movies: [...state.movies, ...page.movies],
           currentPage: page.page,
@@ -226,6 +224,8 @@ class BrowseCubit extends Cubit<BrowseState> {
           failure: null,
         ),
       ),
+      onFailure: (error) =>
+          emit(state.copyWith(isLoadingMore: false, failure: error)),
     );
   }
 }

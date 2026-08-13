@@ -1,16 +1,15 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/browse/data/browse_repository.dart';
 import 'package:cinmovies_app/features/browse/presentation/cubit/browse_cubit.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('loadInitial loads genres and first movie page', () async {
     final repository = _FakeBrowseRepository(
-      genresResult: const Right([
+      genresResult: const Success([
         BrowseGenre.all,
         BrowseGenre(id: 28, name: 'Action'),
       ]),
@@ -34,48 +33,54 @@ void main() {
     expect(cubit.state.totalPages, 2);
   });
 
-  test('loadInitial emits failure with no fake movies when first page fails', () async {
-    final repository = _FakeBrowseRepository(
-      genresResult: const Left(Failure(message: 'No connection')),
-      failureKeys: {'All:1'},
-    );
-    final cubit = BrowseCubit(repository);
-    addTearDown(cubit.close);
+  test(
+    'loadInitial emits failure with no fake movies when first page fails',
+    () async {
+      final repository = _FakeBrowseRepository(
+        genresResult: const Failure(NetworkAppError(message: 'No connection')),
+        failureKeys: {'All:1'},
+      );
+      final cubit = BrowseCubit(repository);
+      addTearDown(cubit.close);
 
-    await cubit.loadInitial();
+      await cubit.loadInitial();
 
-    expect(cubit.state.status, BrowseStatus.failure);
-    expect(cubit.state.movies, isEmpty);
-    expect(cubit.state.failure?.message, 'No connection');
-  });
+      expect(cubit.state.status, BrowseStatus.failure);
+      expect(cubit.state.movies, isEmpty);
+      expect(cubit.state.failure?.message, 'No connection');
+    },
+  );
 
-  test('selectGenre resets movies and loads page one for selected genre', () async {
-    const action = BrowseGenre(id: 28, name: 'Action');
-    final repository = _FakeBrowseRepository(
-      pages: {
-        'All:1': BrowseMoviesPage(
-          movies: [_movie('1', 'All Movie')],
-          page: 1,
-          totalPages: 1,
-        ),
-        'Action:1': BrowseMoviesPage(
-          movies: [_movie('2', 'Action Movie')],
-          page: 1,
-          totalPages: 3,
-        ),
-      },
-    );
-    final cubit = BrowseCubit(repository);
-    addTearDown(cubit.close);
+  test(
+    'selectGenre resets movies and loads page one for selected genre',
+    () async {
+      const action = BrowseGenre(id: 28, name: 'Action');
+      final repository = _FakeBrowseRepository(
+        pages: {
+          'All:1': BrowseMoviesPage(
+            movies: [_movie('1', 'All Movie')],
+            page: 1,
+            totalPages: 1,
+          ),
+          'Action:1': BrowseMoviesPage(
+            movies: [_movie('2', 'Action Movie')],
+            page: 1,
+            totalPages: 3,
+          ),
+        },
+      );
+      final cubit = BrowseCubit(repository);
+      addTearDown(cubit.close);
 
-    await cubit.loadInitial();
-    await cubit.selectGenre(action);
+      await cubit.loadInitial();
+      await cubit.selectGenre(action);
 
-    expect(cubit.state.selectedGenre, action);
-    expect(cubit.state.movies.single.title, 'Action Movie');
-    expect(cubit.state.currentPage, 1);
-    expect(cubit.state.totalPages, 3);
-  });
+      expect(cubit.state.selectedGenre, action);
+      expect(cubit.state.movies.single.title, 'Action Movie');
+      expect(cubit.state.currentPage, 1);
+      expect(cubit.state.totalPages, 3);
+    },
+  );
 
   test('loadNextPage appends movies and stops at totalPages', () async {
     final repository = _FakeBrowseRepository(
@@ -143,35 +148,40 @@ void main() {
   });
 }
 
-class _FakeBrowseRepository extends BrowseRepository {
+class _FakeBrowseRepository implements BrowseRepository {
   _FakeBrowseRepository({
-    this.genresResult = const Right([BrowseGenre.all]),
+    this.genresResult = const Success([BrowseGenre.all]),
     this.pages = const {},
     this.failureKeys = const {},
-  }) : super(Dio());
+  });
 
-  final Either<Failure, List<BrowseGenre>> genresResult;
+  final Result<List<BrowseGenre>> genresResult;
   final Map<String, BrowseMoviesPage> pages;
   final Set<String> failureKeys;
   final List<String> movieRequests = [];
 
   @override
-  Future<Either<Failure, List<BrowseGenre>>> fetchGenres() async {
+  Future<Result<List<BrowseGenre>>> fetchGenres() async {
     return genresResult;
   }
 
   @override
-  Future<Either<Failure, BrowseMoviesPage>> fetchMovies({
+  Future<Result<BrowseMoviesPage>> fetchMovies({
     required int page,
     BrowseGenre genre = BrowseGenre.all,
   }) async {
     final key = '${genre.name}:$page';
     movieRequests.add(key);
     if (failureKeys.contains(key)) {
-      return const Left(Failure(message: 'No connection'));
+      return const Failure(NetworkAppError(message: 'No connection'));
     }
-    return Right(
-      pages[key] ?? BrowseMoviesPage(movies: [_movie('$page', key)], page: page, totalPages: page),
+    return Success(
+      pages[key] ??
+          BrowseMoviesPage(
+            movies: [_movie('$page', key)],
+            page: page,
+            totalPages: page,
+          ),
     );
   }
 }

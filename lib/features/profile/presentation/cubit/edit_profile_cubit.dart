@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -14,7 +16,7 @@ class EditProfileState extends Equatable {
     this.username,
     this.bio,
     this.avatarUrl,
-    this.errorMessage,
+    this.failure,
   });
 
   final EditProfileStatus status;
@@ -22,7 +24,7 @@ class EditProfileState extends Equatable {
   final String? username;
   final String? bio;
   final String? avatarUrl;
-  final String? errorMessage;
+  final AppError? failure;
 
   bool get isLoading =>
       status == EditProfileStatus.loading || status == EditProfileStatus.saving;
@@ -33,10 +35,10 @@ class EditProfileState extends Equatable {
     String? username,
     String? bio,
     String? avatarUrl,
-    String? errorMessage,
+    AppError? failure,
     bool clearUsername = false,
     bool clearBio = false,
-    bool clearError = false,
+    bool clearFailure = false,
   }) {
     return EditProfileState(
       status: status ?? this.status,
@@ -44,47 +46,44 @@ class EditProfileState extends Equatable {
       username: clearUsername ? null : username ?? this.username,
       bio: clearBio ? null : bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
-      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      failure: clearFailure ? null : failure ?? this.failure,
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        fullName,
-        username,
-        bio,
-        avatarUrl,
-        errorMessage,
-      ];
+    status,
+    fullName,
+    username,
+    bio,
+    avatarUrl,
+    failure,
+  ];
 }
 
 class EditProfileCubit extends Cubit<EditProfileState> {
   EditProfileCubit(this._profileRepository, this._authRepository)
-      : super(const EditProfileState());
+    : super(const EditProfileState());
 
   final ProfileRepository _profileRepository;
   final AuthRepository _authRepository;
 
   Future<void> load() async {
-    emit(state.copyWith(status: EditProfileStatus.loading, clearError: true));
+    emit(state.copyWith(status: EditProfileStatus.loading, clearFailure: true));
 
     final result = await _profileRepository.currentProfile();
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: EditProfileStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (profile) => emit(
+    result.when(
+      onSuccess: (profile) => emit(
         EditProfileState(
           status: EditProfileStatus.loaded,
-          fullName: (profile?['full_name'] as String?) ?? '',
-          username: profile?['username'] as String?,
-          bio: profile?['bio'] as String?,
-          avatarUrl: profile?['avatar_url'] as String?,
+          fullName: profile?.fullName ?? '',
+          username: profile?.username,
+          bio: profile?.bio,
+          avatarUrl: profile?.avatarUrl,
         ),
+      ),
+      onFailure: (error) => emit(
+        state.copyWith(status: EditProfileStatus.failure, failure: error),
       ),
     );
   }
@@ -97,7 +96,7 @@ class EditProfileCubit extends Cubit<EditProfileState> {
     String? avatarFileName,
     String? avatarContentType,
   }) async {
-    emit(state.copyWith(status: EditProfileStatus.saving, clearError: true));
+    emit(state.copyWith(status: EditProfileStatus.saving, clearFailure: true));
 
     String? avatarUrl;
     if (avatarBytes != null) {
@@ -107,20 +106,17 @@ class EditProfileCubit extends Cubit<EditProfileState> {
         contentType: avatarContentType,
       );
 
-      if (uploadResult.isLeft()) {
-        uploadResult.fold(
-          (failure) => emit(
-            state.copyWith(
-              status: EditProfileStatus.failure,
-              errorMessage: failure.message,
-            ),
+      if (uploadResult.isFailure) {
+        uploadResult.when(
+          onSuccess: (_) {},
+          onFailure: (error) => emit(
+            state.copyWith(status: EditProfileStatus.failure, failure: error),
           ),
-          (_) {},
         );
         return;
       }
 
-      avatarUrl = uploadResult.getOrElse(() => '');
+      avatarUrl = uploadResult.getOrNull() ?? '';
     }
 
     final trimmedUsername = username.trim();
@@ -134,14 +130,8 @@ class EditProfileCubit extends Cubit<EditProfileState> {
       clearBio: trimmedBio.isEmpty,
     );
 
-    updateResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: EditProfileStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (_) => emit(
+    updateResult.when(
+      onSuccess: (_) => emit(
         state.copyWith(
           status: EditProfileStatus.success,
           fullName: fullName.trim(),
@@ -152,21 +142,21 @@ class EditProfileCubit extends Cubit<EditProfileState> {
           clearBio: trimmedBio.isEmpty,
         ),
       ),
+      onFailure: (error) => emit(
+        state.copyWith(status: EditProfileStatus.failure, failure: error),
+      ),
     );
   }
 
   Future<void> changePassword(String password) async {
-    emit(state.copyWith(status: EditProfileStatus.saving, clearError: true));
+    emit(state.copyWith(status: EditProfileStatus.saving, clearFailure: true));
     final result = await _authRepository.updatePassword(password);
 
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: EditProfileStatus.failure,
-          errorMessage: failure.message,
-        ),
+    result.when(
+      onSuccess: (_) => emit(state.copyWith(status: EditProfileStatus.success)),
+      onFailure: (error) => emit(
+        state.copyWith(status: EditProfileStatus.failure, failure: error),
       ),
-      (_) => emit(state.copyWith(status: EditProfileStatus.success)),
     );
   }
 }

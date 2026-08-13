@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -13,13 +15,13 @@ class AuthState extends Equatable {
   const AuthState({
     this.status = AuthSubmissionStatus.initial,
     this.operation,
-    this.errorMessage,
+    this.failure,
     this.termsAccepted = false,
   });
 
   final AuthSubmissionStatus status;
   final AuthSubmissionOperation? operation;
-  final String? errorMessage;
+  final AppError? failure;
   final bool termsAccepted;
 
   bool get isLoading => status == AuthSubmissionStatus.loading;
@@ -31,25 +33,20 @@ class AuthState extends Equatable {
   AuthState copyWith({
     AuthSubmissionStatus? status,
     AuthSubmissionOperation? operation,
-    String? errorMessage,
-    bool clearError = false,
+    AppError? failure,
+    bool clearFailure = false,
     bool? termsAccepted,
   }) {
     return AuthState(
       status: status ?? this.status,
       operation: operation ?? this.operation,
-      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      failure: clearFailure ? null : failure ?? this.failure,
       termsAccepted: termsAccepted ?? this.termsAccepted,
     );
   }
 
   @override
-  List<Object?> get props => [
-    status,
-    operation,
-    errorMessage,
-    termsAccepted,
-  ];
+  List<Object?> get props => [status, operation, failure, termsAccepted];
 }
 
 class AuthCubit extends Cubit<AuthState> {
@@ -68,7 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
       state.copyWith(
         status: AuthSubmissionStatus.loading,
         operation: AuthSubmissionOperation.login,
-        clearError: true,
+        clearFailure: true,
       ),
     );
     final result = await _authRepository.signIn(
@@ -76,18 +73,15 @@ class AuthCubit extends Cubit<AuthState> {
       password: password,
     );
 
-    await result.fold(
-      (failure) async {
-        emit(
-          state.copyWith(
-            status: AuthSubmissionStatus.failure,
-            errorMessage: failure.message,
-          ),
-        );
-      },
-      (_) async {
+    await result.when(
+      onSuccess: (_) async {
         await _syncCachedGenres();
         emit(state.copyWith(status: AuthSubmissionStatus.success));
+      },
+      onFailure: (error) async {
+        emit(
+          state.copyWith(status: AuthSubmissionStatus.failure, failure: error),
+        );
       },
     );
   }
@@ -97,18 +91,16 @@ class AuthCubit extends Cubit<AuthState> {
       state.copyWith(
         status: AuthSubmissionStatus.loading,
         operation: AuthSubmissionOperation.guest,
-        clearError: true,
+        clearFailure: true,
       ),
     );
     final result = await _authRepository.continueAsGuest();
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: AuthSubmissionStatus.failure,
-          errorMessage: failure.message,
-        ),
+    result.when(
+      onSuccess: (_) =>
+          emit(state.copyWith(status: AuthSubmissionStatus.success)),
+      onFailure: (error) => emit(
+        state.copyWith(status: AuthSubmissionStatus.failure, failure: error),
       ),
-      (_) => emit(state.copyWith(status: AuthSubmissionStatus.success)),
     );
   }
 
@@ -124,7 +116,9 @@ class AuthCubit extends Cubit<AuthState> {
       emit(
         state.copyWith(
           status: AuthSubmissionStatus.failure,
-          errorMessage: 'Please agree to the terms first.',
+          failure: const ValidationAppError(
+            message: 'Please agree to the terms first.',
+          ),
         ),
       );
       return;
@@ -134,7 +128,7 @@ class AuthCubit extends Cubit<AuthState> {
       state.copyWith(
         status: AuthSubmissionStatus.loading,
         operation: AuthSubmissionOperation.signup,
-        clearError: true,
+        clearFailure: true,
       ),
     );
     final result = await _authRepository.signUp(
@@ -146,29 +140,35 @@ class AuthCubit extends Cubit<AuthState> {
       avatarContentType: avatarContentType,
     );
 
-    await result.fold(
-      (failure) async {
-        emit(
-          state.copyWith(
-            status: AuthSubmissionStatus.failure,
-            errorMessage: failure.message,
-          ),
-        );
-      },
-      (_) async {
+    await result.when(
+      onSuccess: (_) async {
         await _syncCachedGenres();
         emit(state.copyWith(status: AuthSubmissionStatus.success));
+      },
+      onFailure: (error) async {
+        emit(
+          state.copyWith(status: AuthSubmissionStatus.failure, failure: error),
+        );
       },
     );
   }
 
-  Future<void> logout() => _authRepository.signOut();
+  Future<bool> logout() async {
+    final result = await _authRepository.signOut();
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (error) {
+        emit(
+          state.copyWith(status: AuthSubmissionStatus.failure, failure: error),
+        );
+        return false;
+      },
+    );
+  }
 
   Future<void> _syncCachedGenres() async {
-    try {
-      await _preferenceRepository.syncCachedFavoriteGenres();
-    } catch (_) {
-      // Keep the Hive cache. The next login/startup can retry the sync.
-    }
+    // syncCachedFavoriteGenres now returns Result<void>.
+    // Keep the Hive cache. The next login/startup can retry the sync.
+    await _preferenceRepository.syncCachedFavoriteGenres();
   }
 }

@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
@@ -13,9 +15,7 @@ void main() {
   late AuthRepository repository;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({
-      'has_passed_onboarding': true,
-    });
+    SharedPreferences.setMockInitialValues({'has_passed_onboarding': true});
     preferences = LocalPreferencesService(
       await SharedPreferences.getInstance(),
     );
@@ -23,21 +23,24 @@ void main() {
       'https://localhost.invalid',
       'test-publishable-key',
     );
-    repository = AuthRepository(
+    repository = SupabaseAuthRepository(
       SupabaseDatabaseService(client),
       SupabaseStorageService(client),
       preferences,
+      const DefaultErrorMapper(),
     );
   });
 
   test('continue as guest persists a local session without a user', () async {
     final result = await repository.continueAsGuest();
 
-    expect(result.isRight(), isTrue);
-    expect(repository.currentUser, isNull);
+    expect(result.isSuccess, isTrue);
+    expect(repository.isAuthenticated, isFalse);
     expect(preferences.isGuestMode, isTrue);
     expect(repository.isGuest, isTrue);
-    expect(await repository.resolveInitialRoute(), AppRoutes.home);
+    final cubit = AppBootstrapCubit(repository, preferences);
+    addTearDown(cubit.close);
+    expect(await cubit.resolveInitialRoute(), AppRoutes.home);
   });
 
   test('leaving guest mode returns the next launch to login', () async {
@@ -45,10 +48,12 @@ void main() {
 
     final result = await repository.leaveGuestMode();
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     expect(preferences.isGuestMode, isFalse);
     expect(repository.isGuest, isFalse);
-    expect(await repository.resolveInitialRoute(), AppRoutes.login);
+    final cubit = AppBootstrapCubit(repository, preferences);
+    addTearDown(cubit.close);
+    expect(await cubit.resolveInitialRoute(), AppRoutes.login);
   });
 
   test('bootstrap prioritizes onboarding over a saved guest session', () async {

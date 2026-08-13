@@ -1,31 +1,32 @@
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
-import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-abstract class TrailerHistoryRepositoryContract {
-  Future<Either<Failure, List<TrailerHistoryEntry>>> history();
+abstract interface class TrailerHistoryRepository {
+  Future<Result<List<TrailerHistoryEntry>>> history();
 
-  Future<Either<Failure, TrailerHistoryEntry?>> findByVideoKey(String videoKey);
+  Future<Result<TrailerHistoryEntry?>> findByVideoKey(String videoKey);
 
-  Future<Either<Failure, void>> saveProgress(TrailerHistoryEntry entry);
+  Future<Result<void>> saveProgress(TrailerHistoryEntry entry);
 
-  Future<Either<Failure, void>> remove(String videoKey);
+  Future<Result<void>> remove(String videoKey);
 
   Stream<List<TrailerHistoryEntry>> watchHistory();
 }
 
-class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
-  TrailerHistoryRepository(
+final class HiveTrailerHistoryRepository implements TrailerHistoryRepository {
+  HiveTrailerHistoryRepository(
     this._cache,
-    this._supabase, {
+    this._supabase,
+    this._errorMapper, {
     this._scopeIdResolver,
   });
 
   final HiveCacheService _cache;
   final SupabaseClient _supabase;
+  final ErrorMapper _errorMapper;
   final String Function()? _scopeIdResolver;
 
   String get _scopeId {
@@ -35,61 +36,59 @@ class TrailerHistoryRepository implements TrailerHistoryRepositoryContract {
   }
 
   @override
-  Future<Either<Failure, List<TrailerHistoryEntry>>> history() async {
+  Future<Result<List<TrailerHistoryEntry>>> history() async {
     try {
-      return Right(await _historyForScope(_scopeId));
+      return Success(await _historyForScope(_scopeId));
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, TrailerHistoryEntry?>> findByVideoKey(
-    String videoKey,
-  ) async {
+  Future<Result<TrailerHistoryEntry?>> findByVideoKey(String videoKey) async {
     try {
       final key = videoKey.trim();
-      if (key.isEmpty) return const Right(null);
+      if (key.isEmpty) return const Success(null);
       final map = _cache.getTrailerHistoryEntry(_scopeId, key);
-      if (map == null) return const Right(null);
+      if (map == null) return const Success(null);
       final entry = _tryParse(map);
-      return Right(
+      return Success(
         entry != null && entry.videoKey.isNotEmpty && entry.totalSeconds > 0
             ? entry
             : null,
       );
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, void>> saveProgress(TrailerHistoryEntry entry) async {
+  Future<Result<void>> saveProgress(TrailerHistoryEntry entry) async {
     try {
       final normalized = entry.normalized();
       if (normalized.videoKey.isEmpty || normalized.totalSeconds <= 0) {
-        return const Right(null);
+        return const Success(null);
       }
       await _cache.cacheTrailerHistoryEntry(
         _scopeId,
         normalized.videoKey,
         normalized.toMap(),
       );
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
   @override
-  Future<Either<Failure, void>> remove(String videoKey) async {
+  Future<Result<void>> remove(String videoKey) async {
     try {
       final key = videoKey.trim();
-      if (key.isEmpty) return const Right(null);
+      if (key.isEmpty) return const Success(null);
       await _cache.deleteTrailerHistoryEntry(_scopeId, key);
-      return const Right(null);
+      return const Success(null);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 

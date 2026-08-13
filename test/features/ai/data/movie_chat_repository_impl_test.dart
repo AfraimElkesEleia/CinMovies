@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_ai_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_local_data_source.dart';
 import 'package:cinmovies_app/features/ai/data/movie_chat_remote_data_source.dart';
@@ -6,74 +8,96 @@ import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('authenticated send persists in Supabase and user-scoped Hive', () async {
-    final ai = _FakeAiDataSource();
-    final remote = _FakeRemoteDataSource(isGuestValue: false);
-    final local = _FakeLocalDataSource();
-    final repository = MovieChatRepositoryImpl(ai, remote, local);
+  test(
+    'authenticated send persists in Supabase and user-scoped Hive',
+    () async {
+      final ai = _FakeAiDataSource();
+      final remote = _FakeRemoteDataSource(isGuestValue: false);
+      final local = _FakeLocalDataSource();
+      final repository = MovieChatRepositoryImpl(
+        ai,
+        remote,
+        local,
+        const DefaultErrorMapper(),
+      );
 
-    final result = await repository.sendMessage(
-      conversationId: _conversationId,
-      requestId: _requestId,
-      optimisticMessage: _optimisticMessage,
-      locale: 'en',
-      context: const [],
-    );
+      final result = await repository.sendMessage(
+        conversationId: _conversationId,
+        requestId: _requestId,
+        optimisticMessage: _optimisticMessage,
+        locale: 'en',
+        context: const [],
+      );
 
-    expect(result.isRight(), isTrue);
-    final response = result.getOrElse(() => throw StateError('Expected data'));
-    expect(response.userMessage.id, _persistedUserId);
-    expect(response.assistantMessage.id, _persistedAssistantId);
-    expect(response.assistantMessage.content, 'A grounded answer.');
-    expect(remote.persistCalls, 1);
-    expect(local.optimisticScopes, ['user:account-one']);
-    expect(local.responseScopes, ['user:account-one']);
-  });
+      expect(result.isSuccess, isTrue);
+      final response = result.getOrElse(
+        () => throw StateError('Expected data'),
+      );
+      expect(response.userMessage.id, _persistedUserId);
+      expect(response.assistantMessage.id, _persistedAssistantId);
+      expect(response.assistantMessage.content, 'A grounded answer.');
+      expect(remote.persistCalls, 1);
+      expect(local.optimisticScopes, ['user:account-one']);
+      expect(local.responseScopes, ['user:account-one']);
+    },
+  );
 
-  test('guest send never writes to Supabase and uses guest Hive scope', () async {
-    final ai = _FakeAiDataSource();
-    final remote = _FakeRemoteDataSource(isGuestValue: true);
-    final local = _FakeLocalDataSource();
-    final repository = MovieChatRepositoryImpl(ai, remote, local);
+  test(
+    'guest send never writes to Supabase and uses guest Hive scope',
+    () async {
+      final ai = _FakeAiDataSource();
+      final remote = _FakeRemoteDataSource(isGuestValue: true);
+      final local = _FakeLocalDataSource();
+      final repository = MovieChatRepositoryImpl(
+        ai,
+        remote,
+        local,
+        const DefaultErrorMapper(),
+      );
 
-    final result = await repository.sendMessage(
-      conversationId: _conversationId,
-      requestId: _requestId,
-      optimisticMessage: _optimisticMessage,
-      locale: 'en',
-      context: const [],
-    );
+      final result = await repository.sendMessage(
+        conversationId: _conversationId,
+        requestId: _requestId,
+        optimisticMessage: _optimisticMessage,
+        locale: 'en',
+        context: const [],
+      );
 
-    expect(result.isRight(), isTrue);
-    expect(remote.persistCalls, 0);
-    expect(local.optimisticScopes, ['guest']);
-    expect(local.responseScopes, ['guest']);
-  });
+      expect(result.isSuccess, isTrue);
+      expect(remote.persistCalls, 0);
+      expect(local.optimisticScopes, ['guest']);
+      expect(local.responseScopes, ['guest']);
+    },
+  );
 
-  test('authenticated history falls back to the matching local cache', () async {
-    final cached = MovieChatSession(
-      id: _conversationId,
-      title: 'Cached chat',
-      preview: 'Available offline',
-      updatedAt: DateTime.utc(2026, 7, 28),
-      messageCount: 2,
-    );
-    final remote = _FakeRemoteDataSource(
-      isGuestValue: false,
-      failLoads: true,
-    );
-    final local = _FakeLocalDataSource(sessions: [cached]);
-    final repository = MovieChatRepositoryImpl(
-      _FakeAiDataSource(),
-      remote,
-      local,
-    );
+  test(
+    'authenticated history falls back to the matching local cache',
+    () async {
+      final cached = MovieChatSession(
+        id: _conversationId,
+        title: 'Cached chat',
+        preview: 'Available offline',
+        updatedAt: DateTime.utc(2026, 7, 28),
+        messageCount: 2,
+      );
+      final remote = _FakeRemoteDataSource(
+        isGuestValue: false,
+        failLoads: true,
+      );
+      final local = _FakeLocalDataSource(sessions: [cached]);
+      final repository = MovieChatRepositoryImpl(
+        _FakeAiDataSource(),
+        remote,
+        local,
+        const DefaultErrorMapper(),
+      );
 
-    final result = await repository.loadSessions();
+      final result = await repository.loadSessions();
 
-    expect(result.getOrElse(() => const []), [cached]);
-    expect(local.loadedScopes, ['user:account-one']);
-  });
+      expect(result.getOrElse(() => const []), [cached]);
+      expect(local.loadedScopes, ['user:account-one']);
+    },
+  );
 }
 
 class _FakeAiDataSource implements MovieChatAiDataSource {
@@ -92,10 +116,7 @@ class _FakeAiDataSource implements MovieChatAiDataSource {
 }
 
 class _FakeRemoteDataSource implements MovieChatRemoteDataSource {
-  _FakeRemoteDataSource({
-    required this.isGuestValue,
-    this.failLoads = false,
-  });
+  _FakeRemoteDataSource({required this.isGuestValue, this.failLoads = false});
 
   final bool isGuestValue;
   final bool failLoads;

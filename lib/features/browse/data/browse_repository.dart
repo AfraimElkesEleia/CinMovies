@@ -1,18 +1,28 @@
 import 'package:cinmovies_app/core/constants/api_constants.dart';
 import 'package:cinmovies_app/core/error/error_mapper.dart';
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/browse/data/browse_genre.dart';
 import 'package:cinmovies_app/features/home/data/tmdb_movie_mapper.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
-import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
-class BrowseRepository {
-  const BrowseRepository(this._dio);
+abstract interface class BrowseRepository {
+  Future<Result<List<BrowseGenre>>> fetchGenres();
+
+  Future<Result<BrowseMoviesPage>> fetchMovies({
+    required int page,
+    BrowseGenre genre = BrowseGenre.all,
+  });
+}
+
+final class TmdbBrowseRepository implements BrowseRepository {
+  const TmdbBrowseRepository(this._dio, this._errorMapper);
 
   final Dio _dio;
+  final ErrorMapper _errorMapper;
 
-  Future<Either<Failure, List<BrowseGenre>>> fetchGenres() async {
+  @override
+  Future<Result<List<BrowseGenre>>> fetchGenres() async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiConstants.movieGenres,
@@ -20,13 +30,14 @@ class BrowseRepository {
       );
 
       final genres = _genresFromResponse(response.data);
-      return Right([BrowseGenre.all, ...genres]);
+      return Success([BrowseGenre.all, ...genres]);
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 
-  Future<Either<Failure, BrowseMoviesPage>> fetchMovies({
+  @override
+  Future<Result<BrowseMoviesPage>> fetchMovies({
     required int page,
     BrowseGenre genre = BrowseGenre.all,
   }) async {
@@ -46,9 +57,9 @@ class BrowseRepository {
         queryParameters: queryParameters,
       );
 
-      return Right(BrowseMoviesPage.fromJson(response.data));
+      return Success(BrowseMoviesPage.fromJson(response.data));
     } catch (error) {
-      return Left(mapError(error));
+      return _errorMapper.toFailure(error);
     }
   }
 

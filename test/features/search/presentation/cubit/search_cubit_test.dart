@@ -1,13 +1,12 @@
 import 'dart:io';
 
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movies/presentation/model/movie_list_options.dart';
 import 'package:cinmovies_app/features/search/data/search_repository.dart';
 import 'package:cinmovies_app/features/search/presentation/cubit/search_cubit.dart';
-import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -19,10 +18,18 @@ void main() {
     tempDir = await Directory.systemTemp.createTemp('search_cubit_test_');
     Hive.init(tempDir.path);
     cache = HiveCacheService(
-      await Hive.openBox<dynamic>('search_${DateTime.now().microsecondsSinceEpoch}'),
-      await Hive.openBox<dynamic>('movies_${DateTime.now().microsecondsSinceEpoch}'),
-      await Hive.openBox<dynamic>('users_${DateTime.now().microsecondsSinceEpoch}'),
-      await Hive.openBox<dynamic>('genres_${DateTime.now().microsecondsSinceEpoch}'),
+      await Hive.openBox<dynamic>(
+        'search_${DateTime.now().microsecondsSinceEpoch}',
+      ),
+      await Hive.openBox<dynamic>(
+        'movies_${DateTime.now().microsecondsSinceEpoch}',
+      ),
+      await Hive.openBox<dynamic>(
+        'users_${DateTime.now().microsecondsSinceEpoch}',
+      ),
+      await Hive.openBox<dynamic>(
+        'genres_${DateTime.now().microsecondsSinceEpoch}',
+      ),
     );
   });
 
@@ -59,10 +66,22 @@ void main() {
 
   test('submitQuery stores only the last six recent searches', () async {
     final repository = _FakeSearchRepository(const {});
-    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    final cubit = SearchCubit(
+      repository,
+      cache,
+      debounceDuration: Duration.zero,
+    );
     addTearDown(cubit.close);
 
-    for (final query in ['one', 'two', 'three', 'four', 'five', 'six', 'seven']) {
+    for (final query in [
+      'one',
+      'two',
+      'three',
+      'four',
+      'five',
+      'six',
+      'seven',
+    ]) {
       await cubit.submitQuery(query);
     }
 
@@ -78,7 +97,11 @@ void main() {
 
   test('deleteRecentSearch removes a stored query', () async {
     final repository = _FakeSearchRepository(const {});
-    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    final cubit = SearchCubit(
+      repository,
+      cache,
+      debounceDuration: Duration.zero,
+    );
     addTearDown(cubit.close);
 
     await cubit.submitQuery('avatar');
@@ -101,7 +124,11 @@ void main() {
         totalPages: 2,
       ),
     });
-    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    final cubit = SearchCubit(
+      repository,
+      cache,
+      debounceDuration: Duration.zero,
+    );
     addTearDown(cubit.close);
 
     await cubit.submitQuery('batman');
@@ -127,7 +154,11 @@ void main() {
         totalPages: 1,
       ),
     });
-    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    final cubit = SearchCubit(
+      repository,
+      cache,
+      debounceDuration: Duration.zero,
+    );
     addTearDown(cubit.close);
 
     await cubit.submitQuery('movie');
@@ -155,7 +186,11 @@ void main() {
 
   test('failed search emits failure state', () async {
     final repository = _FakeSearchRepository(const {}, failures: {'bad:1'});
-    final cubit = SearchCubit(repository, cache, debounceDuration: Duration.zero);
+    final cubit = SearchCubit(
+      repository,
+      cache,
+      debounceDuration: Duration.zero,
+    );
     addTearDown(cubit.close);
 
     await cubit.submitQuery('bad');
@@ -165,24 +200,24 @@ void main() {
   });
 }
 
-class _FakeSearchRepository extends SearchRepository {
-  _FakeSearchRepository(this.pages, {this.failures = const {}}) : super(Dio());
+class _FakeSearchRepository implements SearchRepository {
+  _FakeSearchRepository(this.pages, {this.failures = const {}});
 
   final Map<String, SearchMoviesPage> pages;
   final Set<String> failures;
   final List<String> requests = [];
 
   @override
-  Future<Either<Failure, SearchMoviesPage>> searchMovies({
+  Future<Result<SearchMoviesPage>> searchMovies({
     required String query,
     required int page,
   }) async {
     final key = '$query:$page';
     requests.add(key);
     if (failures.contains(key)) {
-      return const Left(Failure(message: 'No connection'));
+      return const Failure(NetworkAppError(message: 'No connection'));
     }
-    return Right(
+    return Success(
       pages[key] ??
           SearchMoviesPage(
             movies: [_movie('$page', key)],

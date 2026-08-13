@@ -1,16 +1,11 @@
-import 'dart:typed_data';
-
-import 'package:cinmovies_app/core/error/failures.dart';
 import 'package:cinmovies_app/core/di/injection_container.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/widgets/app_splash_overlay.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:cinmovies_app/main.dart';
 
@@ -48,54 +43,10 @@ void main() {
   });
 }
 
-class _FakeAuthRepository implements AuthRepository {
+class _FakeAuthRepository extends Fake implements AuthRepository {
   @override
-  User? get currentUser => null;
+  bool get isAuthenticated => false;
 
   @override
   bool get isGuest => false;
-
-  @override
-  Stream<AuthState> get authStateChanges => const Stream.empty();
-
-  @override
-  Future<String> resolveInitialRoute() async => AppRoutes.onboarding;
-
-  @override
-  Future<Either<Failure, AuthResponse>> signIn({
-    required String email,
-    required String password,
-  }) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, void>> continueAsGuest() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, void>> leaveGuestMode() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AuthResponse>> signUp({
-    required String fullName,
-    required String email,
-    required String password,
-    Uint8List? avatarBytes,
-    String? avatarFileName,
-    String? avatarContentType,
-  }) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> signOut() async {}
-
-  @override
-  Future<Either<Failure, void>> updatePassword(String password) {
-    throw UnimplementedError();
-  }
 }

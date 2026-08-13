@@ -15,7 +15,7 @@ class AppBootstrapState extends Equatable {
 
 class AppBootstrapCubit extends Cubit<AppBootstrapState> {
   AppBootstrapCubit(this._authRepository, this._preferences)
-      : super(const AppBootstrapState());
+    : super(const AppBootstrapState());
 
   final AuthRepository _authRepository;
   final LocalPreferencesService _preferences;
@@ -23,9 +23,9 @@ class AppBootstrapCubit extends Cubit<AppBootstrapState> {
   Future<String> resolveInitialRoute() async {
     final route = !_preferences.hasPassedOnboarding
         ? AppRoutes.onboarding
-        : _authRepository.currentUser == null && !_preferences.isGuestMode
-            ? AppRoutes.login
-            : AppRoutes.home;
+        : !_authRepository.isAuthenticated && !_preferences.isGuestMode
+        ? AppRoutes.login
+        : AppRoutes.home;
     emit(AppBootstrapState(initialRoute: route));
     return route;
   }

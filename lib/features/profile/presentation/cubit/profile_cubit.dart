@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/profile/data/profile_repository.dart';
@@ -18,6 +20,7 @@ class ProfileState extends Equatable {
     this.favoriteCount = 0,
     this.watchlistCount = 0,
     this.reviewCount = 0,
+    this.failure,
   });
 
   final ProfileStatus status;
@@ -29,19 +32,21 @@ class ProfileState extends Equatable {
   final int favoriteCount;
   final int watchlistCount;
   final int reviewCount;
+  final AppError? failure;
 
   @override
   List<Object?> get props => [
-        status,
-        fullName,
-        username,
-        email,
-        bio,
-        avatarUrl,
-        favoriteCount,
-        watchlistCount,
-        reviewCount,
-      ];
+    status,
+    fullName,
+    username,
+    email,
+    bio,
+    avatarUrl,
+    favoriteCount,
+    watchlistCount,
+    reviewCount,
+    failure,
+  ];
 }
 
 class ProfileCubit extends Cubit<ProfileState> {
@@ -50,8 +55,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     this._libraryRepository,
     this._authRepository,
     this._reviewRepository,
-  )
-      : super(const ProfileState());
+  ) : super(const ProfileState());
 
   final ProfileRepository _profileRepository;
   final LibraryRepository _libraryRepository;
@@ -60,47 +64,55 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> load() async {
     emit(const ProfileState(status: ProfileStatus.loading));
-    try {
-      final profileResult = await _profileRepository.currentProfile();
-      final countResults = await Future.wait([
-        _libraryRepository.count(UserMovieListType.favorite),
-        _libraryRepository.count(UserMovieListType.watchlist),
-        _reviewRepository.countForCurrentUser(),
-      ]);
-      // If profile fetch failed, emit failure.
-      if (profileResult.isLeft()) {
-        emit(const ProfileState(status: ProfileStatus.failure));
-        return;
-      }
+    final profileFuture = _profileRepository.currentProfile();
+    final favoriteCountFuture = _libraryRepository.count(
+      UserMovieListType.favorite,
+    );
+    final watchlistCountFuture = _libraryRepository.count(
+      UserMovieListType.watchlist,
+    );
+    final reviewCountFuture = _reviewRepository.countForCurrentUser();
 
-      // If any count failed, emit failure.
-      for (final result in countResults) {
-        if (result.isLeft()) {
-          emit(const ProfileState(status: ProfileStatus.failure));
-          return;
-        }
-      }
-      final profile = profileResult.getOrElse(() => null);
-      final fullName = profile?['full_name'] as String?;
-      emit(
-        ProfileState(
-          status: ProfileStatus.loaded,
-          fullName: fullName?.trim().isNotEmpty == true
-              ? fullName!
-              : 'Movie Explorer',
-          username: profile?['username'] as String?,
-          email: _authRepository.currentUser?.email,
-          bio: profile?['bio'] as String?,
-          avatarUrl: profile?['avatar_url'] as String?,
-          favoriteCount: countResults[0].getOrElse(() => 0),
-          watchlistCount: countResults[1].getOrElse(() => 0),
-          reviewCount: countResults[2].getOrElse(() => 0),
-        ),
-      );
-    } catch (_) {
-      emit(const ProfileState(status: ProfileStatus.failure));
+    final profileResult = await profileFuture;
+    final favoriteCountResult = await favoriteCountFuture;
+    final watchlistCountResult = await watchlistCountFuture;
+    final reviewCountResult = await reviewCountFuture;
+    final failure =
+        profileResult.errorOrNull ??
+        favoriteCountResult.errorOrNull ??
+        watchlistCountResult.errorOrNull ??
+        reviewCountResult.errorOrNull;
+    if (failure != null) {
+      emit(ProfileState(status: ProfileStatus.failure, failure: failure));
+      return;
     }
+
+    final profile = profileResult.getOrNull();
+    emit(
+      ProfileState(
+        status: ProfileStatus.loaded,
+        fullName: profile?.fullName.trim().isNotEmpty == true
+            ? profile!.fullName
+            : 'Movie Explorer',
+        username: profile?.username,
+        email: _authRepository.currentUserEmail,
+        bio: profile?.bio,
+        avatarUrl: profile?.avatarUrl,
+        favoriteCount: favoriteCountResult.getOrElse(() => 0),
+        watchlistCount: watchlistCountResult.getOrElse(() => 0),
+        reviewCount: reviewCountResult.getOrElse(() => 0),
+      ),
+    );
   }
 
-  Future<void> logout() => _authRepository.signOut();
+  Future<bool> logout() async {
+    final result = await _authRepository.signOut();
+    return result.when(
+      onSuccess: (_) => true,
+      onFailure: (error) {
+        emit(ProfileState(status: ProfileStatus.failure, failure: error));
+        return false;
+      },
+    );
+  }
 }

@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/error_mapper.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/features/ai/data/gemini_service.dart';
@@ -20,7 +22,6 @@ import 'package:cinmovies_app/features/library/data/library_repository.dart';
 import 'package:cinmovies_app/features/library/presentation/cubit/library_cubit.dart';
 import 'package:cinmovies_app/features/main/presentation/cubit/main_navigation_cubit.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
-import 'package:cinmovies_app/features/movies/data/movie_artwork_cache.dart';
 import 'package:cinmovies_app/features/movies/data/movie_repository.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:cinmovies_app/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -48,9 +49,8 @@ Future<void> initDependencies({
   serviceLocator.registerLazySingleton<SupabaseClient>(
     () => Supabase.instance.client,
   );
-  serviceLocator.registerLazySingleton<Dio>(
-    DioClientFactory.createTmdb,
-  );
+  serviceLocator.registerLazySingleton<Dio>(DioClientFactory.createTmdb);
+  serviceLocator.registerLazySingleton<ErrorMapper>(DefaultErrorMapper.new);
   serviceLocator.registerLazySingleton<SupabaseDatabaseService>(
     () => SupabaseDatabaseService(serviceLocator()),
   );
@@ -63,54 +63,62 @@ Future<void> initDependencies({
   serviceLocator.registerLazySingleton<LocalPreferencesService>(
     () => LocalPreferencesService(sharedPreferences),
   );
-  serviceLocator.registerLazySingleton<MovieArtworkCache>(
-    DiskMovieArtworkCache.new,
-  );
   serviceLocator.registerLazySingleton<AuthRepository>(
-    () => AuthRepository(
+    () => SupabaseAuthRepository(
+      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepository(serviceLocator(), serviceLocator()),
+    () => SupabaseProfileRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<HomeRepository>(
-    () => HomeRepository(
+    () => TmdbHomeRepository(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<BrowseRepository>(
-    () => BrowseRepository(serviceLocator()),
+    () => TmdbBrowseRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<SearchRepository>(
-    () => SearchRepository(serviceLocator()),
+    () => TmdbSearchRepository(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<MovieDetailsRepository>(
-    () => MovieDetailsRepository(
+    () => TmdbMovieDetailsRepository(
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<MovieRepository>(
-    () => MovieRepository(serviceLocator(), serviceLocator()),
+    () => MovieRepository(serviceLocator(), serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<LibraryRepository>(
-    () => LibraryRepository(
+    () => SupabaseLibraryRepository(
+      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<ReviewRepository>(
-    () => ReviewRepository(serviceLocator(), serviceLocator()),
+    () => SupabaseReviewRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
   serviceLocator.registerLazySingleton<GenrePreferencesRepository>(
-    () => GenrePreferencesRepository(
+    () => CachedGenrePreferencesRepository(
+      serviceLocator(),
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
@@ -123,10 +131,7 @@ Future<void> initDependencies({
     () => TmdbCatalogService(serviceLocator()),
   );
   serviceLocator.registerLazySingleton<MovieChatAiDataSource>(
-    () => MovieChatAiDataSource(
-      serviceLocator(),
-      serviceLocator(),
-    ),
+    () => MovieChatAiDataSource(serviceLocator(), serviceLocator()),
   );
   serviceLocator.registerLazySingleton<MovieChatRemoteDataSource>(
     () => MovieChatRemoteDataSource(serviceLocator()),
@@ -139,10 +144,15 @@ Future<void> initDependencies({
       serviceLocator(),
       serviceLocator(),
       serviceLocator(),
+      serviceLocator(),
     ),
   );
   serviceLocator.registerLazySingleton<TrailerHistoryRepository>(
-    () => TrailerHistoryRepository(serviceLocator(), serviceLocator()),
+    () => HiveTrailerHistoryRepository(
+      serviceLocator(),
+      serviceLocator(),
+      serviceLocator(),
+    ),
   );
 
   serviceLocator.registerFactory<AuthCubit>(

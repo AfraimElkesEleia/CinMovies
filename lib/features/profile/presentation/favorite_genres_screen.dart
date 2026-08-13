@@ -13,7 +13,9 @@ class FavoriteGenresScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => FavoriteGenresCubit(serviceLocator<GenrePreferencesRepository>())..load(),
+      create: (_) =>
+          FavoriteGenresCubit(serviceLocator<GenrePreferencesRepository>())
+            ..load(),
       child: const _FavoriteGenresView(),
     );
   }
@@ -27,8 +29,8 @@ class _FavoriteGenresView extends StatelessWidget {
     return BlocConsumer<FavoriteGenresCubit, FavoriteGenresState>(
       listener: (context, state) {
         if (state.status == FavoriteGenresStatus.failure &&
-            state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
+            state.failure != null) {
+          AppSnackBar.showError(context, state.failure!.message);
         }
 
         if (state.status == FavoriteGenresStatus.saved) {

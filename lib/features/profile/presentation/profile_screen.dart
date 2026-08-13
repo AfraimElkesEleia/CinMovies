@@ -97,8 +97,8 @@ class _ProfileView extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    await context.read<ProfileCubit>().logout();
-    if (!context.mounted) return;
+    final succeeded = await context.read<ProfileCubit>().logout();
+    if (!context.mounted || !succeeded) return;
     context.pushNamedAndRemoveUntil(AppRoutes.login);
   }
 
@@ -248,9 +248,9 @@ class _SupportHelpDialog extends StatelessWidget {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (launched || !context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open this link.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Could not open this link.')));
   }
 }
 

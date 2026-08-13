@@ -1,3 +1,5 @@
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
 import 'package:cinmovies_app/core/supabase/supabase_storage_service.dart';
@@ -18,10 +20,11 @@ void main() {
       'https://localhost.invalid',
       'test-publishable-key',
     );
-    final repository = AuthRepository(
+    final repository = SupabaseAuthRepository(
       SupabaseDatabaseService(client),
       SupabaseStorageService(client),
       preferences,
+      const DefaultErrorMapper(),
     );
     final cubit = AuthCubit(repository, _FakeGenrePreferencesRepository());
     addTearDown(cubit.close);
@@ -51,8 +54,7 @@ void main() {
   });
 }
 
-class _FakeGenrePreferencesRepository
-    implements GenrePreferencesRepository {
+class _FakeGenrePreferencesRepository implements GenrePreferencesRepository {
   @override
   String? get userScopeId => null;
 
@@ -60,13 +62,14 @@ class _FakeGenrePreferencesRepository
   Set<String> cachedFavoriteGenres() => {};
 
   @override
-  Future<Set<String>> loadFavoriteGenres() async => {};
+  Future<Result<Set<String>>> loadFavoriteGenres() async => const Success({});
 
   @override
-  Future<void> saveFavoriteGenres(Set<String> genreNames) async {}
+  Future<Result<void>> saveFavoriteGenres(Set<String> genreNames) async =>
+      const Success(null);
 
   @override
-  Future<void> syncCachedFavoriteGenres() async {}
+  Future<Result<void>> syncCachedFavoriteGenres() async => const Success(null);
 
   @override
   Stream<Set<String>> watchFavoriteGenres() => const Stream.empty();

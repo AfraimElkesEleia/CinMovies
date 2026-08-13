@@ -1,9 +1,8 @@
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
 import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
 import 'package:cinmovies_app/features/trailers/presentation/cubit/trailer_playback_cubit.dart';
 import 'package:cinmovies_app/features/trailers/presentation/model/trailer_viewer_args.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -28,20 +27,23 @@ void main() {
     expect(repository.saved.single.totalSeconds, 100);
   });
 
-  test('completed trailer resumes from zero and completion saves 100%', () async {
-    final repository = _FakeTrailerHistoryRepository(
-      existing: _entry(watched: 96),
-    );
-    final cubit = TrailerPlaybackCubit(repository, _args);
-    addTearDown(cubit.close);
+  test(
+    'completed trailer resumes from zero and completion saves 100%',
+    () async {
+      final repository = _FakeTrailerHistoryRepository(
+        existing: _entry(watched: 96),
+      );
+      final cubit = TrailerPlaybackCubit(repository, _args);
+      addTearDown(cubit.close);
 
-    await cubit.initialize();
-    expect(cubit.state.initialSeconds, 0);
+      await cubit.initialize();
+      expect(cubit.state.initialSeconds, 0);
 
-    await cubit.markCompleted(const Duration(seconds: 100));
-    expect(repository.saved.single.watchedSeconds, 100);
-    expect(repository.saved.single.percentage, 100);
-  });
+      await cubit.markCompleted(const Duration(seconds: 100));
+      expect(repository.saved.single.watchedSeconds, 100);
+      expect(repository.saved.single.percentage, 100);
+    },
+  );
 
   test('incomplete trailer resumes at its saved second', () async {
     final repository = _FakeTrailerHistoryRepository(
@@ -76,36 +78,31 @@ TrailerHistoryEntry _entry({required int watched}) {
   );
 }
 
-class _FakeTrailerHistoryRepository
-    implements TrailerHistoryRepositoryContract {
+class _FakeTrailerHistoryRepository implements TrailerHistoryRepository {
   _FakeTrailerHistoryRepository({this.existing});
 
   final TrailerHistoryEntry? existing;
   final List<TrailerHistoryEntry> saved = [];
 
   @override
-  Future<Either<Failure, TrailerHistoryEntry?>> findByVideoKey(
-    String videoKey,
-  ) async {
-    return Right(existing);
+  Future<Result<TrailerHistoryEntry?>> findByVideoKey(String videoKey) async {
+    return Success(existing);
   }
 
   @override
-  Future<Either<Failure, List<TrailerHistoryEntry>>> history() async {
-    return Right(existing == null ? const [] : [existing!]);
+  Future<Result<List<TrailerHistoryEntry>>> history() async {
+    return Success(existing == null ? const [] : [existing!]);
   }
 
   @override
-  Future<Either<Failure, void>> saveProgress(
-    TrailerHistoryEntry entry,
-  ) async {
+  Future<Result<void>> saveProgress(TrailerHistoryEntry entry) async {
     saved.add(entry);
-    return const Right(null);
+    return const Success(null);
   }
 
   @override
-  Future<Either<Failure, void>> remove(String videoKey) async {
-    return const Right(null);
+  Future<Result<void>> remove(String videoKey) async {
+    return const Success(null);
   }
 
   @override

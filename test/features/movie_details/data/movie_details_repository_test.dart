@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/movies/domain/entities/movie.dart';
 import 'package:cinmovies_app/features/movie_details/data/movie_details_repository.dart';
 import 'package:dio/dio.dart';
@@ -15,7 +17,7 @@ void main() {
     adapter = _FakeAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'https://api.themoviedb.org/3'))
       ..httpClientAdapter = adapter;
-    repository = MovieDetailsRepository(dio);
+    repository = TmdbMovieDetailsRepository(dio, const DefaultErrorMapper());
   });
 
   test(
@@ -80,7 +82,7 @@ void main() {
 
       final result = await repository.fetchMovieDetails(_seed());
 
-      expect(result.isRight(), isTrue);
+      expect(result.isSuccess, isTrue);
       final details = result.getOrElse(
         () => throw StateError('Expected details'),
       );

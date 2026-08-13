@@ -1,4 +1,6 @@
 import 'package:cinmovies_app/core/di/injection_container.dart';
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/local_preferences_service.dart';
 import 'package:cinmovies_app/core/navigation/routes.dart';
 import 'package:cinmovies_app/core/supabase/supabase_database_service.dart';
@@ -26,10 +28,11 @@ void main() {
       'test-publishable-key',
     );
     serviceLocator.registerSingleton<AuthRepository>(
-      AuthRepository(
+      SupabaseAuthRepository(
         SupabaseDatabaseService(client),
         SupabaseStorageService(client),
         preferences,
+        const DefaultErrorMapper(),
       ),
     );
     serviceLocator.registerSingleton<GenrePreferencesRepository>(
@@ -56,6 +59,7 @@ void main() {
 
     expect(find.text('Google'), findsNothing);
     expect(find.text('Facebook'), findsNothing);
+    expect(find.text('Forgot Password?'), findsNothing);
 
     await tester.tap(find.text('Continue as Guest'));
     await tester.pumpAndSettle();
@@ -66,9 +70,7 @@ void main() {
 
   testWidgets('signup removes social options', (tester) async {
     await _setLargeTestSurface(tester);
-    await tester.pumpWidget(
-      const MaterialApp(home: SignupScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: SignupScreen()));
     await tester.pump();
 
     expect(find.text('Google'), findsNothing);
@@ -76,6 +78,7 @@ void main() {
     expect(find.text('or continue with'), findsNothing);
     expect(find.text('Create Account'), findsWidgets);
   });
+
 }
 
 Future<void> _setLargeTestSurface(WidgetTester tester) async {
@@ -85,8 +88,7 @@ Future<void> _setLargeTestSurface(WidgetTester tester) async {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-class _FakeGenrePreferencesRepository
-    implements GenrePreferencesRepository {
+class _FakeGenrePreferencesRepository implements GenrePreferencesRepository {
   @override
   String? get userScopeId => null;
 
@@ -94,13 +96,14 @@ class _FakeGenrePreferencesRepository
   Set<String> cachedFavoriteGenres() => {};
 
   @override
-  Future<Set<String>> loadFavoriteGenres() async => {};
+  Future<Result<Set<String>>> loadFavoriteGenres() async => const Success({});
 
   @override
-  Future<void> saveFavoriteGenres(Set<String> genreNames) async {}
+  Future<Result<void>> saveFavoriteGenres(Set<String> genreNames) async =>
+      const Success(null);
 
   @override
-  Future<void> syncCachedFavoriteGenres() async {}
+  Future<Result<void>> syncCachedFavoriteGenres() async => const Success(null);
 
   @override
   Stream<Set<String>> watchFavoriteGenres() => const Stream.empty();

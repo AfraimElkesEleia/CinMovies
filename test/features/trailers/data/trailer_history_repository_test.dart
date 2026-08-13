@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:cinmovies_app/core/error/default_error_mapper.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/core/local/hive_cache_service.dart';
 import 'package:cinmovies_app/features/trailers/data/trailer_history_repository.dart';
 import 'package:cinmovies_app/features/trailers/domain/entities/trailer_history_entry.dart';
@@ -25,9 +27,10 @@ void main() {
       trailerHistoryBox: await Hive.openBox<dynamic>('trailers_$suffix'),
     );
     scopeId = 'user-a';
-    repository = TrailerHistoryRepository(
+    repository = HiveTrailerHistoryRepository(
       cache,
       SupabaseClient('https://localhost.invalid', 'test-key'),
+      const DefaultErrorMapper(),
       scopeIdResolver: () => scopeId,
     );
   });
@@ -79,7 +82,7 @@ void main() {
     scopeId = 'user-a';
     final result = await repository.remove('video-key');
 
-    expect(result.isRight(), isTrue);
+    expect(result.isSuccess, isTrue);
     expect((await repository.history()).getOrElse(() => []), isEmpty);
 
     scopeId = 'user-b';

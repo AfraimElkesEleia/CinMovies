@@ -7,7 +7,6 @@ import 'package:cinmovies_app/features/auth/data/auth_repository.dart';
 import 'package:cinmovies_app/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_header.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/login_primary_button.dart';
-import 'package:cinmovies_app/features/login/presentation/widgets/login_options_row.dart';
 import 'package:cinmovies_app/features/login/presentation/widgets/signup_prompt.dart';
 import 'package:cinmovies_app/features/preferences/data/genre_preferences_repository.dart';
 import 'package:flutter/material.dart';
@@ -59,8 +58,8 @@ class _LoginViewState extends State<_LoginView> {
         }
 
         if (state.status == AuthSubmissionStatus.failure &&
-            state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
+            state.failure != null) {
+          AppSnackBar.showError(context, state.failure!.message);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
@@ -92,9 +91,6 @@ class _LoginViewState extends State<_LoginView> {
                       textInputAction: TextInputAction.done,
                       validator: _requiredPassword,
                       onSubmitted: (_) => _login(context),
-                    ),
-                    LoginOptionsRow(
-                      onForgotPasswordPressed: () {},
                     ),
                     const SizedBox(height: 16),
                     LoginPrimaryButton(

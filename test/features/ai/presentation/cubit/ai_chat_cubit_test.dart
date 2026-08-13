@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:cinmovies_app/core/error/failures.dart';
+import 'package:cinmovies_app/core/error/app_error.dart';
+import 'package:cinmovies_app/core/error/result.dart';
 import 'package:cinmovies_app/features/ai/domain/entities/movie_chat_models.dart';
 import 'package:cinmovies_app/features/ai/domain/repositories/movie_chat_repository.dart';
 import 'package:cinmovies_app/features/ai/presentation/cubit/ai_chat_cubit.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -24,7 +24,7 @@ void main() {
   test(
     'optimistically inserts a valid message and completes with answer',
     () async {
-      final pending = Completer<Either<Failure, MovieChatResponse>>();
+      final pending = Completer<Result<MovieChatResponse>>();
       final repository = _FakeMovieChatRepository(
         sendHandler: (_, _, _) => pending.future,
       );
@@ -40,7 +40,7 @@ void main() {
 
       final optimistic = cubit.state.messages.single;
       pending.complete(
-        Right(_response(cubit.state.conversationId, optimistic)),
+        Success(_response(cubit.state.conversationId, optimistic)),
       );
       expect(await send, isTrue);
       expect(cubit.state.status, AiChatStatus.ready);
@@ -56,9 +56,9 @@ void main() {
     final repository = _FakeMovieChatRepository(
       sendHandler: (call, conversationId, optimisticMessage) async {
         if (call == 1) {
-          return const Left(Failure(message: 'No connection'));
+          return const Failure(NetworkAppError(message: 'No connection'));
         }
-        return Right(_response(conversationId, optimisticMessage));
+        return Success(_response(conversationId, optimisticMessage));
       },
     );
     final cubit = AiChatCubit(repository);
@@ -78,7 +78,7 @@ void main() {
   });
 
   test('prevents a duplicate send while a request is pending', () async {
-    final pending = Completer<Either<Failure, MovieChatResponse>>();
+    final pending = Completer<Result<MovieChatResponse>>();
     final repository = _FakeMovieChatRepository(
       sendHandler: (_, _, _) => pending.future,
     );
@@ -92,33 +92,38 @@ void main() {
     expect(second, isFalse);
     expect(repository.sendCount, 1);
     final optimistic = cubit.state.messages.single;
-    pending.complete(Right(_response(cubit.state.conversationId, optimistic)));
+    pending.complete(
+      Success(_response(cubit.state.conversationId, optimistic)),
+    );
     await first;
   });
 
-  test('replaces the optimistic user ID with the persisted database ID', () async {
-    final repository = _FakeMovieChatRepository(
-      sendHandler: (_, conversationId, optimistic) async {
-        final persisted = MovieChatMessage(
-          id: 'c374852b-4d6d-4e30-9e6d-ec2da2fa0770',
-          role: MovieChatRole.user,
-          content: optimistic.content,
-          createdAt: optimistic.createdAt,
-        );
-        return Right(_response(conversationId, persisted));
-      },
-    );
-    final cubit = AiChatCubit(repository);
-    addTearDown(cubit.close);
+  test(
+    'replaces the optimistic user ID with the persisted database ID',
+    () async {
+      final repository = _FakeMovieChatRepository(
+        sendHandler: (_, conversationId, optimistic) async {
+          final persisted = MovieChatMessage(
+            id: 'c374852b-4d6d-4e30-9e6d-ec2da2fa0770',
+            role: MovieChatRole.user,
+            content: optimistic.content,
+            createdAt: optimistic.createdAt,
+          );
+          return Success(_response(conversationId, persisted));
+        },
+      );
+      final cubit = AiChatCubit(repository);
+      addTearDown(cubit.close);
 
-    await cubit.sendMessage('Recommend a classic', locale: 'en');
+      await cubit.sendMessage('Recommend a classic', locale: 'en');
 
-    expect(cubit.state.messages, hasLength(2));
-    expect(
-      cubit.state.messages.first.id,
-      'c374852b-4d6d-4e30-9e6d-ec2da2fa0770',
-    );
-  });
+      expect(cubit.state.messages, hasLength(2));
+      expect(
+        cubit.state.messages.first.id,
+        'c374852b-4d6d-4e30-9e6d-ec2da2fa0770',
+      );
+    },
+  );
 
   test('switches conversations and loads their messages', () async {
     final message = MovieChatMessage(
@@ -166,7 +171,7 @@ MovieChatResponse _response(
 class _FakeMovieChatRepository implements MovieChatRepository {
   _FakeMovieChatRepository({this.sendHandler, this.messages = const []});
 
-  final Future<Either<Failure, MovieChatResponse>> Function(
+  final Future<Result<MovieChatResponse>> Function(
     int call,
     String conversationId,
     MovieChatMessage optimisticMessage,
@@ -180,20 +185,18 @@ class _FakeMovieChatRepository implements MovieChatRepository {
   bool get isGuest => false;
 
   @override
-  Future<Either<Failure, List<MovieChatSession>>> loadSessions() async {
-    return const Right([]);
+  Future<Result<List<MovieChatSession>>> loadSessions() async {
+    return const Success([]);
   }
 
   @override
-  Future<Either<Failure, List<MovieChatMessage>>> loadMessages(
-    String sessionId,
-  ) async {
+  Future<Result<List<MovieChatMessage>>> loadMessages(String sessionId) async {
     loadedSessionId = sessionId;
-    return Right(messages);
+    return Success(messages);
   }
 
   @override
-  Future<Either<Failure, MovieChatResponse>> sendMessage({
+  Future<Result<MovieChatResponse>> sendMessage({
     required String conversationId,
     required String requestId,
     required MovieChatMessage optimisticMessage,
@@ -209,7 +212,7 @@ class _FakeMovieChatRepository implements MovieChatRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteSession(String sessionId) async {
-    return const Right(null);
+  Future<Result<void>> deleteSession(String sessionId) async {
+    return const Success(null);
   }
 }
