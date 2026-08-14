@@ -104,11 +104,11 @@ review replies, and reactions.
 - Cached detail pages are shown immediately and revalidated from TMDB.
 - A 20-entry least-recently-used details cache keeps storage bounded.
 <p align="center">
-<img width="28%" alt="Screenshot_1786209074" src="https://github.com/user-attachments/assets/5d9080c1-a37d-4342-8a84-25dc1457703d" style="margin-right: 15px;" />
-<img width="28%"  alt="Screenshot_1786209071" src="https://github.com/user-attachments/assets/e73ae217-0fa8-4c58-be64-d99754cbbd18" style="margin-right: 15px;" />
-<img width="28%"  alt="Screenshot_1786209078" src="https://github.com/user-attachments/assets/fd1233b2-43e0-4afb-906f-66f8284790dd" style="margin-right: 15px;" />
+<img width="20%" alt="Screenshot_1786209074" src="https://github.com/user-attachments/assets/5d9080c1-a37d-4342-8a84-25dc1457703d" style="margin-right: 15px;" />
+<img width="20%"  alt="Screenshot_1786209071" src="https://github.com/user-attachments/assets/e73ae217-0fa8-4c58-be64-d99754cbbd18" style="margin-right: 15px;" />
+<img width="20%"  alt="Screenshot_1786209078" src="https://github.com/user-attachments/assets/fd1233b2-43e0-4afb-906f-66f8284790dd" style="margin-right: 15px;" />
+<img width="20%" height="2400" alt="Screenshot_1786719054" src="https://github.com/user-attachments/assets/0f5a91e8-4972-4a9e-9a88-05aaf75be6af" style="margin-right: 15px;"/>
 </p>
-
 
 ### Favorites, watchlist, and library
 
@@ -122,6 +122,12 @@ review replies, and reactions.
   on failure.
 - The repository also defines a `watched` list type for future use; the current
   library UI exposes history, watchlist, and favorites.
+
+<p align="center">
+<img width="28%" alt="Screenshot_1786719078" src="https://github.com/user-attachments/assets/8de4f369-6cbe-4266-8016-2778f1e019ff" style="margin-right: 15px;"/>
+<img width="28%" alt="Screenshot_1786719077" src="https://github.com/user-attachments/assets/df57cab3-cf56-4fdd-aec0-c380c9a67767" style="margin-right: 15px;"/>
+<img width="28%" alt="Screenshot_1786719080" src="https://github.com/user-attachments/assets/eabafa28-a7d2-4d5a-a3be-c0374f80a905" style="margin-right: 15px;"/>
+</p>
 
 ### Community reviews and replies
 
@@ -140,6 +146,11 @@ review replies, and reactions.
 - Guests can read community content, but writing, replying, reacting, and
   deleting require an account.
 
+<p align="center">
+<img width="35%" alt="Screenshot_1786719228" src="https://github.com/user-attachments/assets/15bb3c04-8dc6-48a8-bfd1-e1393912e861" style="margin-right: 15px;" />
+<img width="35%" alt="Screenshot_1786719241" src="https://github.com/user-attachments/assets/51ecb3f2-f6d7-427f-adb7-d57084fbd9d8" style="margin-right: 15px;" />
+</p>
+
 ### Profile
 
 - Profile header with name, username, email, biography, and avatar.
@@ -149,6 +160,10 @@ review replies, and reactions.
 - Open the current user's reviews.
 - Support/contact dialog and external link launching.
 - Pull-to-refresh and logout confirmation.
+
+<p align="center">
+  <img width="35%" alt="Screenshot_1786719087" src="https://github.com/user-attachments/assets/6e047d09-3523-48e9-86a9-d32c62c9eb41" />
+<\p>
 
 ### User experience
 
