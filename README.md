@@ -157,7 +157,7 @@ review replies, and reactions.
 - Custom animated splash overlay.
 - OpenSans font family and a consistent dark movie-themed design system.
 - Reusable shimmer, snack bar, text field, artwork, and navigation components.
-- Network-image caching, placeholders, error fallbacks, and pre-warmed artwork.
+- Network-image caching, placeholders, and error fallbacks.
 - Centralized error mapping converts Dio, Supabase Auth, database, and storage
   errors into readable messages.
 
@@ -388,7 +388,7 @@ and reply discussions.
 | Popular/upcoming home feed | TMDB | First 20 items per section in Hive; cache-first revalidation |
 | Personalized For You feed | TMDB discover | First page cached per user + normalized genre IDs |
 | Movie details/similar/trailer | TMDB | 20-entry LRU-style Hive cache |
-| Poster/backdrop images | TMDB image CDN | `flutter_cache_manager`, up to 4 pre-warm downloads concurrently |
+| Poster/backdrop images | TMDB image CDN | Cached automatically by `cached_network_image` |
 | Browse and search results | TMDB | Results are live; recent search terms are in Hive |
 | Account/session | Supabase Auth | Guest and onboarding flags in SharedPreferences |
 | Profile/avatar | Supabase database/storage | Loaded on demand |
@@ -490,7 +490,6 @@ owner-based row-level security.
 | `share_plus` | `^13.3.0` | Native movie sharing |
 | `youtube_player_flutter` | `^10.0.1` | In-app YouTube trailer player |
 | `cached_network_image` | `^3.4.1` | Cached avatar/cast/network images |
-| `flutter_cache_manager` | `^3.4.2` | Disk artwork caching and pre-warming |
 | `uuid` | `^4.5.2` | Conversation, request, and temporary message IDs |
 
 ### Development dependencies
