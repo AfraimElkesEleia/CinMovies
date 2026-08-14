@@ -46,6 +46,11 @@ review replies, and reactions.
   personalized TMDB results automatically.
 - Onboarding and guest-mode flags are persisted with SharedPreferences so the
   correct initial route can be restored on the next launch.
+<p align="center">
+<img width="28%" alt="Screenshot_1786207341" src="https://github.com/user-attachments/assets/45f4c176-6cc7-491f-b9db-bb866b8482de" style="margin-right: 15px;" />
+<img width="28%" height="2400" alt="Screenshot_1786207338" src="https://github.com/user-attachments/assets/a03820f5-2d81-44a1-b3a7-d991b9b4739b" style="margin-right: 15px;" />
+<img width="28%" height="2400" alt="Screenshot_1786207343" src="https://github.com/user-attachments/assets/6cc55944-f262-4f2b-9879-e6b8abdefe91" style="margin-right: 15px;" />
+</p>
 
 ### Authentication and guest access
 
@@ -81,6 +86,10 @@ review replies, and reactions.
 - Protection against stale search responses through request tokens.
 - Search result pagination and sorting by rating, title, or newest release.
 - Up to six recent search terms stored locally, with individual deletion.
+<p align="center">
+<img width="35%" alt="Screenshot_1786209028" src="https://github.com/user-attachments/assets/ce6b0178-5216-441b-96c6-99be5c7bdcb3" style="margin-right: 15px;" />
+<img width="35%" alt="Screenshot_1786209031" src="https://github.com/user-attachments/assets/ad23b995-62a7-4664-8881-bafa4e1e6d86" style="margin-right: 15px;" />
+</p>
 
 ### Movie details
 
@@ -94,6 +103,12 @@ review replies, and reactions.
 - Favorite and watchlist actions for authenticated users.
 - Cached detail pages are shown immediately and revalidated from TMDB.
 - A 20-entry least-recently-used details cache keeps storage bounded.
+<p align="center">
+<img width="28%" alt="Screenshot_1786209074" src="https://github.com/user-attachments/assets/5d9080c1-a37d-4342-8a84-25dc1457703d" style="margin-right: 15px;" />
+<img width="28%"  alt="Screenshot_1786209071" src="https://github.com/user-attachments/assets/e73ae217-0fa8-4c58-be64-d99754cbbd18" style="margin-right: 15px;" />
+<img width="28%"  alt="Screenshot_1786209078" src="https://github.com/user-attachments/assets/fd1233b2-43e0-4afb-906f-66f8284790dd" style="margin-right: 15px;" />
+</p>
+
 
 ### Favorites, watchlist, and library
 
