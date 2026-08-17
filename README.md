@@ -9,6 +9,10 @@ TMDB catalog data, Supabase authentication and account storage, a Gemini-powered
 movie assistant, and Hive-based local caching in one responsive, feature-first
 codebase.
 
+<p align="center">
+<img width="300" alt="small reecording about cinmovies application" src="https://github.com/user-attachments/assets/fe2592a9-3191-409c-bf56-98eadfae962d" />
+</p>
+
 Users can create an account or continue as a guest. Both modes can discover
 movies, search, open detailed movie pages, watch trailers, and use the AI movie
 assistant. Signed-in users additionally receive cloud-backed profiles,
@@ -31,8 +35,6 @@ review replies, and reactions.
 - [Packages](#packages)
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
-- [Testing and validation](#testing-and-validation)
-- [Current limitations](#current-limitations)
 
 ## Core features
 
@@ -331,8 +333,10 @@ Important safeguards and behavior:
 - A successful Supabase write is still returned to the UI if refreshing the
   local account cache fails; the next history load can rebuild the cache.
 
-For a deeper, code-by-code walkthrough, see
-[`docs/AI_MOVIE_ASSISTANT_GUIDE.md`](docs/AI_MOVIE_ASSISTANT_GUIDE.md).
+<p align = "center">
+<img width="35%"  alt="Ai Chatbot Screenshot" src="https://github.com/user-attachments/assets/6da1ed06-a037-46e0-9135-08d2c788bbde" style="margin-right: 15px;"/>
+<img width="35%"  alt="Ai Chatbot Screenshot" src="https://github.com/user-attachments/assets/93ab5bb3-643d-4640-b79b-9afed731e032" style="margin-right: 15px;"/>
+</p>
 
 ## Architecture
 
@@ -641,17 +645,6 @@ cinmovies_app/
 ├── flutter_native_splash.yaml
 └── pubspec.yaml
 ```
-
-Flutter platform projects are included for Android, iOS, web, Windows, Linux,
-and macOS. Actual plugin support and behavior should be validated on every
-platform targeted for release.
-
-## Testing and validation
-
-The repository contains 40 Dart test files covering repositories, Cubits,
-caching, guest access, reviews/replies, trailer history, AI chat, widgets,
-mapping, error handling, and navigation behavior.
-
 
 CinMovies demonstrates how a Flutter application can combine API-driven
 catalog discovery, authenticated social features, resilient local caching,
